@@ -2,7 +2,12 @@
  * R01 -- Spike (RUNNER). Ground hazard: jump it.
  *
  * Params:
- *   height  spike height multiplier   default 1.0
+ *   height   spike height multiplier          default 1.0
+ *   surface  "FLOOR" | "CEILING"               default "FLOOR"
+ *
+ * A ceiling spike hangs down from the upper surface and is what an inverted
+ * gravity sequence dodges; a floor spike is irrelevant while the player is
+ * running on the ceiling, and vice versa.
  */
 
 import type { MechanicSpawnContext } from '../../core/Mechanic';
@@ -10,7 +15,8 @@ import { ScrollingObstacle } from './ScrollingObstacle';
 import type { Rect, Shape } from '../../core/geometry';
 import { clamp, lerp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
-import { GROUND_Y } from './runnerGeometry';
+import { CEILING_Y, GROUND_Y } from './runnerGeometry';
+import { readSurface, type TrackSurface } from './surface';
 
 export const SPIKE_BASE_HEIGHT = 0.09;
 /**
@@ -22,10 +28,14 @@ export const SPIKE_BASE_HEIGHT = 0.09;
 export const SPIKE_WIDTH = 0.024;
 
 export class SpikeMechanic extends ScrollingObstacle {
+  override readonly damageSource = 'OBSTACLE' as const;
+
   private readonly height: number;
+  readonly surface: TrackSurface;
 
   constructor(spawn: MechanicSpawnContext) {
     super(spawn);
+    this.surface = readSurface(this.params.surface);
     // Taller with intensity -- but only slightly. A taller spike needs more
     // clearance, which narrows the slice of the jump arc that is above it, and
     // in a half-beat double that slice *is* the timing window. Scaling height
@@ -36,7 +46,8 @@ export class SpikeMechanic extends ScrollingObstacle {
 
   private body(): Rect {
     const x = this.x;
-    return { x: x - SPIKE_WIDTH / 2, y: GROUND_Y - this.height, w: SPIKE_WIDTH, h: this.height };
+    const top = this.surface === 'CEILING' ? CEILING_Y : GROUND_Y - this.height;
+    return { x: x - SPIKE_WIDTH / 2, y: top, w: SPIKE_WIDTH, h: this.height };
   }
 
   protected dangerShapes(): Shape[] {
@@ -45,9 +56,12 @@ export class SpikeMechanic extends ScrollingObstacle {
 
   render(r: Renderer): void {
     const body = this.body();
-    // Triangular blade rather than a bar: the silhouette says "jump".
-    const tipY = body.y;
-    const baseY = body.y + body.h;
+    // Triangular blade rather than a bar: the silhouette says "jump". On the
+    // ceiling it points the other way, so the shape still reads as a threat
+    // growing out of whichever surface the player is running on.
+    const ceiling = this.surface === 'CEILING';
+    const tipY = ceiling ? body.y + body.h : body.y;
+    const baseY = ceiling ? body.y : body.y + body.h;
     r.glow(body.x + body.w / 2, tipY, this.height * 1.6, '#ff5c5c', 0.2);
     r.fillPolygon([
       { x: body.x, y: baseY },

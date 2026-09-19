@@ -14,6 +14,7 @@
 import type { BeatClock } from './BeatClock';
 import type { MechanicSpawnContext, ResolvedTiming, RuntimeMechanic } from './Mechanic';
 import { scaleTelegraphBeats } from './Intensity';
+import { tierForDifficulty } from '../mechanics/arena/arenaTiming';
 import type { EventRole, GameMode, MechanicDefinition, MechanicLibrary, ParamBag, PatternConstraints } from './types';
 import { NULL_FEEL, type FeelSink } from '../feel/FeelSink';
 
@@ -43,6 +44,8 @@ export interface SpawnRequest {
   seed: number;
   /** Pattern constraints that clamp intensity scaling. */
   constraints?: PatternConstraints;
+  /** Section difficulty, 1-5. Selects the readability tier. */
+  difficulty?: number;
 }
 
 export class MechanicRegistry {
@@ -128,6 +131,7 @@ export class MechanicRegistry {
       seed: request.seed,
       clock,
       feel: this.feel,
+      tier: tierForDifficulty(request.difficulty),
     });
   }
 
@@ -136,9 +140,11 @@ export class MechanicRegistry {
     // Event params may override library timing directly (authoring escape hatch).
     const p = request.params ?? {};
     const telegraphBase = numberParam(p.telegraphBeats, base.telegraphBeats);
+    // Easier tiers buy the player more warning; harder ones spend some of it.
+    const tier = tierForDifficulty(request.difficulty);
     return {
       telegraphBeats: scaleTelegraphBeats(
-        telegraphBase,
+        telegraphBase * (telegraphBase > 0 ? tier.telegraphScale : 1),
         request.intensity,
         request.constraints?.minReactionBeats,
       ),

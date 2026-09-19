@@ -37,6 +37,15 @@ export interface LabDefinition {
 /** Bars of loop before the lab restarts. Long enough not to feel choppy. */
 const TARGET_BARS = 32;
 
+const ARENA_PATTERNS = [
+  'AP01', 'AP02', 'AP03', 'AP04', 'AP05', 'AP06', 'AP07', 'AP08', 'AP09', 'AP10',
+  'AP11', 'AP12', 'AP13', 'AP14', 'AP15', 'AP16', 'AP17', 'AP18', 'AP19', 'AP20',
+];
+const RUNNER_PATTERNS = [
+  'RP01', 'RP02', 'RP03', 'RP04', 'RP05', 'RP06', 'RP07', 'RP08',
+  'RP09', 'RP10', 'RP11', 'RP12', 'RP13', 'RP14', 'RP15',
+];
+
 /**
  * Build a looping single-mode level from a list of patterns.
  *
@@ -179,9 +188,8 @@ export const LABS: LabDefinition[] = [
   {
     index: 6, id: 'arena-patterns', group: 'ARENA', title: 'Pattern Lab',
     hint: 'Cycle every ARENA pattern with [ and ].',
-    variants: ['AP01', 'AP02', 'AP03', 'AP04', 'AP05', 'AP06', 'AP07', 'AP08', 'AP09', 'AP10', 'AP11', 'AP12', 'AP13'],
-    build: (c) => loop(c, 'arena-patterns', 'Arena Pattern Lab', 'ARENA',
-      [pick(['AP01', 'AP02', 'AP03', 'AP04', 'AP05', 'AP06', 'AP07', 'AP08', 'AP09', 'AP10', 'AP11', 'AP12', 'AP13'], c.variantIndex)]),
+    variants: ARENA_PATTERNS,
+    build: (c) => loop(c, 'arena-patterns', 'Arena Pattern Lab', 'ARENA', [pick(ARENA_PATTERNS, c.variantIndex)]),
   },
   {
     index: 7, id: 'arena-combined', group: 'ARENA', title: 'Combined Test',
@@ -225,9 +233,8 @@ export const LABS: LabDefinition[] = [
   {
     index: 11, id: 'runner-patterns', group: 'RUNNER', title: 'Obstacle Pattern Lab',
     hint: 'Cycle every RUNNER pattern with [ and ].',
-    variants: ['RP01', 'RP02', 'RP03', 'RP04', 'RP05', 'RP06', 'RP07', 'RP08', 'RP09', 'RP10', 'RP11', 'RP12'],
-    build: (c) => loop(c, 'runner-patterns', 'Runner Pattern Lab', 'RUNNER',
-      [pick(['RP01', 'RP02', 'RP03', 'RP04', 'RP05', 'RP06', 'RP07', 'RP08', 'RP09', 'RP10', 'RP11', 'RP12'], c.variantIndex)]),
+    variants: RUNNER_PATTERNS,
+    build: (c) => loop(c, 'runner-patterns', 'Runner Pattern Lab', 'RUNNER', [pick(RUNNER_PATTERNS, c.variantIndex)]),
   },
   {
     index: 12, id: 'runner-combined', group: 'RUNNER', title: 'Combined Test',
@@ -332,7 +339,24 @@ export const LABS: LabDefinition[] = [
       [pick(['AP03', 'AP10'], c.variantIndex)], 3),
   },
   {
-    index: 23, id: 'full-demo', group: 'GLOBAL', title: 'Full Demo',
+    index: 23, id: 'arena-radial-inout', group: 'ARENA', title: 'Inward and Outward',
+    hint: 'Centre-out and rim-in rings, and the combinations that mix them.',
+    variants: ['AP14 out then in', 'AP15 out out in', 'AP16 in rotate out',
+               'AP17 alternating rings', 'AP18 spiral inward', 'AP19 delayed waves', 'AP20 converging climax'],
+    trigger: { mechanicId: 'A04', params: { origin: 'EDGE', gapAngleDeg: -90 } },
+    build: (c) => loop(c, 'arena-radial-inout', 'Arena Inward and Outward', 'ARENA',
+      [pick(['AP14', 'AP15', 'AP16', 'AP17', 'AP18', 'AP19', 'AP20'], c.variantIndex)], 3),
+  },
+  {
+    index: 24, id: 'runner-ceiling', group: 'RUNNER', title: 'Ceiling Chain',
+    hint: 'Flip up, run the ceiling, flip back. Obstacles belong to a surface.',
+    variants: ['RP13 ceiling chain', 'RP11 alternation', 'RP14 mixed chain', 'RP15 recovery'],
+    trigger: { mechanicId: 'R01', params: { surface: 'CEILING' } },
+    build: (c) => loop(c, 'runner-ceiling', 'Runner Ceiling Chain', 'RUNNER',
+      [pick(['RP13', 'RP11', 'RP14', 'RP15'], c.variantIndex)], 3),
+  },
+  {
+    index: 25, id: 'full-demo', group: 'GLOBAL', title: 'Full Demo',
     hint: 'The complete multi-mode song. Not a lab.',
     build: null,
   },

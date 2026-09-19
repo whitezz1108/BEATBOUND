@@ -16,6 +16,17 @@ import type { SpawnedMechanicInfo } from './PatternScheduler';
 import type { GameMode } from './types';
 import type { GameplayMode, ModeContext, ModeFactory } from '../modes/GameplayMode';
 import { PlaceholderMode } from '../modes/PlaceholderMode';
+import { easeInOut, easeOutCubic, pulse } from '../feel/Easing';
+import { TUNING } from '../tuning';
+
+/** Each mode's signature colour, used by the scene transition and the HUD. */
+export const MODE_COLOURS: Record<GameMode, string> = {
+  ARENA: '#6de3ff',
+  RUNNER: '#8a5fff',
+  VERTICAL: '#4dffa6',
+  RADIAL: '#ffc46d',
+  DUO: '#ff8ec4',
+};
 
 interface TransitionState {
   id: string;
@@ -49,7 +60,7 @@ export class ModeManager {
     private readonly clock: BeatClock,
     private readonly context: ModeContext,
     /** How long a mode transition animates, in beats. */
-    private readonly transitionBeats = 1,
+    private readonly transitionBeats = TUNING.transition.sceneBeats,
   ) {}
 
   register(mode: GameMode, factory: ModeFactory): void {
@@ -131,6 +142,12 @@ export class ModeManager {
     return total;
   }
 
+  /** Drop hazards in every instantiated mode, not just the live one. */
+  clearHazards(): void {
+    for (const mode of this.instances.values()) mode.clearHazards();
+    this.pending.clear();
+  }
+
   update(u: MechanicUpdate): void {
     if (this.transition && u.beat >= this.transition.startBeat + this.transition.lengthBeats) {
       this.transition = null;
@@ -143,13 +160,34 @@ export class ModeManager {
     this.renderTransition(r);
   }
 
-  /** Placeholder wipe. Real per-mode transition animations slot in here. */
+  /**
+   * Scene transition.
+   *
+   * Each mode gets its own colour so the switch registers before the player has
+   * read a single hazard. The wipe travels rather than fading flat, which says
+   * "you are moving somewhere" instead of "the screen blinked". Readability
+   * wins over spectacle: it is short, it never hides the incoming mode's
+   * telegraphs, and it is fully transparent by the time gameplay resumes.
+   */
   private renderTransition(r: Renderer): void {
     const t = this.transition;
     if (!t) return;
-    const progress = Math.min(1, Math.max(0, (this.clock.absoluteBeat - t.startBeat) / t.lengthBeats));
-    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#05070d', 1 - progress);
-    r.text(t.id.replace(/_/g, ' '), 0.5, 0.5, '#e8ecf8', 20, 'center', 1 - progress);
+    const raw = (this.clock.visualBeat - t.startBeat) / t.lengthBeats;
+    const progress = Math.min(1, Math.max(0, raw));
+    const colour = MODE_COLOURS[t.to] ?? '#6de3ff';
+
+    // A band sweeping off the screen, tinted with the mode being entered.
+    const swept = easeOutCubic(progress);
+    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#05070d', (1 - progress) * 0.85);
+    r.fillRect({ x: swept, y: 0, w: Math.max(0, 1 - swept), h: 1 }, colour, (1 - progress) * 0.35);
+    r.line(swept, 0, swept, 1, colour, 4, (1 - progress) * 0.9);
+
+    // Name the destination, drifting with the wipe.
+    const fade = 1 - easeInOut(progress);
+    r.text(t.to, 0.5, 0.47 - 0.03 * progress, '#e8ecf8', 30, 'center', fade);
+    r.text(t.id.replace(/_/g, ' ').toLowerCase(), 0.5, 0.54, colour, 13, 'center', fade * 0.8);
+    // One ring on arrival, so the transition lands on a beat rather than easing out of existence.
+    if (progress < 0.5) r.strokeCircle(0.5, 0.5, 0.1 + progress * 0.5, colour, 3, pulse(progress * 2) * 0.6);
   }
 
   private instanceFor(mode: GameMode): GameplayMode {

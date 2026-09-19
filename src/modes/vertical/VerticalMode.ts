@@ -57,6 +57,11 @@ export class VerticalMode extends NoteMode {
     return { x: this.laneCentre(this.laneOf(target, beat)), y: HIT_LINE_Y - 0.06 };
   }
 
+  protected isOffscreen(target: NoteTarget, beat: number): boolean {
+    // The whole note, tail included, has to be past the bottom edge.
+    return this.noteY(target.beat + target.holdBeats, beat) > 1.08;
+  }
+
   private laneCentre(lane: number): number {
     return (clamp(lane, 1, LANE_COUNT) - 0.5) / LANE_COUNT;
   }
@@ -96,14 +101,34 @@ export class VerticalMode extends NoteMode {
     const headLane = target.path?.[0].lane ?? target.lane ?? 1;
     const colour = LANE_COLOURS[clamp(headLane, 1, LANE_COUNT) - 1];
 
-    if (target.state === 'HIT' || target.state === 'MISSED' || target.state === 'BROKEN') {
-      // Brief resolution flash at the hit line rather than a note still falling.
+    if (target.state === 'EXPIRED') return;
+
+    if (target.state === 'HIT') {
+      // A played note is consumed: it bursts at the line instead of falling on.
       const age = beat - (target.hitBeat ?? target.beat);
       if (age > 0.5) return;
       const alpha = 1 - age / 0.5;
-      const flash = target.state === 'HIT' ? colour : '#ff5470';
       const cx = this.laneCentre(this.laneOf(target, beat));
-      r.strokeCircle(cx, HIT_LINE_Y, 0.03 + easeOutCubic(age / 0.5) * 0.07, flash, 3, alpha);
+      r.strokeCircle(cx, HIT_LINE_Y, 0.03 + easeOutCubic(age / 0.5) * 0.07, colour, 3, alpha);
+      return;
+    }
+
+    if (target.state === 'MISSED' || target.state === 'BROKEN') {
+      // Scored, inert, and still falling. Drawn hollow and red so it cannot be
+      // confused with something still playable.
+      const cx = this.laneCentre(this.laneOf(target, beat));
+      const y = this.noteY(target.beat, beat);
+      const body = {
+        x: cx - laneWidth / 2 + 0.012, y: y - NOTE_HEIGHT / 2,
+        w: laneWidth - 0.024, h: NOTE_HEIGHT,
+      };
+      const fade = clamp(1 - (beat - (target.hitBeat ?? target.beat)) / 2.5, 0.25, 1);
+      r.strokeRect(body, '#ff5470', 2, 0.7 * fade);
+      r.fillRect(body, '#ff5470', 0.12 * fade);
+      if (target.holdBeats > 0) {
+        const tailTop = this.noteY(target.beat + target.holdBeats, beat);
+        r.strokeRect({ x: body.x, y: tailTop, w: body.w, h: y - tailTop }, '#ff5470', 1, 0.3 * fade);
+      }
       return;
     }
 

@@ -21,6 +21,7 @@ import { BaseMechanic, type MechanicSpawnContext, type MechanicPhase } from '../
 import type { Rect, Shape } from '../../core/geometry';
 import { clamp, makeRng } from '../../core/geometry';
 import { easeIn } from '../../feel/Easing';
+import { slowed } from './arenaTiming';
 import type { Renderer } from '../../core/Renderer';
 
 const SEGMENTS = 22;
@@ -38,7 +39,7 @@ export class WaveSweepMechanic extends BaseMechanic {
   private readonly gapWidth: number;
 
   constructor(spawn: MechanicSpawnContext) {
-    super(spawn);
+    super(slowed(spawn));
     const axis = String(this.params.axis ?? 'HORIZONTAL').toUpperCase();
     this.vertical = axis === 'VERTICAL';
     this.diagonal = axis === 'DIAGONAL';
@@ -47,7 +48,7 @@ export class WaveSweepMechanic extends BaseMechanic {
     this.amplitude = clamp(numberOr(this.params.amplitude, 0), 0, 0.25);
     // Openings stay wide enough to walk through and spread out so the nearest
     // one is always within a beat of travel.
-    this.gapWidth = clamp(numberOr(this.params.gapWidth, 0.2), 0.12, 0.45);
+    this.gapWidth = clamp(numberOr(this.params.gapWidth, 0.2) * this.tier.gapScale, 0.12, 0.5);
 
     const count = clamp(Math.round(numberOr(this.params.gapCount, 1)), 1, 3);
     const rng = makeRng(this.seed);

@@ -999,6 +999,512 @@
       "notes": "Spiral, fan, ring with a gap, laser, then a collapsing ring on the last downbeat."
     },
     {
+      "id": "AP14",
+      "name": "Outward Then Inward",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": -90
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": -90
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A04"
+        ]
+      },
+      "notes": "Ring out, a full bar of quiet, ring back in through the same gap. The pause is the teaching: it separates the two directions so they can be told apart."
+    },
+    {
+      "id": "AP15",
+      "name": "Out Out In",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": -90
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": 30
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": 150
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A04"
+        ]
+      },
+      "notes": "Two outward rings set an expectation; the third reverses it. The gap moves every bar so the answer is never the same spot twice."
+    },
+    {
+      "id": "AP16",
+      "name": "In Rotate Out",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": -90
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A07",
+          "params": {
+            "arms": 2,
+            "rotationPerBeatDeg": 45,
+            "armArcDeg": 40
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": 90
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A04",
+          "A07"
+        ]
+      },
+      "notes": "Inward ring, a rotating fan to move the player off their spot, then an outward ring through the opposite gap."
+    },
+    {
+      "id": "AP17",
+      "name": "Alternating Rings",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": -90,
+            "count": 16
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": 0,
+            "count": 16
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": 90,
+            "count": 16
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": 180,
+            "count": 16
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A04"
+        ]
+      },
+      "notes": "One ring per bar, alternating direction, with the safe arc walking a quarter turn each time."
+    },
+    {
+      "id": "AP18",
+      "name": "Spiral Inward",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A08",
+          "params": {
+            "expand": false,
+            "direction": "CCW",
+            "stepDeg": 24,
+            "subdivision": 0.25
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 4,
+        "requiresMechanics": [
+          "A08"
+        ]
+      },
+      "notes": "A spiral converging on the centre. Reads the opposite way round to AP08: the safe space closes rather than opens, so the player has to keep moving outward."
+    },
+    {
+      "id": "AP19",
+      "name": "Delayed Inward Waves",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": -90,
+            "gapCount": 2,
+            "count": 16
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": -45,
+            "gapCount": 2,
+            "count": 16
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A10",
+          "params": {
+            "mode": "COLLAPSE",
+            "gapAngleDeg": 0
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A04",
+          "A10"
+        ]
+      },
+      "notes": "Two inward waves a bar and a half apart, then a collapsing ring on the last downbeat. The offbeat second wave is what stops the phrase becoming a metronome."
+    },
+    {
+      "id": "AP20",
+      "name": "Converging Climax",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 5,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 5,
+        "inputComplexity": 1,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "gapAngleDeg": -90,
+            "count": 20
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": 90,
+            "count": 20
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A07",
+          "params": {
+            "arms": 3,
+            "rotationPerBeatDeg": 60
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "EDGE",
+            "gapAngleDeg": -30,
+            "count": 16
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A10",
+          "params": {
+            "mode": "COLLAPSE",
+            "gapAngleDeg": 150
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 3,
+        "requiresMechanics": [
+          "A04",
+          "A07",
+          "A10"
+        ]
+      },
+      "notes": "Outward, inward, a rotating fan overlapping a second inward wave, then a collapsing ring. Overlapping directions, but every beat still has one readable route."
+    },
+    {
       "id": "RP01",
       "name": "Basic Jump",
       "mode": "RUNNER",
@@ -1689,21 +2195,30 @@
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
         },
         {
           "at": {
@@ -1717,19 +2232,15 @@
             "bar": 3,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
         },
         {
           "at": {
             "bar": 4,
             "beat": 1
-          },
-          "mechanicId": "R01"
-        },
-        {
-          "at": {
-            "bar": 4,
-            "beat": 2
           },
           "mechanicId": "R01"
         },
@@ -1749,7 +2260,7 @@
           "R01"
         ]
       },
-      "notes": "Ground jumps, flip, ceiling jumps, flip back, rapid chain out."
+      "notes": "Flip, three jumps along the ceiling, flip again, and land back on the floor for the closing pair. Obstacles are tagged to the surface the player is actually on."
     },
     {
       "id": "RP12",
@@ -1858,6 +2369,254 @@
         ]
       },
       "notes": "Everything at once at eighth-note density. The pattern the whole mode builds toward."
+    },
+    {
+      "id": "RP13",
+      "name": "Ceiling Chain",
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "BREAKDOWN",
+          "BUILD"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R09"
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R03",
+          "params": {
+            "surface": "CEILING"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "R01",
+          "params": {
+            "surface": "CEILING"
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 3
+          },
+          "mechanicId": "R01"
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "R09",
+          "R01",
+          "R03"
+        ]
+      },
+      "notes": "The full inversion sentence: flip up, jump-slide-jump-jump along the ceiling, gravity restores itself and the phrase resolves with two floor jumps."
+    },
+    {
+      "id": "RP14",
+      "name": "Mixed Chain",
+      "mode": "RUNNER",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 3,
+        "inputComplexity": 1,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R08"
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "R03"
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "R02"
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 3
+          },
+          "mechanicId": "R03"
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "R01",
+          "R08",
+          "R03",
+          "R02"
+        ]
+      },
+      "notes": "Every obstacle type in one phrase, one answer per half bar: jump, pad, jump, slide, gap, jump, jump, slide. Each landing sets up the next input."
+    },
+    {
+      "id": "RP15",
+      "name": "Recovery",
+      "mode": "RUNNER",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 1,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 1,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 2,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "R01"
+        ]
+      },
+      "notes": "Two jumps in four bars. Deliberately almost empty -- somewhere to put the player down after a climax so the next one lands."
     },
     {
       "id": "VP01",

@@ -42,6 +42,7 @@ import { PLAYER_WIDTH, SLIDING_HEIGHT, STANDING_HEIGHT } from '../src/modes/runn
 import { TUNING } from '../src/tuning';
 import { DATA } from '../src/config';
 import { clamp, lerp } from '../src/core/geometry';
+import { readSurface, surfaceForGravity, type TrackSurface } from '../src/mechanics/runner/surface';
 
 const LIBRARY_DIR = resolve(process.cwd(), 'beatbound_library_v1');
 (globalThis as unknown as { fetch: unknown }).fetch = async (url: string) => ({
@@ -69,6 +70,8 @@ interface Obstacle {
   half: number;
   /** For JUMP: minimum height the body must reach. */
   clearHeight: number;
+  /** Which running surface it belongs to. */
+  surface: TrackSurface;
 }
 
 function numberOr(value: unknown, fallback: number): number {
@@ -78,6 +81,7 @@ function numberOr(value: unknown, fallback: number): number {
 /** Mirror of each mechanic's constructor maths. */
 function describe(mechanicId: string, params: Record<string, unknown>, intensity: number, beat: number): Obstacle | null {
   const halfOf = (hazardWidth: number) => (hazardWidth / 2 + PROBE_RADIUS) / UNITS_PER_BEAT;
+  const surface = readSurface(params.surface);
 
   switch (mechanicId) {
     case 'R01': {
@@ -86,7 +90,7 @@ function describe(mechanicId: string, params: Record<string, unknown>, intensity
       );
       // Body centre must clear the spike tip by the probe radius.
       const clearHeight = height - (STANDING_HEIGHT / 2 - PROBE_RADIUS);
-      return { mechanicId, beat, requirement: 'JUMP', half: halfOf(SPIKE_WIDTH), clearHeight: Math.max(0.001, clearHeight) };
+      return { mechanicId, beat, requirement: 'JUMP', half: halfOf(SPIKE_WIDTH), clearHeight: Math.max(0.001, clearHeight), surface };
     }
     case 'R03': {
       const clearance = clamp(
@@ -94,16 +98,16 @@ function describe(mechanicId: string, params: Record<string, unknown>, intensity
       );
       // Sliding must physically fit; if it does not, no input clears the wall.
       const slidingTop = SLIDING_HEIGHT / 2 + PROBE_RADIUS;
-      if (slidingTop > clearance) return { mechanicId, beat, requirement: 'SLIDE', half: halfOf(WALL_WIDTH), clearHeight: Infinity };
-      return { mechanicId, beat, requirement: 'SLIDE', half: halfOf(WALL_WIDTH), clearHeight: 0 };
+      if (slidingTop > clearance) return { mechanicId, beat, requirement: 'SLIDE', half: halfOf(WALL_WIDTH), clearHeight: Infinity, surface };
+      return { mechanicId, beat, requirement: 'SLIDE', half: halfOf(WALL_WIDTH), clearHeight: 0, surface };
     }
     case 'R02': {
       const width = clamp(GAP_BASE_WIDTH * numberOr(params.width, 1) * lerp(1, 1.25, intensity), 0.06, 0.22);
-      return { mechanicId, beat, requirement: 'AIRBORNE', half: halfOf(width), clearHeight: 0.02 };
+      return { mechanicId, beat, requirement: 'AIRBORNE', half: halfOf(width), clearHeight: 0.02, surface };
     }
     case 'R08':
     case 'R09':
-      return { mechanicId, beat, requirement: 'FREE', half: 0, clearHeight: 0 };
+      return { mechanicId, beat, requirement: 'FREE', half: 0, clearHeight: 0, surface };
     default:
       return null;
   }
@@ -212,8 +216,10 @@ function analyse(patternId: string, obstacles: Obstacle[], intensity: number): F
   return findings;
 }
 
+let loader: LevelLoader;
+
 async function main(): Promise<void> {
-  const loader = new LevelLoader();
+  loader = new LevelLoader();
   await loader.loadLibraries(DATA.patterns, DATA.mechanics);
   const patterns = [...loader.patternLibrary.values()].filter((p) => p.mode === 'RUNNER');
   const beatsPerBar = 4;
@@ -240,11 +246,24 @@ async function main(): Promise<void> {
     }
     obstacles.sort((a, b) => a.beat - b.beat);
 
+    // Gravity zones decide which surface is live; an obstacle on the other one
+    // is scenery and must not be counted against the player.
+    const gravitySpans: Array<[number, number]> = [];
+    const flipDefinition = loader.mechanics.mechanics.find((m) => m.id === 'R09');
+    const flipDuration = flipDefinition?.timing.durationBeats ?? 4;
+    for (const o of obstacles) {
+      if (o.mechanicId === 'R09') gravitySpans.push([o.beat, o.beat + flipDuration]);
+    }
+    const surfaceAt = (beat: number): TrackSurface => surfaceForGravity(
+      gravitySpans.some(([a, b]) => beat >= a && beat < b) ? -1 : 1,
+    );
+
     const rows: string[] = [];
     for (const intensity of INTENSITIES) {
       const described = obstacles
         .map((o) => describe(o.mechanicId, o.params, intensity, o.beat))
-        .filter((o): o is Obstacle => o !== null);
+        .filter((o): o is Obstacle => o !== null)
+        .filter((o) => o.requirement === 'FREE' || o.surface === surfaceAt(o.beat));
       for (const f of analyse(pattern.id, described, intensity)) {
         const fatal = f.slack < 0;
         if (fatal) impossible += 1; else tight += 1;

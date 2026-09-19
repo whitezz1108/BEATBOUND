@@ -44,6 +44,44 @@ export function presetScale(): PresetScale {
 }
 
 export const TUNING = {
+  /**
+   * One health pool for the whole song, shared by all four modes.
+   *
+   * Damage is looked up by source rather than passed in at the call site, so
+   * rebalancing "how much does a projectile hurt" is one edit here and not a
+   * hunt through four modes.
+   */
+  health: {
+    max: 100,
+    /**
+     * Collision damage grants this many seconds of immunity. Without it a
+     * hazard the player is standing inside drains the whole bar in a few
+     * frames. Missed rhythm notes are discrete events and deliberately bypass
+     * it -- three missed notes should cost three notes' worth of health.
+     */
+    invulnerableSeconds: 0.8,
+    damage: {
+      /** A missed rhythm note in VERTICAL or RADIAL. */
+      MISS: 8,
+      /** Touching a telegraphed floor, chain, laser or sweep. */
+      COLLISION: 10,
+      /** Being hit by something that was fired at you. */
+      PROJECTILE: 12,
+      /** A RUNNER obstacle, or falling out of the world. */
+      OBSTACLE: 15,
+    },
+    /** Below this fraction the UI starts warning. */
+    lowFraction: 0.3,
+  },
+
+  /** How long a gameplay-mode change takes, and how much it calms down first. */
+  transition: {
+    /** Beats of reduced hazard density before a mode change. */
+    breatherBeats: 6,
+    /** Beats the visual scene transition runs for. */
+    sceneBeats: 2,
+  },
+
   camera: {
     /** Zoom added on an ordinary beat. Deliberately almost subliminal. */
     beatPulse: 0.010,
@@ -71,7 +109,19 @@ export const TUNING = {
 
   arena: {
     playerSpeed: 0.62,
-    playerRadius: 0.032,
+    /**
+     * Collision radius. Smaller than the drawn avatar on purpose: a dodge that
+     * looks like it grazed should read as a graze, not a hit.
+     */
+    playerRadius: 0.021,
+    /** Drawn radius. Collision is ~80% of this. */
+    playerVisualRadius: 0.026,
+    /**
+     * Global multiplier on how long arena hazards take to travel. Above 1 means
+     * slower. Difficulty is meant to come from pattern design -- layering, safe
+     * gaps, timing -- rather than from projectiles the player cannot read.
+     */
+    hazardTravelScale: 1.55,
     /** Acceleration/deceleration smoothing, in seconds to reach full speed. */
     playerAccelSeconds: 0.07,
     projectileSpeed: 1.0,
@@ -82,6 +132,25 @@ export const TUNING = {
     perfectDodgeMargin: 0.028,
     /** Cooldown between perfect-dodge awards, in beats. */
     perfectDodgeCooldownBeats: 0.5,
+  },
+
+  /**
+   * ARENA difficulty tiers, chosen from a section's `difficulty` (1-5).
+   *
+   * Difficulty is expressed as *readability budget*, not velocity: an INTENSE
+   * section still telegraphs, still leaves a safe gap, and still travels slowly
+   * enough to read. What changes is how much margin there is.
+   *
+   *   travelScale     multiplies hazard travel time. Higher = slower.
+   *   telegraphScale  multiplies warning length.
+   *   gapScale        multiplies the size of safe gaps and arcs.
+   *   densityScale    reserved for pattern-level density decisions.
+   */
+  arenaTiers: {
+    EASY: { travelScale: 1.35, telegraphScale: 1.5, gapScale: 1.35, densityScale: 0.7 },
+    MEDIUM: { travelScale: 1.18, telegraphScale: 1.25, gapScale: 1.18, densityScale: 0.85 },
+    HARD: { travelScale: 1.0, telegraphScale: 1.05, gapScale: 1.0, densityScale: 1.0 },
+    INTENSE: { travelScale: 0.9, telegraphScale: 0.9, gapScale: 0.9, densityScale: 1.15 },
   },
 
   runner: {

@@ -39,7 +39,8 @@ export class LabController {
   async launch(): Promise<void> {
     // Pattern lengths must be available before the level is built.
     await this.game.prepareLibraries();
-    await this.game.loadDefinition(this.buildLevel(), { loop: true });
+    const level = this.buildLevel();
+    await this.game.loadDefinition(level, { loop: true });
     // Labs skip most of the count-in: the point is to be testing within a bar.
     await this.game.start({ countInBeats: 4, invincible: true });
     this.detach = this.attachKeys();

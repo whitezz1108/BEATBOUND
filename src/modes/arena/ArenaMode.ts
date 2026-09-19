@@ -50,17 +50,25 @@ export class ArenaMode implements GameplayMode {
     this.mechanics = [];
   }
 
+  clearHazards(): void {
+    this.mechanics = [];
+  }
+
   accept(info: SpawnedMechanicInfo): void {
     this.mechanics.push(info.mechanic);
     this.lastPatternId = info.patternId;
   }
 
   update(u: MechanicUpdate): void {
-    this.player.update(u.deltaSeconds, this.ctx.input.axis());
+    // Death disables input but leaves the scene standing so the player can see
+    // what killed them.
+    if (this.ctx.status.outcome === 'PLAYING') {
+      this.player.update(u.deltaSeconds, this.ctx.input.axis());
+    }
 
     for (const m of this.mechanics) m.update(u);
 
-    this.resolveCollisions(u.beat);
+    if (this.ctx.status.outcome === 'PLAYING') this.resolveCollisions(u);
 
     // Drop finished mechanics. Cheap because the list stays short.
     if (this.mechanics.some((m) => m.isFinished)) {
@@ -68,27 +76,28 @@ export class ArenaMode implements GameplayMode {
     }
   }
 
-  private resolveCollisions(beat: number): void {
+  private resolveCollisions(u: MechanicUpdate): void {
+    const beat = u.beat;
     const body = this.player.circle;
     const margin = TUNING.arena.perfectDodgeMargin;
     const grazeBody = { ...body, r: body.r + margin };
 
-    let hit = false;
+    let hitBy: RuntimeMechanic | null = null;
     let graze = false;
     for (const m of this.mechanics) {
       for (const shape of m.hazards()) {
         if (circleIntersectsShape(body, shape)) {
-          hit = true;
+          hitBy = m;
           break;
         }
         if (!graze && circleIntersectsShape(grazeBody, shape)) graze = true;
       }
-      if (hit) break;
+      if (hitBy) break;
     }
 
-    if (hit) {
+    if (hitBy) {
       this.grazeWasClean = false;
-      if (this.ctx.status.registerHit(beat)) {
+      if (this.ctx.status.damage(hitBy.damageSource, u.songTime)) {
         this.lastHitBeat = beat;
         this.ctx.feel.playerHit(body.x, body.y);
       }
@@ -113,7 +122,7 @@ export class ArenaMode implements GameplayMode {
     this.renderField(r, beat);
     r.withFieldClip(() => {
       for (const m of this.mechanics) m.render(r);
-      this.player.render(r, this.ctx.status.isInvulnerable(beat), beat);
+      this.player.render(r, this.ctx.status.isInvulnerable(this.ctx.clock.songTime), beat);
       this.renderHitFlash(r, beat);
       this.renderPerfectLabel(r, beat);
     });

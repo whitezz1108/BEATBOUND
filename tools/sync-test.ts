@@ -340,7 +340,11 @@ async function checkEveryLevel(): Promise<void> {
     const activeBars = new Set(spawns.map((s) => Math.floor(s.activationBeat / beatsPerBar) + 1));
     const emptyBars: number[] = [];
     for (const section of level.sections) {
-      for (let bar = section.startBar; bar < section.endBar; bar++) {
+      // Bars the mode-change breather deliberately emptied are not dead air.
+      const breatherBar = section.breatherFromBeat !== null
+        ? Math.floor(section.breatherFromBeat / beatsPerBar) + 1
+        : Infinity;
+      for (let bar = section.startBar; bar < Math.min(section.endBar, breatherBar); bar++) {
         if (!activeBars.has(bar)) emptyBars.push(bar);
       }
     }

@@ -30,6 +30,13 @@ export interface GameplayMode {
   deactivate(atBeat: number): void;
   /** Receive a mechanic created by PatternScheduler. */
   accept(info: SpawnedMechanicInfo): void;
+  /**
+   * Drop every live hazard but keep the mode standing.
+   *
+   * Used on death, so the scene the player is looking at stops being lethal
+   * without the mode being torn down and rebuilt underneath them.
+   */
+  clearHazards(): void;
   update(u: MechanicUpdate): void;
   render(r: Renderer): void;
   readonly activeMechanicCount: number;

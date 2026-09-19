@@ -36,8 +36,10 @@ const LIBRARY_DIR = resolve(process.cwd(), 'beatbound_library_v1');
   json: async () => JSON.parse(readFileSync(resolve(LIBRARY_DIR, url.replace(/^\//, '')), 'utf8')),
 });
 
-/** Must match ArenaPlayer. */
-const PLAYER_RADIUS = 0.032;
+import { TUNING } from '../src/tuning';
+
+/** Read from the same tuning ArenaPlayer uses, so it cannot drift. */
+const PLAYER_RADIUS = TUNING.arena.playerRadius;
 const INVULNERABLE_BEATS = 1;
 /** Standing positions sampled per axis. */
 const GRID = 41;

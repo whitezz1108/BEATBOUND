@@ -59,6 +59,8 @@ export abstract class NoteMode implements GameplayMode {
   protected abstract renderNote(r: Renderer, target: NoteTarget, beat: number): void;
   /** Where a target's feedback should appear. */
   protected abstract judgementAnchor(target: NoteTarget, beat: number): { x: number; y: number };
+  /** Has this note travelled out of the visible play area? */
+  protected abstract isOffscreen(target: NoteTarget, beat: number): boolean;
 
   get perfectWindow(): number {
     return this.mode === 'RADIAL' ? TUNING.radial.perfectWindowBeats : TUNING.vertical.perfectWindowBeats;
@@ -78,6 +80,10 @@ export abstract class NoteMode implements GameplayMode {
     this.mechanics = [];
   }
 
+  clearHazards(): void {
+    this.mechanics = [];
+  }
+
   accept(info: SpawnedMechanicInfo): void {
     this.mechanics.push(info.mechanic);
     this.lastPatternId = info.patternId;
@@ -85,8 +91,17 @@ export abstract class NoteMode implements GameplayMode {
 
   update(u: MechanicUpdate): void {
     for (const m of this.mechanics) m.update(u);
+    const alive = this.ctx.status.outcome === 'PLAYING';
     for (const target of this.allTargets()) {
-      if (target.state === 'PENDING' || target.state === 'HOLDING') this.judge(target, u);
+      if (alive && (target.state === 'PENDING' || target.state === 'HOLDING')) {
+        this.judge(target, u);
+      }
+      // A missed note keeps travelling. It is scored and inert, but visible
+      // until it leaves the board -- then, and only then, it expires.
+      if ((target.state === 'MISSED' || target.state === 'BROKEN')
+          && this.isOffscreen(target, u.beat)) {
+        target.state = 'EXPIRED';
+      }
     }
     if (this.mechanics.some((m) => m.isFinished)) {
       this.mechanics = this.mechanics.filter((m) => !m.isFinished);
@@ -173,7 +188,9 @@ export abstract class NoteMode implements GameplayMode {
   }
 
   private registerMiss(target: NoteTarget, beat: number): void {
-    this.ctx.status.registerMiss(beat);
+    // Missed notes bypass collision invulnerability on purpose: three missed
+    // notes should cost three notes' worth of health, not one.
+    this.ctx.status.damage('MISS', this.ctx.clock.songTime);
     this.combo = 0;
     this.onJudged(target, 'MISS', beat);
   }

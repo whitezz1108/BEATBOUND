@@ -14,7 +14,9 @@ import type { BeatClock } from './BeatClock';
 import type { Shape } from './geometry';
 import type { Renderer } from './Renderer';
 import type { EventRole, MechanicDefinition, ParamBag } from './types';
+import type { DamageSource } from './HealthManager';
 import type { FeelSink } from '../feel/FeelSink';
+import type { ArenaTier } from '../mechanics/arena/arenaTiming';
 
 export type MechanicPhase = 'SCHEDULED' | 'TELEGRAPH' | 'ACTIVE' | 'RECOVERY' | 'FINISHED';
 
@@ -42,11 +44,15 @@ export interface MechanicSpawnContext {
   clock: BeatClock;
   /** Where a mechanic asks for camera, particle and audio response. */
   feel: FeelSink;
+  /** Readability budget from the section's difficulty. See arenaTiming.ts. */
+  tier: ArenaTier;
 }
 
 export interface MechanicUpdate {
   /** Current absolute beat from BeatClock. */
   beat: number;
+  /** Seconds into the song. Used for anything measured in real time. */
+  songTime: number;
   /** Real seconds since last frame (for interpolation only, never for rhythm). */
   deltaSeconds: number;
   secondsPerBeat: number;
@@ -55,6 +61,8 @@ export interface MechanicUpdate {
 export interface RuntimeMechanic {
   readonly definitionId: string;
   readonly role: EventRole;
+  /** What this costs when it connects. Modes read it instead of guessing. */
+  readonly damageSource: DamageSource;
   readonly phase: MechanicPhase;
   readonly isFinished: boolean;
   update(u: MechanicUpdate): void;
@@ -67,12 +75,15 @@ export interface RuntimeMechanic {
 export abstract class BaseMechanic implements RuntimeMechanic {
   readonly definitionId: string;
   readonly role: EventRole;
+  /** Overridden by anything fired at the player or run into at speed. */
+  readonly damageSource: DamageSource = 'COLLISION';
   protected readonly params: ParamBag;
   protected readonly timing: ResolvedTiming;
   protected readonly activationBeat: number;
   protected readonly intensity: number;
   protected readonly seed: number;
   protected readonly feel: FeelSink;
+  protected readonly tier: ArenaTier;
 
   private _phase: MechanicPhase = 'SCHEDULED';
 
@@ -85,6 +96,7 @@ export abstract class BaseMechanic implements RuntimeMechanic {
     this.intensity = spawn.intensity;
     this.seed = spawn.seed;
     this.feel = spawn.feel;
+    this.tier = spawn.tier;
   }
 
   get telegraphStartBeat(): number { return this.activationBeat - this.timing.telegraphBeats; }

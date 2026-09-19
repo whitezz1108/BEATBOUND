@@ -22,6 +22,7 @@ import { easeIn } from '../../feel/Easing';
 import type { Renderer } from '../../core/Renderer';
 import { TUNING } from '../../tuning';
 import { ARENA_CENTRE, ARENA_OUTER_RADIUS, degToRad, polarToField } from './polar';
+import { travelScale } from './arenaTiming';
 
 interface Shot {
   angle: number;
@@ -33,6 +34,8 @@ const COLOUR = '#c08bff';
 const EDGE = '#8f5fff';
 
 export class SpiralMechanic extends BaseMechanic {
+  override readonly damageSource = 'PROJECTILE' as const;
+
   private readonly arms: number;
   private readonly stepAngle: number;
   private readonly subdivision: number;
@@ -56,7 +59,8 @@ export class SpiralMechanic extends BaseMechanic {
     this.startAngle = degToRad(numberOr(this.params.startAngleDeg, -90));
     this.bulletRadius = TUNING.arena.projectileRadius * 0.7;
     const speed = numberOr(this.params.speed, 0.9) * (1 + 0.2 * this.intensity);
-    this.travelBeats = Math.max(0.75, 2.2 / Math.max(0.3, speed));
+    // Shots outlive the ACTIVE window on purpose -- isFinished waits for them.
+    this.travelBeats = Math.max(0.75, (2.2 * travelScale(this.tier)) / Math.max(0.3, speed));
   }
 
   protected override onUpdate(u: { beat: number }): void {

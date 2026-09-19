@@ -19,7 +19,9 @@ const TRAIL_LENGTH = 10;
 export class ArenaPlayer {
   x = 0.5;
   y = 0.5;
+  /** Collision radius. Deliberately smaller than what is drawn. */
   readonly radius = TUNING.arena.playerRadius;
+  private readonly visualRadius = TUNING.arena.playerVisualRadius;
   speed = TUNING.arena.playerSpeed;
 
   private vx = 0;
@@ -79,8 +81,8 @@ export class ArenaPlayer {
     const stretch = 1 + 0.16 * moving;
     const squash = 1 - 0.10 * moving;
     const angle = Math.atan2(this.vy, this.vx);
-    const rx = this.radius * (moving > 0.05 ? stretch : 1);
-    const ry = this.radius * (moving > 0.05 ? squash : 1);
+    const rx = this.visualRadius * (moving > 0.05 ? stretch : 1);
+    const ry = this.visualRadius * (moving > 0.05 ? squash : 1);
 
     const c = r.ctx;
     c.save();
@@ -93,7 +95,9 @@ export class ArenaPlayer {
     c.fill();
     c.restore();
 
-    r.strokeCircle(this.x, this.y, this.radius + 0.008, '#6de3ff', 2, alpha * 0.9);
-    r.glow(this.x, this.y, this.radius * 3.4, '#6de3ff', 0.16 * alpha);
+    r.strokeCircle(this.x, this.y, this.visualRadius + 0.006, '#6de3ff', 2, alpha * 0.9);
+    // A faint ring at the true collision radius, so what kills you is visible.
+    r.strokeCircle(this.x, this.y, this.radius, '#ffffff', 1, alpha * 0.35);
+    r.glow(this.x, this.y, this.visualRadius * 3.4, '#6de3ff', 0.16 * alpha);
   }
 }

@@ -38,8 +38,8 @@ export class Hud {
       row('STATE', modes.activeMode?.statusLine ?? '—'),
       row('SCHEDULER', `queued:${clock.pendingCount} scheduled:${scheduler.scheduledEventCount} spawned:${scheduler.spawnedMechanicCount} waiting:${modes.pendingSpawnCount} dropped:${modes.droppedSpawnCount}`),
       row('SYNC', `last ${stats.lastLatencyMs.toFixed(1)}ms · mean ${stats.meanLatencyMs.toFixed(1)}ms · max ${stats.maxLatencyMs.toFixed(1)}ms`),
-      row('RUN', `${'♥'.repeat(status.hp)}${'·'.repeat(Math.max(0, status.maxHp - status.hp))}  hits:${status.hits}  ${status.outcome}${status.invincible ? '  [INVINCIBLE]' : ''}`),
-      row('NOTES', `${status.notesHit} hit · ${status.notesMissed} missed · ${status.missesUntilNextHeart} miss(es) to next heart`),
+      row('RUN', `HP ${Math.round(status.health.currentHealth)}/${status.health.maxHealth}  hits:${status.hits}  ${status.outcome}${status.invincible ? '  [INVINCIBLE]' : ''}`),
+      row('NOTES', `${status.notesHit} hit · ${status.notesMissed} missed`),
     ].join('');
   }
 }

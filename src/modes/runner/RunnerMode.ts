@@ -19,6 +19,7 @@ import type { Renderer } from '../../core/Renderer';
 import type { SpawnedMechanicInfo } from '../../core/PatternScheduler';
 import type { GameMode } from '../../core/types';
 import { CEILING_Y, GROUND_Y, PLAYER_X, UNITS_PER_BEAT } from '../../mechanics/runner/runnerGeometry';
+import { surfaceForGravity, surfaceOf } from '../../mechanics/runner/surface';
 import { TUNING } from '../../tuning';
 import type { GameplayMode, ModeContext } from '../GameplayMode';
 import { RunnerPlayer } from './RunnerPlayer';
@@ -47,6 +48,10 @@ export class RunnerMode implements GameplayMode {
     this.mechanics = [];
   }
 
+  clearHazards(): void {
+    this.mechanics = [];
+  }
+
   accept(info: SpawnedMechanicInfo): void {
     this.mechanics.push(info.mechanic);
     this.lastPatternId = info.patternId;
@@ -70,14 +75,15 @@ export class RunnerMode implements GameplayMode {
       this.gravityDirection = nextGravity;
     }
 
+    const alive = this.ctx.status.outcome === 'PLAYING';
     const hasFloor = !this.isOverGap();
     const step = this.player.update(
       u.deltaSeconds,
       u.secondsPerBeat,
       {
-        jumpPressed: this.ctx.input.wasPressed(...JUMP_KEYS),
-        jumpHeld: this.ctx.input.isDown(...JUMP_KEYS),
-        slide: this.ctx.input.isDown(...SLIDE_KEYS),
+        jumpPressed: alive && this.ctx.input.wasPressed(...JUMP_KEYS),
+        jumpHeld: alive && this.ctx.input.isDown(...JUMP_KEYS),
+        slide: alive && this.ctx.input.isDown(...SLIDE_KEYS),
       },
       this.gravityDirection,
       hasFloor,
@@ -103,7 +109,7 @@ export class RunnerMode implements GameplayMode {
     }
 
     this.applyBouncePads(u.secondsPerBeat);
-    this.resolveCollisions(u.beat);
+    if (alive) this.resolveCollisions(u);
 
     if (this.mechanics.some((m) => m.isFinished)) {
       this.mechanics = this.mechanics.filter((m) => !m.isFinished);
@@ -121,8 +127,9 @@ export class RunnerMode implements GameplayMode {
   }
 
   private isOverGap(): boolean {
+    const surface = surfaceForGravity(this.gravityDirection);
     for (const m of this.mechanics) {
-      if (!hasTerrain(m)) continue;
+      if (!hasTerrain(m) || surfaceOf(m) !== surface) continue;
       const gap = m.groundGap?.() ?? null;
       if (gap && PLAYER_X > gap.x0 && PLAYER_X < gap.x1) return true;
     }
@@ -148,10 +155,11 @@ export class RunnerMode implements GameplayMode {
     }
   }
 
-  private resolveCollisions(beat: number): void {
+  private resolveCollisions(u: MechanicUpdate): void {
+    const beat = u.beat;
     // Falling out of the world counts as a hit, same as touching a spike.
     if (this.player.hasFallenOut) {
-      if (this.ctx.status.registerHit(beat)) {
+      if (this.ctx.status.damage('OBSTACLE', u.songTime)) {
         this.lastHitBeat = beat;
         this.ctx.feel.playerHit(PLAYER_X, this.player.surfaceY);
         this.ctx.feel.sfx('runner_fail');
@@ -167,10 +175,13 @@ export class RunnerMode implements GameplayMode {
       y: body.y + body.h / 2,
       r: Math.min(body.w, body.h) / 2,
     };
+    const surface = surfaceForGravity(this.gravityDirection);
     for (const m of this.mechanics) {
+      // An obstacle on the surface the player is not attached to is scenery.
+      if (surfaceOf(m) !== surface) continue;
       for (const shape of m.hazards()) {
         if (!circleIntersectsShape(probe, shape)) continue;
-        if (this.ctx.status.registerHit(beat)) {
+        if (this.ctx.status.damage(m.damageSource, u.songTime)) {
           this.lastHitBeat = beat;
           this.ctx.feel.playerHit(probe.x, probe.y, -1, 0);
         }
@@ -189,7 +200,7 @@ export class RunnerMode implements GameplayMode {
       this.renderTrack(r, beat);
       for (const m of this.mechanics) m.render(r);
       this.renderSpeedStreaks(r, beat);
-      this.player.render(r, this.ctx.status.isInvulnerable(beat), beat);
+      this.player.render(r, this.ctx.status.isInvulnerable(this.ctx.clock.songTime), beat);
       const since = beat - this.lastHitBeat;
       if (since >= 0 && since <= 0.5) {
         r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#ff3355', 0.25 * (1 - since / 0.5));

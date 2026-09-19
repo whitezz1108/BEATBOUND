@@ -22,6 +22,8 @@ export const GAP_BASE_WIDTH = 0.13;
 const MAX_WIDTH = 0.22;
 
 export class GapMechanic extends ScrollingObstacle implements RunnerTerrain {
+  override readonly damageSource = 'OBSTACLE' as const;
+
   private readonly width: number;
 
   constructor(spawn: MechanicSpawnContext) {

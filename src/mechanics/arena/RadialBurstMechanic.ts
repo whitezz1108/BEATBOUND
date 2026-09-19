@@ -29,6 +29,7 @@ import { TUNING } from '../../tuning';
 import {
   ARENA_CENTRE, ARENA_OUTER_RADIUS, dangerArcs, degToRad, polarToField, spreadGaps,
 } from './polar';
+import { slowed } from './arenaTiming';
 
 interface Bullet {
   angle: number;
@@ -41,6 +42,8 @@ const COLOUR = '#ffd479';
 const EDGE_COLOUR = '#ff8a3d';
 
 export class RadialBurstMechanic extends BaseMechanic {
+  override readonly damageSource = 'PROJECTILE' as const;
+
   private readonly bullets: Bullet[] = [];
   private readonly fromCentre: boolean;
   private readonly bulletRadius: number;
@@ -49,19 +52,27 @@ export class RadialBurstMechanic extends BaseMechanic {
   private readonly gapArc: number;
 
   constructor(spawn: MechanicSpawnContext) {
-    super(spawn);
+    super(slowed(spawn));
     this.fromCentre = String(this.params.origin ?? 'CENTER').toUpperCase() !== 'EDGE';
     this.bulletRadius = TUNING.arena.projectileRadius * 0.85;
 
     const speed = numberOr(this.params.speed, 1) * (1 + 0.25 * this.intensity);
     this.travelBeats = Math.max(0.5, this.timing.durationBeats / Math.max(0.25, speed));
 
-    this.gapArc = degToRad(clamp(numberOr(this.params.gapArcDeg, 46), 18, 150));
+    this.gapArc = degToRad(clamp(numberOr(this.params.gapArcDeg, 46) * this.tier.gapScale, 18, 170));
     const first = degToRad(numberOr(this.params.gapAngleDeg, -90) + numberOr(this.params.rotationDeg, 0));
     this.gapCentres = spreadGaps(first, numberOr(this.params.gapCount, 1));
 
     // Lay bullets around the ring, dropping the ones that fall inside a gap.
-    const count = Math.max(6, Math.round(numberOr(this.params.count, 18)));
+    //
+    // The count has a floor, because a ring is only meaningful if its *only*
+    // way through is the declared safe arc. Too few bullets and the spacing at
+    // the rim exceeds the player's width, so the ring becomes a picket fence
+    // full of accidental holes and the safe arc stops mattering.
+    const minimumForCoverage = Math.ceil(
+      (Math.PI * 2 * ARENA_OUTER_RADIUS) / ((this.bulletRadius + TUNING.arena.playerRadius) * 2 * 0.92),
+    );
+    const count = Math.max(minimumForCoverage, Math.round(numberOr(this.params.count, 18)));
     const arcs = dangerArcs(this.gapCentres, this.gapArc);
     const step = (Math.PI * 2) / count;
     for (let i = 0; i < count; i++) {
@@ -117,22 +128,41 @@ export class RadialBurstMechanic extends BaseMechanic {
 
     if (this.phase === 'TELEGRAPH') {
       const t = this.telegraphProgress(beat);
-      // Spokes show exactly which angles will be covered; the gaps stay dark.
-      for (const b of this.bullets) {
-        const to = polarToField(b.angle, ARENA_OUTER_RADIUS * (0.25 + 0.5 * easeIn(t)));
-        r.line(ARENA_CENTRE.x, ARENA_CENTRE.y, to.x, to.y, EDGE_COLOUR, 1, 0.10 + 0.25 * t);
+      const grow = easeIn(t);
+
+      if (this.fromCentre) {
+        // Outward: spokes push out from a charging core, so the eye starts at
+        // the centre and is carried to where the ring will pass.
+        for (const b of this.bullets) {
+          const to = polarToField(b.angle, ARENA_OUTER_RADIUS * (0.25 + 0.5 * grow));
+          r.line(ARENA_CENTRE.x, ARENA_CENTRE.y, to.x, to.y, EDGE_COLOUR, 1, 0.10 + 0.25 * t);
+        }
+        const core = 0.012 + 0.03 * grow;
+        r.glow(ARENA_CENTRE.x, ARENA_CENTRE.y, core * 3, COLOUR, 0.25 + 0.5 * t);
+        r.fillCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, core, '#fff3d0', 0.6 + 0.4 * t);
+      } else {
+        // Inward: the threat starts at the rim, so the warning does too --
+        // muzzle marks on the perimeter and spokes aimed at the centre.
+        for (const b of this.bullets) {
+          const from = polarToField(b.angle, ARENA_OUTER_RADIUS * 0.94);
+          const to = polarToField(b.angle, ARENA_OUTER_RADIUS * (0.94 - 0.55 * grow));
+          r.line(from.x, from.y, to.x, to.y, EDGE_COLOUR, 1.5, 0.12 + 0.35 * t);
+          r.fillCircle(from.x, from.y, 0.008 + 0.012 * grow, COLOUR, 0.4 + 0.5 * t);
+        }
+        r.strokeCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, ARENA_OUTER_RADIUS * 0.94, EDGE_COLOUR, 2, 0.12 + 0.3 * t);
       }
-      // Safe arcs are drawn positively, so the player looks for the opening.
+
+      // Safe arcs are drawn positively either way, so the player hunts for the
+      // opening rather than reading a wall of danger. Inward attacks mark it at
+      // the rim, where the gap has to be entered.
+      const markerRadius = this.fromCentre ? 0.3 : ARENA_OUTER_RADIUS * 0.8;
       for (const centre of this.gapCentres) {
         r.strokeArc(
-          ARENA_CENTRE.x, ARENA_CENTRE.y, 0.3,
+          ARENA_CENTRE.x, ARENA_CENTRE.y, markerRadius,
           centre - this.gapArc / 2, centre + this.gapArc / 2,
           '#7dffb0', 3, 0.3 + 0.5 * t,
         );
       }
-      const core = 0.012 + 0.03 * easeIn(t);
-      r.glow(ARENA_CENTRE.x, ARENA_CENTRE.y, core * 3, COLOUR, 0.25 + 0.5 * t);
-      r.fillCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, core, '#fff3d0', 0.6 + 0.4 * t);
       return;
     }
 

@@ -170,6 +170,30 @@ warning is spatial. They ask the registry for `spawnLeadBeats` instead, so
 `PatternScheduler` creates them a bar early without knowing why, and
 `ModeManager` holds them until the RUNNER section actually starts.
 
+### Health, damage and death
+
+One `HealthManager` lives for a whole song and is shared by all four modes, so
+damage taken dodging in ARENA still matters when the song hands the player to
+RUNNER. Modes never subtract health — they name what happened and the manager
+decides what it costs.
+
+| Source | Cost | Notes |
+| --- | --- | --- |
+| `MISS` | 8 | A missed rhythm note. Bypasses invulnerability on purpose |
+| `COLLISION` | 10 | Floors, chains, lasers, sweeps |
+| `PROJECTILE` | 12 | Anything fired at you |
+| `OBSTACLE` | 15 | RUNNER obstacles, and falling out of the world |
+
+Collision damage grants 0.8 s of immunity, or a hazard you are standing inside
+drains the bar in a few frames. Missed notes deliberately skip that window —
+three missed notes should cost three notes' worth of health.
+
+At zero health the modes stop accepting input, the scheduler is cleared, live
+hazards are dropped, and **R** restarts the level in place (not a page reload —
+that would throw away the audio context too).
+
+All of it is in `TUNING.health`.
+
 ### Game feel
 
 Presentation lives in `src/feel/` behind one facade. Mechanics describe *what
@@ -193,6 +217,18 @@ running, so the picture freezes but scheduling, judging and the music never do.
 
 All tuning is centralised in `src/tuning.ts` — camera, arena, runner, vertical,
 radial and ambient values, plus the three polish presets.
+
+### Transitions
+
+A mode change is a context switch — different controls, different camera,
+different read — and it is the one place the game can be unfair without any
+single hazard being unfair. So the last `TUNING.transition.breatherBeats` of a
+section before a mode change simply do not spawn. The pattern is not rewritten;
+its tail is held back, which gives the player a clear runway and a countdown
+banner naming what is arriving. The scene then wipes in the incoming mode's
+colour.
+
+`npm run test:timing` knows about breathers and does not count them as dead air.
 
 ### Mechanic coverage
 

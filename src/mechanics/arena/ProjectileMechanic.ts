@@ -31,6 +31,8 @@ import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext, type Mecha
 import type { Shape } from '../../core/geometry';
 import { clamp, makeRng } from '../../core/geometry';
 import { scaleCount, scaleSpeed } from '../../core/Intensity';
+import { TUNING } from '../../tuning';
+import { slowed } from './arenaTiming';
 import type { Renderer } from '../../core/Renderer';
 
 type Side = 'LEFT' | 'RIGHT' | 'TOP' | 'BOTTOM';
@@ -51,18 +53,23 @@ const DEFAULT_RADIUS = 0.03;
 /**
  * Centre-to-centre spacing of a wall.
  *
- * The player is 0.064 across and a projectile 0.06, so anything under ~0.124
- * is a barrier they cannot slip through. 0.105 leaves no accidental holes.
+ * Derived rather than written down: the player fits between two projectiles
+ * exactly when the spacing exceeds both radii plus both of theirs, so shrinking
+ * the avatar must shrink this too. The 0.92 keeps a margin so a wall is a wall.
  */
-const WALL_SPACING = 0.105;
+const WALL_SPACING = (DEFAULT_RADIUS + TUNING.arena.playerRadius) * 2 * 0.92;
 
 export class ProjectileMechanic extends BaseMechanic {
+  override readonly damageSource = 'PROJECTILE' as const;
+
   private readonly projectiles: Projectile[];
   /** Beats required to cross the field, after intensity scaling. */
   private readonly crossBeats: number;
 
   constructor(spawn: MechanicSpawnContext) {
-    super(spawn);
+    // Slowing the flight without slowing the ACTIVE window would leave the
+    // projectile mid-arena and harmless.
+    super(slowed(spawn));
     const rng = makeRng(this.seed);
 
     const speed = scaleSpeed(numberOr(this.params.speed, 1), this.intensity);
@@ -106,6 +113,8 @@ export class ProjectileMechanic extends BaseMechanic {
    */
   private buildWall(rng: () => number, side: Side, radius: number): Projectile[] {
     const gaps = clamp(Math.round(numberOr(this.params.gaps, 2)), 1, 4);
+    // Easier tiers widen the openings rather than removing projectiles.
+    const gapScale = this.tier.gapScale;
     const gapCentres: number[] = [];
     for (let i = 0; i < gaps; i++) {
       gapCentres.push(clamp((i + 0.5) / gaps + (rng() - 0.5) * (0.6 / gaps), 0.12, 0.88));
@@ -115,7 +124,7 @@ export class ProjectileMechanic extends BaseMechanic {
     for (let lane = WALL_SPACING / 2; lane < 1; lane += WALL_SPACING) {
       // Drop the projectiles nearest each gap centre; the survivors on either
       // side are then far enough apart for the player to pass between them.
-      if (gapCentres.some((g) => Math.abs(lane - g) < WALL_SPACING * 0.85)) continue;
+      if (gapCentres.some((g) => Math.abs(lane - g) < WALL_SPACING * 0.85 * gapScale)) continue;
       out.push({ side, lane, radius, x: 0, y: 0 });
     }
     return out;

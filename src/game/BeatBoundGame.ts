@@ -36,7 +36,9 @@ import { registerRunnerMechanics } from '../mechanics/runner';
 import { registerVerticalMechanics } from '../mechanics/vertical';
 import { registerRadialMechanics } from '../mechanics/radial';
 import { COUNT_IN_BEATS, DATA, type DevOptions } from '../config';
+import { MODE_COLOURS } from '../core/ModeManager';
 import { Hud } from './Hud';
+import { HealthBar } from './HealthBar';
 
 export interface StartOptions extends Partial<DevOptions> {
   /** Labs loop forever and skip the long count-in. */
@@ -49,7 +51,8 @@ export class BeatBoundGame {
   private readonly input = new Input();
   private readonly registry = new MechanicRegistry();
   private readonly loader = new LevelLoader();
-  private readonly status = new RunStatus(3, 1);
+  private readonly status = new RunStatus();
+  private readonly healthBar = new HealthBar();
   private readonly renderer: Renderer;
 
   private clock!: BeatClock;
@@ -68,6 +71,9 @@ export class BeatBoundGame {
   private pauseReason: 'MANUAL' | 'STALL' = 'MANUAL';
   private hasTicked = false;
   private startBar = 1;
+  /** Set once when health hits zero, so the death sequence runs a single time. */
+  private deathHandled = false;
+  private lastDevOptions: StartOptions = {};
   private countInBeats = COUNT_IN_BEATS;
   /** Labs restart instead of ending, so a failure costs a beat not a session. */
   private loopOnEnd = false;
@@ -231,9 +237,12 @@ export class BeatBoundGame {
     this.countInBeats = dev.countInBeats ?? COUNT_IN_BEATS;
     this.status.reset();
     this.status.invincible = dev.invincible ?? false;
+    this.healthBar.reset();
     this.feel.reset();
     this.hasTicked = false;
     this.paused = false;
+    this.deathHandled = false;
+    this.lastDevOptions = dev;
 
     const startBeat = this.applyStartBar(dev.startBar ?? 1);
     this.songPlayer.start(
@@ -368,11 +377,14 @@ export class BeatBoundGame {
 
     const update = {
       beat: this.clock.absoluteBeat,
+      songTime: this.clock.songTime,
       deltaSeconds: this.clock.deltaSeconds,
       secondsPerBeat: this.clock.secondsPerBeat,
     };
     this.modes.update(update);
     this.input.endFrame();
+    this.healthBar.update(this.status, this.clock.deltaSeconds);
+    if (this.status.outcome === 'FAILED' && !this.deathHandled) this.onDeath();
     this.feel.update(this.clock.deltaSeconds, this.clock.visualBeat);
     this.feel.setEnergy(this.sectionEnergy());
 
@@ -391,8 +403,30 @@ export class BeatBoundGame {
     return Math.min(1, (difficulty - 1) / 4 * 0.6 + intensity * 0.4);
   }
 
+  /**
+   * Death. Input is already refused by the modes; this makes the world safe and
+   * stops anything new arriving, so the player can look at what killed them.
+   */
+  private onDeath(): void {
+    this.deathHandled = true;
+    this.clock.clearSchedule();
+    this.modes.clearHazards();
+    this.feel.impact('HEAVY', { colour: '#ff2547', sfx: 'runner_fail' });
+    this.feel.screen.vignette('#ff1133', 0.75);
+  }
+
+  /** Restart the current level from the top, keeping the same dev options. */
+  async restartLevel(): Promise<void> {
+    await this.restart(this.lastDevOptions);
+  }
+
+  get isFailed(): boolean {
+    return this.status.outcome === 'FAILED';
+  }
+
   private checkRunEnd(): void {
     const endBeat = (this.level.endBar - 1) * this.clock.beatsPerBar;
+    if (this.status.outcome === 'FAILED') return;
     if (this.clock.absoluteBeat < endBeat) return;
     if (this.loopOnEnd) {
       void this.restart({ invincible: this.status.invincible, countInBeats: this.countInBeats });
@@ -424,6 +458,29 @@ export class BeatBoundGame {
     renderer.resetCamera();
     this.feel.renderScreen(renderer, cssWidth, cssHeight);
     this.drawOverlays(renderer);
+    // The health bar sits above the overlays: it stays readable on the death
+    // screen, which is where the player most wants to see what happened.
+    this.healthBar.render(renderer, this.status, cssWidth, this.clock.visualBeat);
+  }
+
+  /**
+   * Countdown into a mode change.
+   *
+   * The scheduler has already stopped spawning by this point, so the arena is
+   * emptying; this says why, and what is arriving.
+   */
+  private drawBreather(r: Renderer): void {
+    const section = this.currentSection();
+    if (!section?.breatherFromBeat || !section.nextMode) return;
+    const beat = this.clock.visualBeat;
+    const sectionEnd = (section.endBar - 1) * this.clock.beatsPerBar;
+    if (beat < section.breatherFromBeat || beat > sectionEnd) return;
+
+    const remaining = sectionEnd - beat;
+    const colour = MODE_COLOURS[section.nextMode] ?? '#6de3ff';
+    const alpha = Math.min(1, (beat - section.breatherFromBeat) / 1.5);
+    r.text(`NEXT: ${section.nextMode}`, 0.5, 0.08, colour, 15, 'center', alpha * 0.85);
+    r.text(`${Math.ceil(remaining)}`, 0.5, 0.135, '#e8ecf8', 20, 'center', alpha * 0.7);
   }
 
   private drawOverlays(r: Renderer): void {
@@ -444,10 +501,15 @@ export class BeatBoundGame {
       if (this.startBar > 1) r.text(`starting at bar ${this.startBar}`, 0.5, 0.6, '#9aa4bd', 13);
       return;
     }
+    this.drawBreather(r);
+
     if (this.status.outcome === 'FAILED') {
-      r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#180509', 0.7);
-      r.text('FAILED', 0.5, 0.46, '#ff5470', 34);
-      r.text('press R to restart', 0.5, 0.54, '#9aa4bd', 14);
+      r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#180509', 0.72);
+      r.text('GAME OVER', 0.5, 0.43, '#ff5470', 34);
+      const cause = this.status.health.lastDamageEvent?.source ?? null;
+      if (cause) r.text(`finished by: ${cause.toLowerCase()}`, 0.5, 0.50, '#9aa4bd', 13);
+      r.text(`hits taken: ${this.status.hits}   notes missed: ${this.status.notesMissed}`, 0.5, 0.55, '#6b7691', 12);
+      r.text('press R to restart the level', 0.5, 0.62, '#e8ecf8', 14);
     } else if (this.status.outcome === 'COMPLETE') {
       r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#05120d', 0.7);
       r.text('LEVEL COMPLETE', 0.5, 0.46, '#7dffb0', 30);

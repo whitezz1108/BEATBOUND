@@ -9,8 +9,12 @@
 
 import { clamp, lerp } from './geometry';
 
-/** Absolute readability floor: no telegraph may ever be shorter than this. */
-export const MIN_TELEGRAPH_BEATS = 0.5;
+/**
+ * Absolute readability floor: no telegraph may ever be shorter than this.
+ * 0.6 beats is 0.3s at 120 BPM -- the lower bound on a warning a player can
+ * actually see, read and act on.
+ */
+export const MIN_TELEGRAPH_BEATS = 0.6;
 
 /**
  * Higher intensity shortens the warning, but never below the pattern's declared

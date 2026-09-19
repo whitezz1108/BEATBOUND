@@ -103,6 +103,11 @@ export class RadialMode extends NoteMode {
     return { x: CENTRE + v.x * RING_RADIUS, y: CENTRE + v.y * RING_RADIUS };
   }
 
+  protected isOffscreen(target: NoteTarget, beat: number): boolean {
+    // Missed prompts keep converging and expire once they reach the middle.
+    return this.radiusAt(target.beat, beat) <= 0.012;
+  }
+
   /** Distance from centre for a prompt due on `noteBeat`, at `beat`. */
   private radiusAt(noteBeat: number, beat: number): number {
     const beatsAway = noteBeat - beat;
@@ -159,15 +164,23 @@ export class RadialMode extends NoteMode {
     const colour = DIRECTION_COLOUR[direction];
     const diagonal = isDiagonal(direction);
 
-    if (target.state === 'HIT' || target.state === 'MISSED' || target.state === 'BROKEN') {
+    if (target.state === 'EXPIRED') return;
+
+    if (target.state === 'HIT') {
       const age = beat - (target.hitBeat ?? target.beat);
       if (age > 0.5) return;
-      const alpha = 1 - age / 0.5;
-      const flash = target.state === 'HIT' ? colour : '#ff5470';
       r.strokeCircle(
         CENTRE + v.x * RING_RADIUS, CENTRE + v.y * RING_RADIUS,
-        0.025 + easeOutCubic(age / 0.5) * 0.07, flash, 3, alpha,
+        0.025 + easeOutCubic(age / 0.5) * 0.07, colour, 3, 1 - age / 0.5,
       );
+      return;
+    }
+
+    if (target.state === 'MISSED' || target.state === 'BROKEN') {
+      // Carries on through the ring toward the centre, hollow and red.
+      const missedRadius = Math.max(0.012, this.radiusAt(target.beat, beat));
+      const fade = clamp(missedRadius / RING_RADIUS, 0.2, 1);
+      r.strokeCircle(CENTRE + v.x * missedRadius, CENTRE + v.y * missedRadius, 0.026, '#ff5470', 2, 0.75 * fade);
       return;
     }
 

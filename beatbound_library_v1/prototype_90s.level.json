@@ -104,9 +104,9 @@
       "difficulty": 3,
       "patterns": [
         {
-          "patternId": "AP04",
-          "repeat": 2,
-          "intensity": 0.75
+          "patternId": "AP17",
+          "repeat": 1,
+          "intensity": 0.7
         },
         {
           "patternId": "AP03",

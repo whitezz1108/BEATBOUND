@@ -1,79 +1,49 @@
 /**
- * Player health / run outcome, shared across modes.
+ * Outcome and scoring for one run.
  *
- * Invulnerability is measured in beats (not seconds) so the grace window scales
- * with the song instead of feeling different at every tempo.
+ * Health itself lives in HealthManager; this owns the *run*: whether it is
+ * still going, how many hits and notes it has seen, and the transition to
+ * FAILED or COMPLETE. Modes talk to this, never to the health pool directly,
+ * so "what does this cost" and "is the run over" stay in one place.
  */
+
+import { HealthManager, type DamageEvent, type DamageSource } from './HealthManager';
 
 export type RunOutcome = 'PLAYING' | 'FAILED' | 'COMPLETE';
 
 export class RunStatus {
-  hp: number;
+  readonly health = new HealthManager();
+  outcome: RunOutcome = 'PLAYING';
+  /** Collisions taken (not missed notes). */
   hits = 0;
   notesHit = 0;
   notesMissed = 0;
-  outcome: RunOutcome = 'PLAYING';
-  /** Dev flag: still counts and flashes hits, but never loses health. */
-  invincible = false;
-  private invulnerableUntilBeat = -Infinity;
 
-  constructor(
-    readonly maxHp = 3,
-    readonly invulnerableBeats = 1,
-    /**
-     * Missed rhythm notes are far cheaper than collisions.
-     *
-     * VERTICAL and RADIAL fire roughly one note per beat, so charging a heart
-     * per miss would fail an idle player in about two seconds. Spending a heart
-     * every Nth miss turns the same three hearts into a miss allowance -- with
-     * the default, a run survives 18 missed notes, i.e. ~80% accuracy on a
-     * practice level.
-     */
-    readonly missesPerHeart = 6,
-  ) {
-    this.hp = maxHp;
+  get invincible(): boolean {
+    return this.health.invincible;
   }
 
-  isInvulnerable(beat: number): boolean {
-    return beat < this.invulnerableUntilBeat;
+  set invincible(value: boolean) {
+    this.health.invincible = value;
   }
 
-  /** Returns true if the hit actually landed (i.e. not during i-frames). */
-  registerHit(beat: number): boolean {
-    if (this.outcome !== 'PLAYING' || this.isInvulnerable(beat)) return false;
-    this.hits += 1;
-    this.invulnerableUntilBeat = beat + this.invulnerableBeats;
-    if (this.invincible) return true; // counted and flashed, but survivable
-    this.hp -= 1;
-    if (this.hp <= 0) {
-      this.hp = 0;
-      this.outcome = 'FAILED';
-    }
-    return true;
+  isInvulnerable(songTime: number): boolean {
+    return this.health.isInvulnerable(songTime);
   }
 
   /**
-   * A rhythm note the player failed to hit. Always counted for accuracy; costs
-   * a heart only once every `missesPerHeart` misses. Note misses deliberately
-   * do not use the collision invulnerability window -- a run of missed notes
-   * should register as a run of missed notes.
+   * Something hurt the player. Returns the event when health changed, or null
+   * when invulnerability absorbed it -- callers use that to decide whether to
+   * fire feedback, so a hazard the player is standing in does not strobe.
    */
-  registerMiss(_beat: number): boolean {
-    if (this.outcome !== 'PLAYING') return false;
-    this.notesMissed += 1;
-    if (this.invincible) return true;
-    if (this.notesMissed % this.missesPerHeart !== 0) return false;
-    this.hp -= 1;
-    if (this.hp <= 0) {
-      this.hp = 0;
-      this.outcome = 'FAILED';
-    }
-    return true;
-  }
-
-  /** Misses remaining before the next heart is spent. */
-  get missesUntilNextHeart(): number {
-    return this.missesPerHeart - (this.notesMissed % this.missesPerHeart);
+  damage(source: DamageSource, songTime: number): DamageEvent | null {
+    if (this.outcome !== 'PLAYING') return null;
+    const event = this.health.takeDamage(source, songTime);
+    if (!event) return null;
+    if (source === 'MISS') this.notesMissed += 1;
+    else this.hits += 1;
+    if (this.health.isDead()) this.outcome = 'FAILED';
+    return event;
   }
 
   registerNoteHit(): void {
@@ -85,11 +55,10 @@ export class RunStatus {
   }
 
   reset(): void {
-    this.hp = this.maxHp;
+    this.health.reset();
+    this.outcome = 'PLAYING';
     this.hits = 0;
     this.notesHit = 0;
     this.notesMissed = 0;
-    this.outcome = 'PLAYING';
-    this.invulnerableUntilBeat = -Infinity;
   }
 }

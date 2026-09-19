@@ -98,8 +98,9 @@ async function startLevelFlow(): Promise<void> {
 
 window.addEventListener('keydown', (e) => {
   if (document.activeElement instanceof HTMLInputElement) return;
-  // In a lab, R is the lab's own instant reset; outside one it reloads.
-  if (e.key.toLowerCase() === 'r' && !lab) window.location.reload();
+  // In a lab, R is the lab's own instant reset. Outside one it restarts the
+  // level in place -- a full reload would also throw away the audio context.
+  if (e.key.toLowerCase() === 'r' && !lab) void game.restartLevel();
 });
 
 function renderLabMenu(active: LabDefinition | null): void {

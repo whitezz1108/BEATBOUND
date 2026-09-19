@@ -20,6 +20,7 @@ import { clamp } from '../../core/geometry';
 import { easeIn, easeInOut } from '../../feel/Easing';
 import type { Renderer } from '../../core/Renderer';
 import { ARENA_CENTRE, ARENA_OUTER_RADIUS, dangerArcs, degToRad, polarToField, spreadGaps, sector } from './polar';
+import { slowed } from './arenaTiming';
 
 const COLOUR = '#ff6b9d';
 const EDGE = '#ffd6e6';
@@ -31,10 +32,10 @@ export class RingMechanic extends BaseMechanic {
   private readonly gapArc: number;
 
   constructor(spawn: MechanicSpawnContext) {
-    super(spawn);
+    super(slowed(spawn));
     this.collapse = String(this.params.mode ?? 'COLLAPSE').toUpperCase() !== 'EXPAND';
     this.thickness = clamp(numberOr(this.params.thickness, 0.07), 0.04, 0.16);
-    this.gapArc = degToRad(clamp(numberOr(this.params.gapArcDeg, 54), 28, 160));
+    this.gapArc = degToRad(clamp(numberOr(this.params.gapArcDeg, 54) * this.tier.gapScale, 28, 170));
     const first = degToRad(numberOr(this.params.gapAngleDeg, -90) + numberOr(this.params.rotationDeg, 0));
     this.gapCentres = spreadGaps(first, numberOr(this.params.gapCount, 1));
   }

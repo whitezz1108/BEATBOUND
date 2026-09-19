@@ -83,6 +83,11 @@ export class PatternScheduler {
       // Fractional beats (2.5) and offsetBeats fall out of this for free.
       const activationBeat = patternStartBeat + specToRelativeBeats(event.at, beatsPerBar);
 
+      // Hold back anything due during the run-up to a mode change. The pattern
+      // is not rewritten; its tail simply does not spawn, which is what gives
+      // the player a clear runway into the next mode.
+      if (section.breatherFromBeat !== null && activationBeat >= section.breatherFromBeat) continue;
+
       // The mechanic must exist early enough to show its warning. The registry
       // knows the true lead: the library telegraph, or more if the runtime needs
       // it (a RUNNER obstacle has to scroll in). Intensity can only shorten a
@@ -103,6 +108,7 @@ export class PatternScheduler {
               role: event.role ?? 'SYSTEM',
               seed,
               constraints: pattern.constraints,
+              difficulty: section.definition.difficulty,
             },
             this.clock,
           );

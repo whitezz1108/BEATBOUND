@@ -27,7 +27,19 @@ import type { RuntimeMechanic } from './Mechanic';
 export const RADIAL_DIRECTIONS = DIRECTION8;
 export type RadialDirection = Direction8;
 
-export type NoteState = 'PENDING' | 'HOLDING' | 'HIT' | 'MISSED' | 'BROKEN';
+/**
+ * A note's life, in order:
+ *
+ *   PENDING -> HIT                                  (played)
+ *   PENDING -> MISSED -> EXPIRED                    (not played; keeps falling)
+ *   PENDING -> HOLDING -> HIT | BROKEN -> EXPIRED   (sustained)
+ *
+ * MISSED and BROKEN are scored exactly once and then stop interacting, but the
+ * note stays on screen and keeps moving until it leaves the play area and
+ * becomes EXPIRED. A note that vanishes the instant it is missed steals the
+ * feedback the player needs to see how late they were.
+ */
+export type NoteState = 'PENDING' | 'HOLDING' | 'HIT' | 'MISSED' | 'BROKEN' | 'EXPIRED';
 
 /** One checkpoint of a drift hold: "by this beat, be in this lane". */
 export interface NoteSegment {

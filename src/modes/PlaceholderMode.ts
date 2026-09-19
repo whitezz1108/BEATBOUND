@@ -18,6 +18,8 @@ export class PlaceholderMode implements GameplayMode {
   activate(): void { this.skipped = 0; }
   deactivate(): void {}
 
+  clearHazards(): void {}
+
   accept(_info: SpawnedMechanicInfo): void { this.skipped += 1; }
 
   update(_u: MechanicUpdate): void {}

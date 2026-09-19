@@ -12,6 +12,7 @@
  */
 
 import { ConstantTempoMap, type TempoMap } from './TempoMap';
+import { TUNING } from '../tuning';
 import type {
   GameMode,
   LevelDefinition,
@@ -49,6 +50,17 @@ export interface CompiledSection {
    */
   leadInBeats: number;
   transitionOut: string | null;
+  /** Mode the song moves to next, or null at the end. */
+  nextMode: GameMode | null;
+  /**
+   * Absolute beat from which this section stops spawning, because a mode change
+   * is coming. Null when the next section is the same mode.
+   *
+   * A mode change is a context switch for the player -- different controls,
+   * different camera, different read. Dropping them into it mid-barrage is the
+   * one place the game can be unfair without any single hazard being unfair.
+   */
+  breatherFromBeat: number | null;
 }
 
 export interface CompiledLevel {
@@ -214,7 +226,9 @@ export class LevelLoader {
     const tempo = new ConstantTempoMap(level.song.bpm, timeSignature);
     const beatsPerBar = tempo.beatsPerBar;
 
-    const sections: CompiledSection[] = level.sections.map((definition) => {
+    const sections: CompiledSection[] = level.sections.map((definition, index) => {
+      const next = level.sections[index + 1] ?? null;
+      const modeChanges = next !== null && next.mode !== definition.mode;
       const placements: CompiledPlacement[] = [];
       // Patterns are laid end to end inside the section, in declaration order.
       let cursorBar = definition.startBar;
@@ -245,6 +259,10 @@ export class LevelLoader {
         // Never lead in by more than a bar: a mode swap should stay musical.
         leadInBeats: Math.min(maxTelegraph, beatsPerBar),
         transitionOut: definition.transitionOut ?? null,
+        nextMode: next?.mode ?? null,
+        breatherFromBeat: modeChanges
+          ? (definition.startBar - 1 + definition.lengthBars) * beatsPerBar - TUNING.transition.breatherBeats
+          : null,
       };
     });
 
