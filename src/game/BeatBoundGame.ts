@@ -61,6 +61,7 @@ export class BeatBoundGame {
   private songPlayer!: SongPlayer;
   private level!: CompiledLevel;
   private hud: Hud | null = null;
+  private songBuffer: AudioBuffer | null = null;
   private unsubscribeBeat: (() => void) | null = null;
 
   private detachInput: (() => void) | null = null;
@@ -132,12 +133,19 @@ export class BeatBoundGame {
   async load(sources: LevelSources): Promise<CompiledLevel> {
     await this.loader.loadLibraries(sources.patternsUrl, sources.mechanicsUrl);
     const definition = await fetchLevel(sources.levelUrl);
+    this.songBuffer = await this.audio.loadBuffer(definition.song.audio);
+    if (!this.songBuffer) {
+      console.info(`[BeatBound] audio "${definition.song.audio}" not found -- using a generated click track.`);
+    }
     return this.adopt(this.loader.build(definition), false);
   }
 
   /** Load a level built in memory (the Polish Lab path). */
   async loadDefinition(definition: LevelDefinition, options: { loop?: boolean } = {}): Promise<CompiledLevel> {
     await this.loader.loadLibraries(DATA.patterns, DATA.mechanics);
+    // Labs run on the click track: they change BPM constantly, which no
+    // recorded song would survive.
+    this.songBuffer = null;
     return this.adopt(this.loader.build(definition), options.loop ?? false);
   }
 
@@ -207,22 +215,21 @@ export class BeatBoundGame {
     }
   }
 
+  /**
+   * The song, or a click track when the level has no audio asset.
+   *
+   * The buffer is decoded during load, before any system is built, because the
+   * scheduler, modes and HUD are all wired to a specific BeatClock -- swapping
+   * the player in afterwards would leave them driving a clock nothing reads.
+   */
   private makeSongPlayer(): SongPlayer {
+    if (this.songBuffer) {
+      return new BufferSongPlayer(this.audio, this.songBuffer, this.level.song.audio);
+    }
     const lengthSeconds = this.level.tempo.beatsToTime(
       (this.level.endBar - 1) * this.level.tempo.beatsPerBar + 8,
     );
     return new ClickTrackPlayer(this.audio, this.level.tempo, lengthSeconds);
-  }
-
-  /** Try the level's audio asset; fall back to the click track if it is absent. */
-  private async attachSongAudio(): Promise<void> {
-    const buffer = await this.audio.loadBuffer(this.level.song.audio);
-    if (!buffer) {
-      console.info(`[BeatBound] audio "${this.level.song.audio}" not found -- using a generated click track.`);
-      return;
-    }
-    this.songPlayer = new BufferSongPlayer(this.audio, buffer, this.level.song.audio);
-    this.clock = new BeatClock(this.songPlayer, this.level.tempo);
   }
 
   // ---- session ----------------------------------------------------------
@@ -230,8 +237,6 @@ export class BeatBoundGame {
   async start(dev: StartOptions = {}): Promise<void> {
     if (this.running) return;
     await this.audio.resume();
-    if (!this.loopOnEnd) await this.attachSongAudio();
-
     this.detachInput = this.input.attach();
     this.detachLifecycle = this.attachLifecycle();
     this.countInBeats = dev.countInBeats ?? COUNT_IN_BEATS;
@@ -510,10 +515,16 @@ export class BeatBoundGame {
       if (cause) r.text(`finished by: ${cause.toLowerCase()}`, 0.5, 0.50, '#9aa4bd', 13);
       r.text(`hits taken: ${this.status.hits}   notes missed: ${this.status.notesMissed}`, 0.5, 0.55, '#6b7691', 12);
       r.text('press R to restart the level', 0.5, 0.62, '#e8ecf8', 14);
+      r.text('press Esc for the menu', 0.5, 0.67, '#9aa4bd', 13);
     } else if (this.status.outcome === 'COMPLETE') {
       r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#05120d', 0.7);
-      r.text('LEVEL COMPLETE', 0.5, 0.46, '#7dffb0', 30);
-      r.text(`hits taken: ${this.status.hits}`, 0.5, 0.54, '#9aa4bd', 14);
+      r.text('LEVEL COMPLETE', 0.5, 0.44, '#7dffb0', 30);
+      r.text(
+        `hits taken: ${this.status.hits}   notes missed: ${this.status.notesMissed}   HP left: ${Math.round(this.status.health.currentHealth)}`,
+        0.5, 0.51, '#9aa4bd', 13,
+      );
+      r.text('press R to play again', 0.5, 0.60, '#e8ecf8', 14);
+      r.text('press Esc for the menu', 0.5, 0.65, '#9aa4bd', 13);
     }
   }
 

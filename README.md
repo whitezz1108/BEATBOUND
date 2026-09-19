@@ -47,8 +47,9 @@ than a shortcut.
 | RADIAL | Eight-direction notes | **arrows** or **WASD**; diagonals are two keys at once |
 | DUO | Two-player co-op | not implemented — no mechanics in the library yet |
 
-**P** pauses, **R** restarts. The start screen has a level picker, a start-bar
-box and an invincible toggle; all three are mirrored in the URL.
+**P** pauses, **R** restarts the level in place, **Esc** returns to the menu.
+The start screen has a level picker, a start-bar box and an invincible toggle;
+all three are mirrored in the URL.
 
 ### Inspecting levels without playing them
 

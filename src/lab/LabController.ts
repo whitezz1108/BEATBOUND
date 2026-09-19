@@ -172,7 +172,7 @@ export class LabController {
       <div class="lab-keys">
         <p><kbd>R</kbd> reset &nbsp; <kbd>Space</kbd> trigger &nbsp; <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> intensity</p>
         <p><kbd>-</kbd><kbd>=</kbd> BPM &nbsp; <kbd>[</kbd><kbd>]</kbd> variant &nbsp; <kbd>,</kbd><kbd>.</kbd> polish</p>
-        <p><kbd>Tab</kbd> back to the lab menu</p>
+        <p><kbd>Tab</kbd> or <kbd>Esc</kbd> back to the lab menu</p>
       </div>`;
   }
 }

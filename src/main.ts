@@ -44,6 +44,28 @@ async function startLab(definition: LabDefinition): Promise<void> {
   }
 }
 
+/** True once a run has been started, so the button knows to rebuild. */
+let hasRun = false;
+
+/**
+ * Back to the menu.
+ *
+ * The game is stopped rather than reloaded: a reload would also tear down the
+ * AudioContext, and the player would have to re-unlock audio with another
+ * click before anything could start.
+ */
+function showMenu(): void {
+  if (lab) {
+    // A lab's menu is the lab list, which lives at the bare URL.
+    window.location.search = '';
+    return;
+  }
+  game.stop();
+  overlay.classList.remove('hidden');
+  startButton.disabled = false;
+  startButton.textContent = hasRun ? 'Play again' : 'Start';
+}
+
 async function startLevelFlow(): Promise<void> {
   const levelUrl = levelUrlFromLocation();
   startBarInput.value = String(dev.startBar);
@@ -87,7 +109,11 @@ async function startLevelFlow(): Promise<void> {
     window.history.replaceState(null, '', `?${next.toString()}`);
 
     overlay.classList.add('hidden');
-    game.start(options).catch((error: unknown) => {
+    // After the first run the level's systems are spent, so a fresh one has to
+    // be built rather than started again.
+    const launch = hasRun ? game.restart(options) : game.start(options);
+    hasRun = true;
+    launch.catch((error: unknown) => {
       overlay.classList.remove('hidden');
       subtitle.innerHTML = `<span class="error">${message(error)}</span>`;
       startButton.textContent = 'Start failed';
@@ -98,9 +124,18 @@ async function startLevelFlow(): Promise<void> {
 
 window.addEventListener('keydown', (e) => {
   if (document.activeElement instanceof HTMLInputElement) return;
+  const key = e.key.toLowerCase();
   // In a lab, R is the lab's own instant reset. Outside one it restarts the
   // level in place -- a full reload would also throw away the audio context.
-  if (e.key.toLowerCase() === 'r' && !lab) void game.restartLevel();
+  if (key === 'r' && !lab) {
+    hasRun = true;
+    void game.restartLevel();
+    return;
+  }
+  if (key === 'escape' || key === 'm') {
+    e.preventDefault();
+    showMenu();
+  }
 });
 
 function renderLabMenu(active: LabDefinition | null): void {
