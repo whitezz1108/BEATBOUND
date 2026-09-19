@@ -125,10 +125,16 @@ export class LabController {
   }
 
   renderPanel(): void {
+    // Say how many variants exist and how to reach them. A lab loops one
+    // pattern forever by design, so without this it reads as "that is all it
+    // does" rather than "this is one of four".
     const variants = this.lab.variants ?? [];
+    const position = variants.length > 0
+      ? ((this.variantIndex % variants.length) + variants.length) % variants.length
+      : 0;
     const variant = variants.length > 0
-      ? variants[((this.variantIndex % variants.length) + variants.length) % variants.length]
-      : '—';
+      ? `${variants[position]}  (${position + 1}/${variants.length}, [ ] to cycle)`
+      : 'none — this lab has one pattern';
     const t = TUNING;
 
     const rows: Array<[string, string]> = [
