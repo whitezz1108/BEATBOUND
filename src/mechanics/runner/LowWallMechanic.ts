@@ -12,9 +12,9 @@ import { clamp, lerp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 import { GROUND_Y } from './runnerGeometry';
 
-const WIDTH = 0.07;
+export const WALL_WIDTH = 0.07;
 /** Clearance 0.5 (the library default) maps to this gap above the ground. */
-const CLEARANCE_SCALE = 0.15;
+export const WALL_CLEARANCE_SCALE = 0.15;
 
 export class LowWallMechanic extends ScrollingObstacle {
   private readonly clearance: number;
@@ -23,7 +23,7 @@ export class LowWallMechanic extends ScrollingObstacle {
     super(spawn);
     // Lower with intensity, but never below a sliding player's height.
     this.clearance = clamp(
-      numberOr(this.params.clearance, 0.5) * CLEARANCE_SCALE * lerp(1, 0.85, this.intensity),
+      numberOr(this.params.clearance, 0.5) * WALL_CLEARANCE_SCALE * lerp(1, 0.85, this.intensity),
       0.062,
       0.14,
     );
@@ -32,7 +32,7 @@ export class LowWallMechanic extends ScrollingObstacle {
   private body(): Rect {
     const x = this.x;
     const top = GROUND_Y - this.clearance - 0.14;
-    return { x: x - WIDTH / 2, y: top, w: WIDTH, h: 0.14 };
+    return { x: x - WALL_WIDTH / 2, y: top, w: WALL_WIDTH, h: 0.14 };
   }
 
   protected dangerShapes(): Shape[] {

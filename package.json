@@ -12,7 +12,8 @@
     "test:timing": "esbuild tools/sync-test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/sync-test.mjs --log-level=warning && node node_modules/.cache/beatbound/sync-test.mjs",
     "level": "esbuild tools/level-report.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/level-report.mjs --log-level=warning && node node_modules/.cache/beatbound/level-report.mjs",
     "audit": "esbuild tools/camp-audit.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/camp-audit.mjs --log-level=warning && node node_modules/.cache/beatbound/camp-audit.mjs",
-    "test": "npm run typecheck && npm run test:timing && npm run audit"
+    "test": "npm run typecheck && npm run test:timing && npm run audit && npm run runner-check",
+    "runner-check": "esbuild tools/runner-check.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/runner-check.mjs --log-level=warning && node node_modules/.cache/beatbound/runner-check.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.21.5",

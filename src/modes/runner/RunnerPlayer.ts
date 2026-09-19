@@ -27,9 +27,13 @@ import { easeOutCubic } from '../../feel/Easing';
 import { CEILING_Y, GROUND_Y, PLAYER_X } from '../../mechanics/runner/runnerGeometry';
 import { TUNING } from '../../tuning';
 
-const STANDING_HEIGHT = 0.125;
-const SLIDING_HEIGHT = 0.058;
-const WIDTH = 0.052;
+export const STANDING_HEIGHT = 0.125;
+export const SLIDING_HEIGHT = 0.058;
+/**
+ * The avatar is slim on purpose: its half-width is added to every obstacle's
+ * danger window, so width directly costs airborne budget in a rapid chain.
+ */
+export const PLAYER_WIDTH = 0.040;
 const TRAIL_LENGTH = 12;
 
 export interface RunnerInput {
@@ -90,7 +94,7 @@ export class RunnerPlayer {
   get body(): Rect {
     const squash = this.squashScale();
     const height = (this.sliding && this.grounded ? SLIDING_HEIGHT : STANDING_HEIGHT) * squash.y;
-    const width = WIDTH * squash.x;
+    const width = PLAYER_WIDTH * squash.x;
     const surface = this.surfaceY;
     const top = this.gravityDirection > 0
       ? surface - this.height - height

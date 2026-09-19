@@ -80,7 +80,26 @@ prototype_90s.level.json    S05       2         0/1681       ok (must move)
 
 This is how the A05 chain and A03 projectile flaws were found and confirmed
 fixed. RUNNER, VERTICAL and RADIAL are skipped — you cannot stand still in them
-by construction. `npm test` runs the typecheck, the timing test and the audit.
+by construction.
+
+`npm run runner-check` answers the RUNNER equivalent: **is every obstacle
+physically clearable?** The runner is the one mode where a pattern can be
+impossible rather than merely hard, because two obstacles can demand
+contradictory states — be airborne here, be sliding on the ground a fraction of
+a beat later. It derives each obstacle's danger window from the same constants
+the mechanics use, allows one jump to clear a group (a half-beat "double spike"
+is meant to be one jump), and reports the take-off slack in beats.
+
+```text
+jump 0.95 beats / 0.32 high · track 0.26 units per beat
+spike window 0.25 beats · wall window 0.42 beats
+  RP08  Half Beat Jumps       4 issue(s)
+    tight  @intensity 0.90  2 obstacles from beat 0.00 to 0.50: only a 0.091-beat take-off window
+```
+
+Anything under 0.10 beats of slack (50 ms at 120 BPM) is flagged as tight;
+negative slack fails the build. `npm test` runs the typecheck, the timing test,
+the camping audit and the runner check.
 
 ```bash
 npm run level                                 # the default arena test level

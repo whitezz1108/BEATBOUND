@@ -12,21 +12,31 @@ import { clamp, lerp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 import { GROUND_Y } from './runnerGeometry';
 
-const BASE_HEIGHT = 0.09;
-const WIDTH = 0.055;
+export const SPIKE_BASE_HEIGHT = 0.09;
+/**
+ * Spikes are drawn as a narrow triangle, so a wide rectangular hazard was
+ * charging the player for space the blade does not occupy. The width also sets
+ * how long a jump has to stay airborne, which is what made half-beat chains
+ * impossible -- see TUNING.runner.jumpBeats.
+ */
+export const SPIKE_WIDTH = 0.024;
 
 export class SpikeMechanic extends ScrollingObstacle {
   private readonly height: number;
 
   constructor(spawn: MechanicSpawnContext) {
     super(spawn);
-    // Taller with intensity, but always clearable by a normal jump.
-    this.height = clamp(BASE_HEIGHT * numberOr(this.params.height, 1) * lerp(1, 1.3, this.intensity), 0.04, 0.16);
+    // Taller with intensity -- but only slightly. A taller spike needs more
+    // clearance, which narrows the slice of the jump arc that is above it, and
+    // in a half-beat double that slice *is* the timing window. Scaling height
+    // hard with intensity quietly turns a demanding pattern into a
+    // frame-perfect one, so the range is deliberately small.
+    this.height = clamp(SPIKE_BASE_HEIGHT * numberOr(this.params.height, 1) * lerp(1, 1.15, this.intensity), 0.04, 0.16);
   }
 
   private body(): Rect {
     const x = this.x;
-    return { x: x - WIDTH / 2, y: GROUND_Y - this.height, w: WIDTH, h: this.height };
+    return { x: x - SPIKE_WIDTH / 2, y: GROUND_Y - this.height, w: SPIKE_WIDTH, h: this.height };
   }
 
   protected dangerShapes(): Shape[] {

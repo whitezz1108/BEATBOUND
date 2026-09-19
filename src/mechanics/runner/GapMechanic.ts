@@ -17,7 +17,7 @@ import { clamp, lerp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 import { GROUND_Y } from './runnerGeometry';
 
-const BASE_WIDTH = 0.13;
+export const GAP_BASE_WIDTH = 0.13;
 /** Wider than this and a normal jump cannot clear it. */
 const MAX_WIDTH = 0.22;
 
@@ -26,7 +26,7 @@ export class GapMechanic extends ScrollingObstacle implements RunnerTerrain {
 
   constructor(spawn: MechanicSpawnContext) {
     super(spawn);
-    this.width = clamp(BASE_WIDTH * numberOr(this.params.width, 1) * lerp(1, 1.25, this.intensity), 0.06, MAX_WIDTH);
+    this.width = clamp(GAP_BASE_WIDTH * numberOr(this.params.width, 1) * lerp(1, 1.25, this.intensity), 0.06, MAX_WIDTH);
   }
 
   groundGap(): GroundGap {

@@ -87,10 +87,27 @@ export const TUNING = {
   runner: {
     /** Field units of track per beat. Raise for a faster-feeling run. */
     unitsPerBeat: 0.26,
-    /** Airtime of a standard jump, in beats. */
-    jumpBeats: 0.8,
+    /**
+     * Airtime of a standard jump, in beats.
+     *
+     * This number decides what obstacle spacing is *possible*, not merely hard,
+     * and it is squeezed from both sides:
+     *
+     *   - A jump longer than the obstacle spacing cannot be sustained. At one
+     *     spike per beat, every jump that lasts 1.05 beats puts the player
+     *     0.05 beats further behind, and a long chain eventually becomes
+     *     unclearable. So it has to stay under 1.0.
+     *   - Two spikes half a beat apart cannot be two jumps -- the second would
+     *     start before the first has landed -- so one jump has to span both.
+     *     That needs the airborne window to exceed 0.5 plus a spike's danger
+     *     window, which pushes it up.
+     *
+     * 0.95 satisfies both with room to spare. `npm run runner-check` proves it
+     * against the whole RUNNER library at three intensities.
+     */
+    jumpBeats: 0.95,
     /** Apex height of a standard jump, in field units. */
-    jumpHeight: 0.28,
+    jumpHeight: 0.32,
     /** Jump pressed this long before landing still fires on touchdown. */
     inputBufferSeconds: 0.12,
     /** Grace after leaving a surface during which a jump still works. */
