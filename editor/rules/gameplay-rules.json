@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "comment": "Structural rules the Level Director must follow. Values are tunable by the designer without touching generator code.",
+
+  "modeOrder": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+  "modeOrderComment": "Four-mode rotation A -> B -> C -> D -> A... Boundaries come from detected sections, not equal chunks.",
+
+  "section": {
+    "minBars": 4,
+    "preferredBars": [8, 16],
+    "maxBars": 32,
+    "minSectionsForFullRotation": 4,
+    "splitLongSectionsAt": ["energyChange", "novelty"],
+    "idPrefix": "S"
+  },
+
+  "firstSection": {
+    "function": "TEACH",
+    "difficultyCap": 1,
+    "intensityCap": 0.45
+  },
+
+  "patterns": {
+    "maxConsecutiveRepeats": 4,
+    "maxConsecutiveSameFamily": 2,
+    "minIntensity": 0.3,
+    "maxIntensity": 1.0,
+    "recoveryIntensity": 0.3,
+    "historyMemory": 4,
+    "avoidImmediateRepeat": true
+  },
+
+  "transition": {
+    "minBeats": 4,
+    "maxBeats": 8,
+    "preferEvenBeats": true,
+    "defaultBeats": 4,
+    "energyDeltaScale": 4,
+    "tailMaxBars": 2,
+    "headMaxBars": 2,
+    "tailIntensityScale": 0.6,
+    "headIntensityScale": 0.7,
+    "tailFunction": "RECOVERY",
+    "headFunction": "TEACH",
+    "breatherBeatsComment": "MIRROR of TUNING.transition.breatherBeats in src/tuning.ts. The runtime drops every activation in the last breatherBeats of a section before a mode change. The editor server re-reads the live value from src/tuning.ts at startup and injects it over this one, and warns if the two ever disagree -- this JSON value is only the offline fallback. Do not hand-edit without updating src/tuning.ts too.",
+    "breatherBeats": 6
+  },
+
+  "climax": {
+    "function": "CLIMAX",
+    "rankBy": "peakEnergy",
+    "minSectionsBeforeClimax": 2,
+    "atMostOneClimax": true
+  },
+
+  "filler": {
+    "comment": "When a section's bars are not an exact multiple of the chosen pattern lengths, the remainder is filled with the section's lowest-difficulty pattern at reduced intensity.",
+    "maxFillBars": 2
+  }
+}

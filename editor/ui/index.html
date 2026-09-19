@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BeatBound Level Editor</title>
+  <link rel="stylesheet" href="/editor.css" />
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">BEATBOUND <span>level editor</span></div>
+    <div class="toolbar">
+      <label class="btn" for="song-file">Upload Song
+        <input id="song-file" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac" hidden />
+      </label>
+      <label class="field">seed <input id="seed-input" type="number" value="42" min="1" /></label>
+      <label class="field">bpm <input id="bpm-override" type="number" placeholder="auto" min="40" max="300" /></label>
+      <button id="btn-analyze" class="btn primary" disabled>Analyze</button>
+      <button id="btn-direct" class="btn primary" disabled>Generate Blueprint</button>
+      <button id="btn-generate" class="btn primary" disabled>Generate level.json</button>
+      <button id="btn-check" class="btn" disabled>Run Checks</button>
+      <button id="btn-playtest" class="btn accent" disabled>▶ Playtest</button>
+    </div>
+  </header>
+
+  <main id="workspace">
+    <section id="timeline-panel">
+      <div id="song-strip">
+        <canvas id="wave-canvas"></canvas>
+        <div id="song-meta">
+          <span id="song-name">no song loaded</span>
+          <span id="song-stats"></span>
+          <span id="song-bpm-label"></span>
+        </div>
+        <audio id="preview" controls preload="none"></audio>
+      </div>
+      <canvas id="timeline-canvas"></canvas>
+      <div id="timeline-hint">Drop an audio file anywhere, or click <b>Upload Song</b>.</div>
+      <div id="timeline-legend" class="hidden">
+        <span class="lg hatch-w">transition tail/head</span>
+        <span class="lg breather-w">breather — no spawning</span>
+        <span class="lg swap-w">mode swap + colour wipe</span>
+        <span class="lg">click a section or boundary to edit</span>
+      </div>
+    </section>
+
+    <aside id="edit-panel">
+      <div id="panel-empty">Select a section (or a transition) on the timeline to edit it.</div>
+
+      <div id="section-editor" class="editor hidden">
+        <h3>Section <span id="sec-id"></span></h3>
+        <div class="row">
+          <label>Mode
+            <select id="sec-mode">
+              <option>ARENA</option><option>RUNNER</option>
+              <option>VERTICAL</option><option>RADIAL</option>
+            </select>
+          </label>
+          <label>Function
+            <select id="sec-function">
+              <option>TEACH</option><option>PRACTICE</option>
+              <option>VARIATION</option><option>COMBINE</option>
+              <option>CLIMAX</option><option>RECOVERY</option>
+              <option>TRANSITION</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Difficulty <b id="sec-diff-label">1</b>
+            <input id="sec-difficulty" type="range" min="1" max="5" step="1" value="1" />
+          </label>
+          <label>Bars
+            <input id="sec-start" type="number" min="1" class="num" />
+            –
+            <input id="sec-end" type="number" min="1" class="num" />
+          </label>
+        </div>
+        <div class="row">
+          <label class="chk"><input id="sec-keep-role" type="checkbox" checked /> keep transition head/tail</label>
+        </div>
+        <div id="sec-breather" class="meta-line"></div>
+        <h4>Patterns</h4>
+        <ul id="sec-patterns" class="pattern-list"></ul>
+        <button id="sec-add-pattern" class="btn small">+ Add pattern</button>
+        <div class="panel-actions">
+          <button id="sec-apply" class="btn primary">Apply Changes</button>
+          <button id="sec-regenerate" class="btn accent">↻ Regenerate Section</button>
+        </div>
+      </div>
+
+      <div id="transition-editor" class="editor hidden">
+        <h3>Transition <span id="tr-id"></span></h3>
+        <div class="row"><label class="wide">Kind <b id="tr-kind"></b></label></div>
+        <div class="row">
+          <label>Duration (beats)
+            <input id="tr-beats" type="number" min="2" max="16" class="num" />
+          </label>
+        </div>
+        <h4>Scene instructions</h4>
+        <ul id="tr-scene" class="scene-list"></ul>
+        <div class="panel-actions">
+          <button id="tr-apply" class="btn primary">Apply Changes</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="consistency-warn" class="hidden"></div>
+  <footer id="statusbar">
+    <div id="status-msg">ready</div>
+    <div class="status-right">
+      <label class="field">game url
+        <input id="game-url" type="text" value="http://localhost:5173/" spellcheck="false" />
+      </label>
+      <label class="field">playtest
+        <b id="playtest-file">—</b>
+      </label>
+    </div>
+  </footer>
+
+  <div id="drop-overlay" class="hidden">Drop audio to upload</div>
+  <div id="report-overlay" class="hidden">
+    <div id="report-box">
+      <div class="report-head">
+        <b>Level report</b>
+        <button id="report-close" class="btn small">close</button>
+      </div>
+      <pre id="report-body"></pre>
+    </div>
+  </div>
+
+  <script type="module" src="/editor.js"></script>
+</body>
+</html>

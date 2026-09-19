@@ -36,6 +36,18 @@
       "file": "prototype_90s.level.json",
       "title": "Prototype 90s",
       "blurb": "The full multi-mode song map: all four modes and their transitions."
+    },
+    {
+      "id": "test_song",
+      "file": "test_song.level.json",
+      "title": "test_song",
+      "blurb": "Generated in the BeatBound Level Editor."
+    },
+    {
+      "id": "dance_fruits_musicsteve_void_-_toosie_slide_sped_up",
+      "file": "dance_fruits_musicsteve_void_-_toosie_slide_sped_up.level.json",
+      "title": "Dance Fruits Music,Steve Void - Toosie Slide (Sped Up)",
+      "blurb": "Generated in the BeatBound Level Editor."
     }
   ]
 }

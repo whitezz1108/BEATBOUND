@@ -6,6 +6,7 @@
   "description": "BeatBound - data-driven multi-mode rhythm game runtime",
   "scripts": {
     "dev": "vite",
+    "editor": "node editor/server/server.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

@@ -1,0 +1,81 @@
+{
+  "version": "1.0.0",
+  "comment": "Maps per-section music energy onto difficulty, function and intensity. High energy means MORE complexity, density and layering -- not faster objects.",
+
+  "energyBands": [
+    {
+      "name": "LOW",
+      "minEnergy": 0.0,
+      "maxEnergy": 0.38,
+      "difficulty": 1,
+      "intensityRange": [0.3, 0.45],
+      "functions": ["TEACH", "PRACTICE"],
+      "comment": "Lower density, simpler patterns, larger recovery windows, lower visual intensity."
+    },
+    {
+      "name": "MID",
+      "minEnergy": 0.38,
+      "maxEnergy": 0.66,
+      "difficulty": 2,
+      "intensityRange": [0.45, 0.65],
+      "functions": ["PRACTICE", "VARIATION"],
+      "comment": "Normal density, moderate difficulty, longer sequences."
+    },
+    {
+      "name": "HIGH",
+      "minEnergy": 0.66,
+      "maxEnergy": 0.85,
+      "difficulty": 3,
+      "intensityRange": [0.65, 0.85],
+      "functions": ["VARIATION", "COMBINE"],
+      "comment": "Greater complexity, density, pattern combinations, long chains, stronger visuals."
+    },
+    {
+      "name": "PEAK",
+      "minEnergy": 0.85,
+      "maxEnergy": 1.01,
+      "difficulty": 4,
+      "intensityRange": [0.85, 1.0],
+      "functions": ["COMBINE", "CLIMAX"],
+      "comment": "Layering and pattern length first; raw speed is not the tool."
+    }
+  ],
+
+  "difficultyFromEnergy": {
+    "comment": "Difficulty = weighted energy plus rhythm density; density adds complexity beyond loudness.",
+    "energyWeight": 0.7,
+    "densityWeight": 0.3
+  },
+
+  "functionByDifficulty": {
+    "1": ["TEACH"],
+    "2": ["PRACTICE", "VARIATION"],
+    "3": ["VARIATION", "COMBINE"],
+    "4": ["COMBINE", "CLIMAX"],
+    "5": ["CLIMAX"]
+  },
+
+  "progression": {
+    "comment": "The difficulty curve across sections: gentle ramp, one climax, optional rest afterwards.",
+    "startDifficulty": 1,
+    "targetEndDifficulty": 3,
+    "maxStepBetweenSections": 2,
+    "allowRestAfterClimax": true,
+    "restDifficulty": 2
+  },
+
+  "perMode": {
+    "ARENA": { "minDifficulty": 1, "maxDifficulty": 5 },
+    "RUNNER": { "minDifficulty": 1, "maxDifficulty": 5 },
+    "VERTICAL": { "minDifficulty": 1, "maxDifficulty": 5 },
+    "RADIAL": { "minDifficulty": 1, "maxDifficulty": 5 }
+  },
+
+  "patternMatch": {
+    "comment": "How closely a pattern's difficulty must match the section target.",
+    "difficultyTolerance": 1,
+    "preferHigherOverLower": false,
+    "functionMatchBonus": 3,
+    "energyTagMatchBonus": 1
+  }
+}

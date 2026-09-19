@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/editor/level.schema.json",
+  "title": "BeatBound Level (editor superset)",
+  "description": "The runtime's level.schema.json (beatbound_library_v1/level.schema.json) plus two forward-compatible editor extensions the runtime currently ignores: sections[].scene (transition scene instructions) and the top-level editor provenance block.",
+  "type": "object",
+  "required": [
+    "version",
+    "song",
+    "sections"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "editor": {
+      "type": "object",
+      "required": ["seed", "analysisSource", "blueprintVersion"],
+      "properties": {
+        "seed": { "type": "integer" },
+        "analysisSource": { "type": "string" },
+        "blueprintVersion": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "song": {
+      "type": "object",
+      "required": [
+        "id",
+        "audio",
+        "bpm",
+        "timeSignature"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "audio": {
+          "type": "string"
+        },
+        "bpm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "timeSignature": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "integer",
+              "enum": [
+                2,
+                4,
+                8,
+                16
+              ]
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "startBar",
+          "lengthBars",
+          "mode",
+          "patterns"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "startBar": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lengthBars": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "ARENA",
+              "RUNNER",
+              "VERTICAL",
+              "RADIAL",
+              "DUO"
+            ]
+          },
+          "function": {
+            "type": "string"
+          },
+          "difficulty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "patternId"
+              ],
+              "properties": {
+                "patternId": {
+                  "type": "string"
+                },
+                "repeat": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "intensity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "transitionOut": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scene": {
+            "type": "object",
+            "description": "EDITOR EXTENSION — transition scene instructions. The runtime ignores unknown section fields today; a future scene hook can consume this.",
+            "properties": {
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["effect"],
+                  "properties": {
+                    "effect": {
+                      "type": "string",
+                      "enum": [
+                        "cameraZoom",
+                        "cameraPan",
+                        "paletteShift",
+                        "particles",
+                        "wipe",
+                        "bgChange",
+                        "envMovement",
+                        "lightFlash"
+                      ]
+                    },
+                    "params": { "type": "object" },
+                    "durationBeats": { "type": "number", "minimum": 0 }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

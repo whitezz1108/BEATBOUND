@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/editor/level-blueprint.schema.json",
+  "title": "BeatBound Level Blueprint",
+  "description": "The Level Director's output: high-level structure decided from music analysis. Actual gameplay is generated from the rules + pattern library; the blueprint only references real pattern ids from patterns.mvp.json.",
+  "type": "object",
+  "required": [
+    "version",
+    "seed",
+    "song",
+    "analysisSource",
+    "modeOrder",
+    "sections",
+    "transitions"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "seed": { "type": "integer" },
+    "generator": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "song": {
+      "type": "object",
+      "required": ["id", "title", "bpm", "timeSignature", "audioPath", "durationSec", "barCount"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "bpm": { "type": "number", "exclusiveMinimum": 0 },
+        "timeSignature": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "enum": [2, 4, 8, 16] }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "audioPath": { "type": "string" },
+        "durationSec": { "type": "number", "exclusiveMinimum": 0 },
+        "barCount": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "analysisSource": { "type": "string" },
+    "modeOrder": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "startBar",
+          "endBar",
+          "lengthBars",
+          "mode",
+          "function",
+          "difficulty",
+          "energy",
+          "patterns"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "startBar": { "type": "integer", "minimum": 1 },
+          "endBar": { "type": "integer", "minimum": 1 },
+          "lengthBars": { "type": "integer", "minimum": 1 },
+          "mode": { "type": "string", "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+          "function": {
+            "type": "string",
+            "enum": ["TEACH", "PRACTICE", "VARIATION", "COMBINE", "CLIMAX", "RECOVERY", "TRANSITION"]
+          },
+          "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "analysisSection": { "type": ["string", "null"] },
+          "energy": {
+            "type": "object",
+            "required": ["mean", "peak"],
+            "properties": {
+              "mean": { "type": "number", "minimum": 0, "maximum": 1 },
+              "peak": { "type": "number", "minimum": 0, "maximum": 1 },
+              "rhythmDensity": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          },
+          "patterns": {
+            "type": "array",
+            "description": "The full ordered placement list for this section, including transition tail/head roles.",
+            "items": {
+              "type": "object",
+              "required": ["patternId", "repeat", "intensity"],
+              "properties": {
+                "patternId": { "type": "string" },
+                "family": { "type": "string" },
+                "repeat": { "type": "integer", "minimum": 1 },
+                "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+                "role": {
+                  "type": "string",
+                  "enum": ["MAIN", "TRANSITION_TAIL", "TRANSITION_HEAD"]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "source": { "type": "string", "enum": ["auto", "manual", "regenerated"] },
+          "scene": {
+            "type": "object",
+            "description": "Per-section ambient scene hints (editor extension, carried into level.json).",
+            "additionalProperties": true
+          },
+          "breatherFromBeat": {
+            "type": ["number", "null"],
+            "description": "Absolute beat where the runtime's mode-change breather starts (activations >= this are not spawned). Null when no mode change follows. Derived from TUNING.transition.breatherBeats; editor-only field, never compiled into level.json."
+          },
+          "fillBars": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Bars the editor may fill; the rest of the section is the runtime's no-spawn breather. Equals lengthBars when there is no breather. Editor-only field."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "fromSection", "toSection", "kind", "lengthBeats", "scene"],
+        "properties": {
+          "id": { "type": "string" },
+          "fromSection": { "type": "string" },
+          "toSection": { "type": "string" },
+          "kind": { "type": "string" },
+          "lengthBeats": { "type": "integer", "minimum": 2, "maximum": 16 },
+          "tailBars": { "type": "integer", "minimum": 0 },
+          "headBars": { "type": "integer", "minimum": 0 },
+          "hazardReduction": {
+            "type": "string",
+            "enum": ["recovery_tail", "calm_head", "both", "none"]
+          },
+          "scene": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["effect"],
+              "properties": {
+                "effect": {
+                  "type": "string",
+                  "enum": [
+                    "cameraZoom",
+                    "cameraPan",
+                    "paletteShift",
+                    "particles",
+                    "wipe",
+                    "bgChange",
+                    "envMovement",
+                    "lightFlash"
+                  ]
+                },
+                "params": { "type": "object", "additionalProperties": true },
+                "durationBeats": { "type": "number", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "difficultyCurve": {
+      "type": "array",
+      "description": "Per-section difficulty decisions, for the UI curve display.",
+      "items": {
+        "type": "object",
+        "required": ["sectionId", "difficulty", "function"],
+        "properties": {
+          "sectionId": { "type": "string" },
+          "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "function": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

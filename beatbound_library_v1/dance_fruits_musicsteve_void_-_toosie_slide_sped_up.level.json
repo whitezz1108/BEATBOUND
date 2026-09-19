@@ -1,0 +1,276 @@
+{
+  "version": "1.0.0",
+  "editor": {
+    "seed": 42,
+    "analysisSource": "f2d5e0b065da4978",
+    "blueprintVersion": "1.0.0"
+  },
+  "song": {
+    "id": "dance_fruits_musicsteve_void_-_toosie_slide_sped_up",
+    "title": "Dance Fruits Music,Steve Void - Toosie Slide (Sped Up)",
+    "audio": "audio/editor/dance_fruits_musicsteve_void_-_toosie_slide_sped_up.mp3",
+    "bpm": 123.05,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "S01",
+      "startBar": 1,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP06",
+          "repeat": 2,
+          "intensity": 0.36
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.36
+        },
+        {
+          "patternId": "AP05",
+          "repeat": 1,
+          "intensity": 0.22
+        }
+      ],
+      "transitionOut": "ARENA_TO_RUNNER",
+      "scene": {
+        "effects": [
+          {
+            "effect": "paletteShift",
+            "params": {
+              "target": "modePalette"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "lightFlash",
+            "params": {
+              "color": "#ffffff",
+              "decay": 0.25
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S02",
+      "startBar": 13,
+      "lengthBars": 9,
+      "mode": "RUNNER",
+      "function": "COMBINE",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "RP09",
+          "repeat": 3,
+          "intensity": 0.97
+        },
+        {
+          "patternId": "RP03",
+          "repeat": 1,
+          "intensity": 0.97
+        },
+        {
+          "patternId": "RP01",
+          "repeat": 1,
+          "intensity": 0.58
+        }
+      ],
+      "transitionOut": "RUNNER_TO_VERTICAL",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraPan",
+            "params": {
+              "direction": "followMode"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "particles",
+            "params": {
+              "burst": "boundaryCrossing"
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S03",
+      "startBar": 22,
+      "lengthBars": 14,
+      "mode": "VERTICAL",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.38
+        },
+        {
+          "patternId": "VP03",
+          "repeat": 4,
+          "intensity": 0.55
+        },
+        {
+          "patternId": "VP02",
+          "repeat": 3,
+          "intensity": 0.55
+        },
+        {
+          "patternId": "VP03",
+          "repeat": 1,
+          "intensity": 0.55
+        },
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.33
+        }
+      ],
+      "transitionOut": "VERTICAL_TO_RADIAL",
+      "scene": {
+        "effects": [
+          {
+            "effect": "envMovement",
+            "params": {
+              "kind": "drift"
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S04",
+      "startBar": 36,
+      "lengthBars": 9,
+      "mode": "RADIAL",
+      "function": "CLIMAX",
+      "difficulty": 4,
+      "patterns": [
+        {
+          "patternId": "DP01",
+          "repeat": 1,
+          "intensity": 0.65
+        },
+        {
+          "patternId": "DP07",
+          "repeat": 4,
+          "intensity": 0.93
+        },
+        {
+          "patternId": "DP01",
+          "repeat": 2,
+          "intensity": 0.93
+        },
+        {
+          "patternId": "DP03",
+          "repeat": 1,
+          "intensity": 0.55
+        }
+      ],
+      "transitionOut": "RADIAL_TO_ARENA",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraZoom",
+            "params": {
+              "zoom": 1.15,
+              "ease": "easeOutBack"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "paletteShift",
+            "params": {
+              "target": "modePalette"
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S05",
+      "startBar": 45,
+      "lengthBars": 16,
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "AP11",
+          "repeat": 3,
+          "intensity": 0.66
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 2,
+          "intensity": 0.66
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.32
+        }
+      ],
+      "transitionOut": "ARENA_TO_RUNNER",
+      "scene": {
+        "effects": [
+          {
+            "effect": "wipe",
+            "params": {
+              "direction": "radial"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "bgChange",
+            "params": {
+              "target": "modeBackdrop"
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S06",
+      "startBar": 61,
+      "lengthBars": 15,
+      "mode": "RUNNER",
+      "function": "COMBINE",
+      "difficulty": 4,
+      "patterns": [
+        {
+          "patternId": "RP01",
+          "repeat": 1,
+          "intensity": 0.62
+        },
+        {
+          "patternId": "RP14",
+          "repeat": 3,
+          "intensity": 0.88
+        },
+        {
+          "patternId": "RP02",
+          "repeat": 2,
+          "intensity": 0.88
+        }
+      ],
+      "transitionOut": null
+    }
+  ]
+}

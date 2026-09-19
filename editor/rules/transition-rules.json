@@ -1,0 +1,99 @@
+{
+  "version": "1.0.0",
+  "comment": "How the director turns a mode change into a transition: duration, hazard reduction on both sides, and scene instructions. Effects are chosen sparingly -- never all at once.",
+
+  "duration": {
+    "comment": "2-4 seconds, i.e. 4-8 beats at typical tempos. Scaled by the energy jump across the boundary.",
+    "minBeats": 4,
+    "maxBeats": 8,
+    "baseBeats": 4,
+    "beatsPerEnergyUnit": 4,
+    "preferEvenBeats": true
+  },
+
+  "hazardReduction": {
+    "tail": {
+      "comment": "Last bars of the outgoing section: swap to RECOVERY-family / lowest-difficulty patterns at reduced intensity so the player gets a breather.",
+      "maxBars": 2,
+      "intensityScale": 0.6,
+      "function": "RECOVERY",
+      "fallback": "lowestDifficulty",
+      "minBarsKept": 2
+    },
+    "head": {
+      "comment": "First bars of the incoming section: TEACH patterns at reduced intensity so new controls are introduced gently.",
+      "maxBars": 2,
+      "intensityScale": 0.7,
+      "function": "TEACH",
+      "fallback": "lowestDifficulty"
+    }
+  },
+
+  "scene": {
+    "comment": "Scene-transition instructions carried in the blueprint and (as an editor extension) into level.json sections[].scene. The runtime currently ignores them; a future scene hook can consume them.",
+    "maxEffectsPerTransition": 2,
+    "effects": [
+      {
+        "effect": "paletteShift",
+        "weight": 3,
+        "params": { "target": "modePalette" },
+        "comment": "Background/palette shift toward the incoming mode's palette."
+      },
+      {
+        "effect": "cameraZoom",
+        "weight": 3,
+        "params": { "zoom": 1.15, "ease": "easeOutBack" },
+        "comment": "A push-in that settles as the new mode starts."
+      },
+      {
+        "effect": "wipe",
+        "weight": 2,
+        "params": { "direction": "radial" },
+        "comment": "Full-screen wipe -- the runtime's existing placeholder wipe, parameterised."
+      },
+      {
+        "effect": "particles",
+        "weight": 2,
+        "params": { "burst": "boundaryCrossing" },
+        "comment": "Particle burst at the boundary."
+      },
+      {
+        "effect": "lightFlash",
+        "weight": 2,
+        "params": { "color": "#ffffff", "decay": 0.25 },
+        "comment": "One-shot light flash on the downbeat of the new section."
+      },
+      {
+        "effect": "bgChange",
+        "weight": 2,
+        "params": { "target": "modeBackdrop" },
+        "comment": "Background environment change."
+      },
+      {
+        "effect": "cameraPan",
+        "weight": 1,
+        "params": { "direction": "followMode" },
+        "comment": "Camera pan toward the incoming mode's focal point."
+      },
+      {
+        "effect": "envMovement",
+        "weight": 1,
+        "params": { "kind": "drift" },
+        "comment": "Environment movement during the transition."
+      }
+    ]
+  },
+
+  "kinds": {
+    "comment": "Transition ids follow the runtime convention FROM_TO. The runtime shows the id during its 1-beat wipe; the musical work happens in the tail/head bars.",
+    "format": "{FROM}_TO_{TO}"
+  },
+
+  "playerPrep": {
+    "comment": "Per-mode prep notes surfaced in the blueprint for future HUD hooks.",
+    "ARENA": "WASD to move",
+    "RUNNER": "Jump / slide",
+    "VERTICAL": "D F J K lanes",
+    "RADIAL": "Arrows or WASD, diagonals are two keys"
+  }
+}
