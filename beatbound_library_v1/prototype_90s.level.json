@@ -105,7 +105,12 @@
       "patterns": [
         {
           "patternId": "AP04",
-          "repeat": 3,
+          "repeat": 2,
+          "intensity": 0.75
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 2,
           "intensity": 0.75
         }
       ],

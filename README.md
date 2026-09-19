@@ -11,7 +11,9 @@ testing adding stuff
 ```bash
 npm install
 npm run dev          # open the printed localhost URL, click Start
-npm run test:timing  # headless BeatClock / scheduler checks
+npm test             # typecheck + timing checks + camping audit
+npm run level        # bar-by-bar report of a level
+npm run audit        # can any section be beaten standing still?
 npm run build        # typecheck + production bundle
 ```
 
@@ -44,6 +46,21 @@ S01  ARENA  bars 1-8  TEACH  difficulty 1
 
 `npm run test:timing` fails if any level has an empty bar, so dead air cannot
 creep back in.
+
+`npm run audit` answers a different question: **can this section be beaten by
+standing still?** It simulates the real mechanics and, for a grid of 1681
+standing positions, counts the hits a motionless player would take. A section
+where any position takes zero hits is trivially campable.
+
+```text
+level                       section   min hits  safe spots   verdict
+arena_test.level.json       T02       4         0/1681       ok (must move)
+prototype_90s.level.json    S05       2         0/1681       ok (must move)
+```
+
+This is how the A05 chain and A03 projectile flaws were found and confirmed
+fixed. RUNNER, VERTICAL and RADIAL are skipped — you cannot stand still in them
+by construction. `npm test` runs the typecheck, the timing test and the audit.
 
 ```bash
 npm run level                                 # the default arena test level

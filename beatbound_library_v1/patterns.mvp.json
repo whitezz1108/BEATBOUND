@@ -111,7 +111,10 @@
           },
           "mechanicId": "A03",
           "params": {
-            "spawnSide": "LEFT"
+            "spawnSide": "LEFT",
+            "formation": "wall",
+            "gaps": 2,
+            "telegraphBeats": 1
           }
         },
         {
@@ -121,7 +124,10 @@
           },
           "mechanicId": "A03",
           "params": {
-            "spawnSide": "RIGHT"
+            "spawnSide": "RIGHT",
+            "formation": "wall",
+            "gaps": 2,
+            "telegraphBeats": 1
           }
         },
         {
@@ -131,7 +137,10 @@
           },
           "mechanicId": "A03",
           "params": {
-            "spawnSide": "TOP"
+            "spawnSide": "TOP",
+            "formation": "wall",
+            "gaps": 2,
+            "telegraphBeats": 1
           }
         },
         {
@@ -142,18 +151,20 @@
           "mechanicId": "A03",
           "params": {
             "spawnSide": "BOTTOM",
-            "count": 2
+            "formation": "wall",
+            "gaps": 2,
+            "telegraphBeats": 1
           }
         }
       ],
       "constraints": {
-        "minReactionBeats": 0.5,
+        "minReactionBeats": 1,
         "maxSimultaneousThreats": 2,
         "requiresMechanics": [
           "A03"
         ]
       },
-      "notes": "Alternating side volleys. Exercises A03 spawn direction, count and deterministic motion."
+      "notes": "Alternating side volleys. Each is a wall of projectiles with two openings, so the player must read the gap and move to it rather than stand still."
     },
     {
       "id": "AP03",

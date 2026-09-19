@@ -7,10 +7,21 @@
  *
  * Params:
  *   spawnSide  "LEFT" | "RIGHT" | "TOP" | "BOTTOM" | "random"   default "random"
- *   count      projectiles in this volley                        default 1
+ *   formation  "spread" | "wall"                                 default "spread"
+ *   count      projectiles in this volley (spread only)          default 1
  *   speed      crossing-speed multiplier                         default 1.0
- *   radius     projectile radius in field units                  default 0.028
+ *   radius     projectile radius in field units                  default 0.03
+ *   gaps       openings in a wall                                default 2
  *   lanes      optional explicit 0..1 lateral positions
+ *
+ * Two formations:
+ *
+ *   spread  a few projectiles on scattered lanes. Cheap and readable, but a
+ *           handful of thin projectiles leaves most of the field untouched, so
+ *           a volley alone cannot force the player to move.
+ *   wall    projectiles tile the spawn edge except for a small number of
+ *           openings. The player has to find a gap and get to it, which is the
+ *           formation to reach for when a section must not be campable.
  *
  * `spawnSide: "random"` draws from the event's deterministic seed, so the
  * "randomness" is fixed by the pattern, not by the run.
@@ -34,8 +45,16 @@ interface Projectile {
   y: number;
 }
 
-/** Cap the volley so a high-intensity section stays dodgeable. */
+/** Cap a spread volley so a high-intensity section stays dodgeable. */
 const MAX_COUNT = 4;
+const DEFAULT_RADIUS = 0.03;
+/**
+ * Centre-to-centre spacing of a wall.
+ *
+ * The player is 0.064 across and a projectile 0.06, so anything under ~0.124
+ * is a barrier they cannot slip through. 0.105 leaves no accidental holes.
+ */
+const WALL_SPACING = 0.105;
 
 export class ProjectileMechanic extends BaseMechanic {
   private readonly projectiles: Projectile[];
@@ -46,27 +65,60 @@ export class ProjectileMechanic extends BaseMechanic {
     super(spawn);
     const rng = makeRng(this.seed);
 
-    const baseCount = numberOr(this.params.count, 1);
-    const count = clamp(scaleCount(baseCount, this.intensity, MAX_COUNT), 1, MAX_COUNT);
-
     const speed = scaleSpeed(numberOr(this.params.speed, 1), this.intensity);
     // durationBeats is the library's "time to cross at speed 1".
     this.crossBeats = Math.max(0.25, this.timing.durationBeats / Math.max(0.25, speed));
 
-    const radius = numberOr(this.params.radius, 0.028);
-    const explicitLanes = Array.isArray(this.params.lanes) ? this.params.lanes.map(Number) : null;
+    const radius = numberOr(this.params.radius, DEFAULT_RADIUS);
     const configuredSide = String(this.params.spawnSide ?? 'random').toUpperCase();
-
-    this.projectiles = [];
-    for (let i = 0; i < count; i++) {
-      const side: Side = SIDES.includes(configuredSide as Side)
+    const pickSide = (): Side =>
+      SIDES.includes(configuredSide as Side)
         ? (configuredSide as Side)
         : SIDES[Math.floor(rng() * SIDES.length)];
+
+    this.projectiles = String(this.params.formation ?? 'spread').toLowerCase() === 'wall'
+      ? this.buildWall(rng, pickSide(), radius)
+      : this.buildSpread(rng, pickSide, radius);
+
+    this.positionAt(this.activationBeat);
+  }
+
+  private buildSpread(rng: () => number, pickSide: () => Side, radius: number): Projectile[] {
+    const baseCount = numberOr(this.params.count, 1);
+    const count = clamp(scaleCount(baseCount, this.intensity, MAX_COUNT), 1, MAX_COUNT);
+    const explicitLanes = Array.isArray(this.params.lanes) ? this.params.lanes.map(Number) : null;
+
+    const out: Projectile[] = [];
+    for (let i = 0; i < count; i++) {
       // Spread lanes evenly, nudged by the deterministic rng, keeping clear of edges.
       const lane = explicitLanes?.[i] ?? clamp((i + 0.5) / count + (rng() - 0.5) * (0.5 / count), 0.08, 0.92);
-      this.projectiles.push({ side, lane, radius, x: 0, y: 0 });
+      out.push({ side: pickSide(), lane, radius, x: 0, y: 0 });
     }
-    this.positionAt(this.activationBeat);
+    return out;
+  }
+
+  /**
+   * A barrier across one edge with a few openings.
+   *
+   * Gaps are spread evenly (with deterministic jitter) rather than placed at
+   * random, so the nearest opening is always within reach of the telegraph --
+   * the volley demands a read, not a sprint.
+   */
+  private buildWall(rng: () => number, side: Side, radius: number): Projectile[] {
+    const gaps = clamp(Math.round(numberOr(this.params.gaps, 2)), 1, 4);
+    const gapCentres: number[] = [];
+    for (let i = 0; i < gaps; i++) {
+      gapCentres.push(clamp((i + 0.5) / gaps + (rng() - 0.5) * (0.6 / gaps), 0.12, 0.88));
+    }
+
+    const out: Projectile[] = [];
+    for (let lane = WALL_SPACING / 2; lane < 1; lane += WALL_SPACING) {
+      // Drop the projectiles nearest each gap centre; the survivors on either
+      // side are then far enough apart for the player to pass between them.
+      if (gapCentres.some((g) => Math.abs(lane - g) < WALL_SPACING * 0.85)) continue;
+      out.push({ side, lane, radius, x: 0, y: 0 });
+    }
+    return out;
   }
 
   protected override onUpdate(u: MechanicUpdate): void {
