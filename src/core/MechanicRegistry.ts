@@ -15,6 +15,7 @@ import type { BeatClock } from './BeatClock';
 import type { MechanicSpawnContext, ResolvedTiming, RuntimeMechanic } from './Mechanic';
 import { scaleTelegraphBeats } from './Intensity';
 import type { EventRole, GameMode, MechanicDefinition, MechanicLibrary, ParamBag, PatternConstraints } from './types';
+import { NULL_FEEL, type FeelSink } from '../feel/FeelSink';
 
 export type MechanicFactory = (ctx: MechanicSpawnContext) => RuntimeMechanic;
 
@@ -49,6 +50,12 @@ export class MechanicRegistry {
   private readonly factories = new Map<string, MechanicFactory>();
   private readonly registrations = new Map<string, MechanicRegistration>();
   private readonly missingWarned = new Set<string>();
+  /** No-op until the game hands over a real one; the headless tools never do. */
+  private feel: FeelSink = NULL_FEEL;
+
+  useFeel(feel: FeelSink): void {
+    this.feel = feel;
+  }
 
   /** Load mechanic *data*. Implementations are registered separately. */
   loadLibrary(library: MechanicLibrary): void {
@@ -120,6 +127,7 @@ export class MechanicRegistry {
       role: request.role,
       seed: request.seed,
       clock,
+      feel: this.feel,
     });
   }
 

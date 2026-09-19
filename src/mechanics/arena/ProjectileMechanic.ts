@@ -27,7 +27,7 @@
  * "randomness" is fixed by the pattern, not by the run.
  */
 
-import { BaseMechanic, type MechanicSpawnContext, type MechanicUpdate } from '../../core/Mechanic';
+import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext, type MechanicUpdate } from '../../core/Mechanic';
 import type { Shape } from '../../core/geometry';
 import { clamp, makeRng } from '../../core/geometry';
 import { scaleCount, scaleSpeed } from '../../core/Intensity';
@@ -139,12 +139,30 @@ export class ProjectileMechanic extends BaseMechanic {
     }
   }
 
+  protected override onPhaseChange(_from: MechanicPhase, to: MechanicPhase): void {
+    if (to === 'TELEGRAPH') {
+      this.feel.sfx('projectile_charge', 0.6);
+      return;
+    }
+    if (to !== 'ACTIVE') return;
+    this.feel.sfx('projectile_fire');
+    // A muzzle flash per projectile, pushed along its travel direction.
+    for (const p of this.projectiles) {
+      const dir = directionOf(p.side);
+      this.feel.emit(p.x, p.y, {
+        count: 3, speed: 0.5, colour: '#ffd479', size: 0.006, shape: 'spark', life: 0.25,
+        direction: Math.atan2(dir.y, dir.x), spread: Math.PI * 0.4,
+      });
+    }
+    this.feel.impact('LIGHT', { x: this.projectiles[0]?.x ?? 0.5, y: this.projectiles[0]?.y ?? 0.5, shockwave: false, particles: false });
+  }
+
   protected dangerShapes(): Shape[] {
     return this.projectiles.map((p) => ({ kind: 'circle' as const, x: p.x, y: p.y, r: p.radius }));
   }
 
   render(r: Renderer): void {
-    const beat = this.spawn.clock.absoluteBeat;
+    const beat = this.spawn.clock.visualBeat;
     if (this.phase === 'TELEGRAPH') {
       const p = this.telegraphProgress(beat);
       for (const proj of this.projectiles) this.renderTelegraph(r, proj, p);

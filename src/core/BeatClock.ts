@@ -49,6 +49,8 @@ export class BeatClock {
   private lastWholeBeat = -1;
 
   private _absoluteBeat = 0;
+  private _visualBeat = 0;
+  private _visualHoldSeconds = 0;
   private _songTime = 0;
   private _deltaSeconds = 0;
   private latencySum = 0;
@@ -64,6 +66,23 @@ export class BeatClock {
   /** 0-based continuous beat since the first beat of the song. */
   get absoluteBeat(): number {
     return this._absoluteBeat;
+  }
+
+  /**
+   * The beat everything *draws* at.
+   *
+   * Normally identical to `absoluteBeat`. During a hit-stop it is held still
+   * for a few frames and then snaps forward, which is what gives an impact its
+   * weight. Scheduling, judging and collision always use `absoluteBeat`, so a
+   * freeze can never cost the player a beat or desync the music.
+   */
+  get visualBeat(): number {
+    return this._visualBeat;
+  }
+
+  /** Freeze the visual beat for a moment. The audio timeline is untouched. */
+  holdVisual(seconds: number): void {
+    this._visualHoldSeconds = Math.max(this._visualHoldSeconds, seconds);
   }
 
   get songTime(): number {
@@ -160,6 +179,12 @@ export class BeatClock {
     this._songTime = this.player.playbackTime;
     this._deltaSeconds = Math.max(0, this._songTime - previousTime);
     this._absoluteBeat = this.tempo.timeToBeats(this._songTime);
+
+    if (this._visualHoldSeconds > 0) {
+      this._visualHoldSeconds -= this._deltaSeconds;
+    } else {
+      this._visualBeat = this._absoluteBeat;
+    }
 
     this.fireDueEvents();
     this.fireBeatListeners();

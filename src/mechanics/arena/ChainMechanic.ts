@@ -13,10 +13,11 @@
  *   laneCount  lanes the field is divided into          default 4
  */
 
-import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
+import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext } from '../../core/Mechanic';
 import type { Rect, Shape } from '../../core/geometry';
 import { clamp, lerp, makeRng } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
+import { easeOutExpo } from '../../feel/Easing';
 
 export const CHAIN_DIRECTIONS = ['LEFT_TO_RIGHT', 'RIGHT_TO_LEFT', 'TOP_TO_BOTTOM', 'BOTTOM_TO_TOP'] as const;
 export type ChainDirection = (typeof CHAIN_DIRECTIONS)[number];
@@ -94,12 +95,46 @@ export class ChainMechanic extends BaseMechanic {
     }
   }
 
+  protected override onPhaseChange(_from: MechanicPhase, to: MechanicPhase): void {
+    const lane = this.laneRect();
+    const cx = lane.x + lane.w / 2;
+    const cy = lane.y + lane.h / 2;
+    if (to === 'TELEGRAPH') {
+      this.feel.sfx('chain_rattle');
+      return;
+    }
+    if (to === 'ACTIVE') {
+      // The whip is the mode's heaviest single event: full kick along travel.
+      const dir = this.travelVector();
+      this.feel.impact('HEAVY', {
+        x: cx, y: cy, dirX: dir.x, dirY: dir.y, colour: '#a68bff', sfx: 'chain_whip',
+      });
+      this.feel.emit(
+        this.direction === 'LEFT_TO_RIGHT' ? 0 : this.direction === 'RIGHT_TO_LEFT' ? 1 : cx,
+        this.direction === 'TOP_TO_BOTTOM' ? 0 : this.direction === 'BOTTOM_TO_TOP' ? 1 : cy,
+        { count: 18, speed: 1.4, colour: '#d8ccff', size: 0.008, shape: 'spark',
+          direction: Math.atan2(dir.y, dir.x), spread: Math.PI * 0.5, life: 0.35 },
+      );
+      return;
+    }
+    if (to === 'RECOVERY') this.feel.sfx('chain_impact', 0.5);
+  }
+
+  private travelVector(): { x: number; y: number } {
+    switch (this.direction) {
+      case 'LEFT_TO_RIGHT': return { x: 1, y: 0 };
+      case 'RIGHT_TO_LEFT': return { x: -1, y: 0 };
+      case 'TOP_TO_BOTTOM': return { x: 0, y: 1 };
+      case 'BOTTOM_TO_TOP': return { x: 0, y: -1 };
+    }
+  }
+
   protected dangerShapes(): Shape[] {
     return [{ kind: 'rect', ...this.sweptRect(this.spawn.clock.absoluteBeat) }];
   }
 
   render(r: Renderer): void {
-    const beat = this.spawn.clock.absoluteBeat;
+    const beat = this.spawn.clock.visualBeat;
     const lane = this.laneRect();
 
     if (this.phase === 'TELEGRAPH') {
@@ -116,6 +151,7 @@ export class ChainMechanic extends BaseMechanic {
       const swept = this.sweptRect(beat);
       r.fillRect(lane, '#3b2e6b', 0.3);
       r.fillRect(swept, '#a68bff', 0.95);
+      this.renderLinks(r, swept, beat);
       // Bright head at the leading edge sells the whip direction.
       this.renderHead(r, swept);
       return;
@@ -125,6 +161,28 @@ export class ChainMechanic extends BaseMechanic {
       const span = Math.max(0.0001, this.recoveryEndBeat - this.activeEndBeat);
       const fade = clamp(1 - (beat - this.activeEndBeat) / span, 0, 1);
       r.fillRect(lane, '#6a58b5', 0.35 * fade);
+    }
+  }
+
+  /**
+   * Chain links along the swept body, each lagging the head slightly, so the
+   * whip reads as a jointed object rather than a growing rectangle.
+   */
+  private renderLinks(r: Renderer, swept: Rect, beat: number): void {
+    const along = this.horizontal ? swept.w : swept.h;
+    const links = Math.max(2, Math.floor(along / 0.05));
+    const settle = easeOutExpo(Math.min(1, (beat - this.activationBeat) / 0.35));
+    for (let i = 0; i < links; i++) {
+      const t = (i + 0.5) / links;
+      // Segment delay: links near the tail are still catching up.
+      const wobble = (1 - settle) * 0.012 * Math.sin(i * 1.7 + beat * 22);
+      const cx = this.horizontal
+        ? (this.direction === 'RIGHT_TO_LEFT' ? swept.x + swept.w * (1 - t) : swept.x + swept.w * t)
+        : swept.x + swept.w / 2 + wobble;
+      const cy = this.horizontal
+        ? swept.y + swept.h / 2 + wobble
+        : (this.direction === 'BOTTOM_TO_TOP' ? swept.y + swept.h * (1 - t) : swept.y + swept.h * t);
+      r.strokeCircle(cx, cy, this.thickness * 0.22, '#e6dcff', 2, 0.35);
     }
   }
 

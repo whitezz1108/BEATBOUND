@@ -41,10 +41,16 @@ export class LowWallMechanic extends ScrollingObstacle {
 
   render(r: Renderer): void {
     const body = this.body();
-    r.fillRect(body, '#ffa23d', 0.95);
+    r.glow(body.x + body.w / 2, body.y + body.h, 0.1, '#ffa23d', 0.18);
+    r.fillRect(body, '#ffa23d', 0.96);
     r.strokeRect(body, '#ffe0b8', 2, 0.85);
-    // Mark the slide gap underneath so the required action is obvious.
-    r.line(body.x, GROUND_Y - this.clearance, body.x + body.w, GROUND_Y - this.clearance, '#ffe0b8', 2, 0.5);
+    // Hatch the gap you have to slide through, so the answer is unambiguous.
+    const gapTop = GROUND_Y - this.clearance;
+    for (let i = 0; i < 3; i++) {
+      const y = gapTop + (this.clearance * (i + 0.5)) / 3;
+      r.line(body.x, y, body.x + body.w, y, '#ffe0b8', 1, 0.28);
+    }
+    r.line(body.x, gapTop, body.x + body.w, gapTop, '#ffe0b8', 2, 0.6);
   }
 }
 

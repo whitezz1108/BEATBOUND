@@ -142,6 +142,49 @@
       }
     },
     {
+      "id": "A04",
+      "name": "Radial Burst",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 3,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "SYNTH"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "spatial_reading",
+        "timing"
+      ],
+      "defaults": {
+        "count": 18,
+        "gapCount": 1,
+        "gapArcDeg": 46,
+        "gapAngleDeg": -90,
+        "rotationDeg": 0,
+        "origin": "CENTER",
+        "speed": 1.0
+      },
+      "notes": "Ring of projectiles with one or more safe arcs. gapAngleDeg points at the opening; rotationDeg turns it between repeats so the safe arc travels around the arena."
+    },
+    {
       "id": "A05",
       "name": "Chain",
       "mode": "ARENA",
@@ -233,6 +276,306 @@
         "orientation": "HORIZONTAL",
         "position": 0.5,
         "thickness": 0.15
+      }
+    },
+    {
+      "id": "A07",
+      "name": "Rotating Fan",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 4,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "SYNTH"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "spatial_reading",
+        "anticipation"
+      ],
+      "defaults": {
+        "arms": 3,
+        "armArcDeg": 34,
+        "startAngleDeg": -90,
+        "rotationPerBeatDeg": 45,
+        "direction": "CW",
+        "radius": 0.72
+      },
+      "notes": "Angular arms sweeping around the arena centre. Rotation is per beat, never per frame, so the sweep stays locked to the music."
+    },
+    {
+      "id": "A08",
+      "name": "Spiral",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 4,
+      "timing": {
+        "durationBeats": 4,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION"
+        ],
+        "instruments": [
+          "HIHAT",
+          "SYNTH"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "spatial_reading",
+        "timing"
+      ],
+      "defaults": {
+        "arms": 2,
+        "stepDeg": 26,
+        "subdivision": 0.25,
+        "direction": "CW",
+        "speed": 0.9,
+        "startAngleDeg": -90,
+        "expand": true
+      },
+      "notes": "Emitter angle advances by stepDeg every subdivision, drawing a spiral of projectiles. direction CW/CCW/ALTERNATE; expand false fires inward from the rim."
+    },
+    {
+      "id": "A09",
+      "name": "Wave Sweep",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 2,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "SNARE"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "spatial_reading"
+      ],
+      "defaults": {
+        "axis": "HORIZONTAL",
+        "direction": "FORWARD",
+        "gapCount": 1,
+        "gapWidth": 0.2,
+        "thickness": 0.09,
+        "amplitude": 0.0
+      },
+      "notes": "A wall sweeping across the arena with a gap to slip through. amplitude > 0 makes the wall a travelling sine wave instead of a straight line."
+    },
+    {
+      "id": "A10",
+      "name": "Ring",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 3,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "instruments": [
+          "KICK"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "spatial_reading",
+        "positioning"
+      ],
+      "defaults": {
+        "mode": "COLLAPSE",
+        "gapCount": 1,
+        "gapArcDeg": 54,
+        "gapAngleDeg": -90,
+        "thickness": 0.07,
+        "rotationDeg": 0
+      },
+      "notes": "A ring closing in on the centre (COLLAPSE) or pushing out from it (EXPAND), with a safe arc. Pairs well with A04 as a call and response."
+    },
+    {
+      "id": "D01",
+      "name": "Single",
+      "mode": "RADIAL",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "MELODY",
+          "SNARE"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "direction_reading",
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "D02",
+          "D06"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "direction": "UP"
+      }
+    },
+    {
+      "id": "D02",
+      "name": "Opposite Double",
+      "mode": "RADIAL",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "BASS"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "simultaneous_input",
+        "direction_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "D01"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "directions": [
+          "UP",
+          "DOWN"
+        ]
+      }
+    },
+    {
+      "id": "D06",
+      "name": "Clockwise",
+      "mode": "RADIAL",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 4,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "MELODY"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "pattern_memory",
+        "direction_reading",
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "D01",
+          "D02"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "sequence": [
+          "UP",
+          "RIGHT",
+          "DOWN",
+          "LEFT"
+        ],
+        "stepBeats": 1
       }
     },
     {
@@ -578,114 +921,25 @@
       }
     },
     {
-      "id": "D01",
-      "name": "Single",
-      "mode": "RADIAL",
+      "id": "V04",
+      "name": "Drift Hold",
+      "mode": "VERTICAL",
       "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "MELODY",
-          "SNARE"
-        ],
-        "sections": [
-          "INTRO",
-          "VERSE"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "direction_reading",
-        "rhythm_accuracy"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "D02",
-          "D06"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "direction": "UP"
-      }
-    },
-    {
-      "id": "D02",
-      "name": "Opposite Double",
-      "mode": "RADIAL",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "STRONG_BEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "BASS"
-        ],
-        "sections": [
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "simultaneous_input",
-        "direction_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "D01"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "directions": [
-          "UP",
-          "DOWN"
-        ]
-      }
-    },
-    {
-      "id": "D06",
-      "name": "Clockwise",
-      "mode": "RADIAL",
-      "status": "MVP",
-      "difficulty": 2,
+      "difficulty": 4,
       "timing": {
         "durationBeats": 4,
-        "telegraphBeats": 1,
+        "telegraphBeats": 2,
         "cooldownBeats": 0
       },
       "musicTags": {
         "rhythm": [
-          "BEAT"
+          "SUSTAIN"
         ],
         "instruments": [
-          "MELODY"
+          "VOCAL",
+          "LEAD"
         ],
         "sections": [
-          "VERSE",
-          "BUILD",
           "CHORUS"
         ],
         "energy": [
@@ -694,26 +948,33 @@
         ]
       },
       "playerSkills": [
-        "pattern_memory",
-        "direction_reading",
-        "rhythm_accuracy"
+        "timing",
+        "sustain",
+        "lane_tracking"
       ],
-      "compatibility": {
-        "goodWith": [
-          "D01",
-          "D02"
-        ],
-        "avoidWith": []
-      },
       "defaults": {
-        "sequence": [
-          "UP",
-          "RIGHT",
-          "DOWN",
-          "LEFT"
+        "lane": 1,
+        "path": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ]
         ],
-        "stepBeats": 1
-      }
+        "holdBeats": 4
+      },
+      "notes": "A hold whose lane moves while it is held. path is a list of [beatOffset, lane] checkpoints; the player has to slide the hold across lanes to trace the melody."
     }
   ]
 }

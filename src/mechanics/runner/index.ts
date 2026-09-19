@@ -19,6 +19,6 @@ export function registerRunnerMechanics(registry: MechanicRegistry): void {
   registry.register('R02', (ctx) => new GapMechanic(ctx), scrolled);
   registry.register('R03', (ctx) => new LowWallMechanic(ctx), scrolled);
   registry.register('R08', (ctx) => new BouncePadMechanic(ctx), scrolled);
-  // A zone, not an obstacle: its library telegraph is enough.
-  registry.register('R09', (ctx) => new GravityFlipMechanic(ctx));
+  // The portal scrolls in like an obstacle even though its effect is a zone.
+  registry.register('R09', (ctx) => new GravityFlipMechanic(ctx), scrolled);
 }

@@ -94,20 +94,35 @@ export class LevelLoader {
   }
 
   async load(sources: LevelSources): Promise<CompiledLevel> {
-    const [level, patternLib, mechanicLib] = await Promise.all([
-      fetchJson<LevelDefinition>(sources.levelUrl),
-      fetchJson<PatternLibrary>(sources.patternsUrl),
-      fetchJson<MechanicLibrary>(sources.mechanicsUrl),
-    ]);
+    const level = await fetchJson<LevelDefinition>(sources.levelUrl);
+    await this.loadLibraries(sources.patternsUrl, sources.mechanicsUrl);
+    return this.build(level);
+  }
 
+  /** Fetch the pattern and mechanic libraries without a level. */
+  async loadLibraries(patternsUrl: string, mechanicsUrl: string): Promise<void> {
+    if (this.mechanicLibrary && this.patterns.size > 0) return;
+    const [patternLib, mechanicLib] = await Promise.all([
+      fetchJson<PatternLibrary>(patternsUrl),
+      fetchJson<MechanicLibrary>(mechanicsUrl),
+    ]);
     this.patterns = new Map(patternLib.patterns.map((p) => [p.id, p]));
     this.mechanicLibrary = mechanicLib;
+  }
 
+  /**
+   * Validate and compile a level that is already in memory.
+   *
+   * The Polish Lab builds its levels as objects rather than files, and they go
+   * through exactly this path -- same validation, same compilation -- so a lab
+   * can never drift from how a real level behaves.
+   */
+  build(level: LevelDefinition): CompiledLevel {
+    if (!this.mechanicLibrary) throw new Error('LevelLoader: call loadLibraries() before build()');
     const errors: string[] = [];
     const warnings: string[] = [];
     this.validate(level, errors, warnings);
     if (errors.length > 0) throw new LevelValidationError(errors);
-
     return this.compile(level, warnings);
   }
 
@@ -145,8 +160,14 @@ export class LevelLoader {
       }
       previousEnd = section.startBar + section.lengthBars;
 
-      if (!Array.isArray(section.patterns) || section.patterns.length === 0) {
-        errors.push(`${where}: patterns must be a non-empty array`);
+      if (!Array.isArray(section.patterns)) {
+        errors.push(`${where}: patterns must be an array`);
+        continue;
+      }
+      if (section.patterns.length === 0) {
+        // Empty on purpose is a real case: a Polish Lab movement test, or a
+        // deliberate rest. Report it, do not reject it.
+        warnings.push(`${where}: has no patterns -- the mode runs with no hazards`);
         continue;
       }
 

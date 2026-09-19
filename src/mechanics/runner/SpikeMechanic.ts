@@ -35,10 +35,17 @@ export class SpikeMechanic extends ScrollingObstacle {
 
   render(r: Renderer): void {
     const body = this.body();
-    r.fillRect(body, '#ff5c5c', 0.95);
-    r.strokeRect(body, '#ffd0d0', 2, 0.8);
-    // Apex highlight so the required clearance is readable at a glance.
-    r.line(body.x, body.y, body.x + body.w, body.y, '#ffffff', 2, 0.9);
+    // Triangular blade rather than a bar: the silhouette says "jump".
+    const tipY = body.y;
+    const baseY = body.y + body.h;
+    r.glow(body.x + body.w / 2, tipY, this.height * 1.6, '#ff5c5c', 0.2);
+    r.fillPolygon([
+      { x: body.x, y: baseY },
+      { x: body.x + body.w / 2, y: tipY },
+      { x: body.x + body.w, y: baseY },
+    ], '#ff5c5c', 0.96);
+    r.line(body.x, baseY, body.x + body.w / 2, tipY, '#ffd0d0', 2, 0.85);
+    r.line(body.x + body.w / 2, tipY, body.x + body.w, baseY, '#ffd0d0', 2, 0.85);
   }
 }
 

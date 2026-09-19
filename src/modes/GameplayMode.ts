@@ -13,11 +13,13 @@ import type { Renderer } from '../core/Renderer';
 import type { RunStatus } from '../core/RunStatus';
 import type { SpawnedMechanicInfo } from '../core/PatternScheduler';
 import type { GameMode } from '../core/types';
+import type { FeelSink } from '../feel/FeelSink';
 
 export interface ModeContext {
   clock: BeatClock;
   input: Input;
   status: RunStatus;
+  feel: FeelSink;
 }
 
 export interface GameplayMode {

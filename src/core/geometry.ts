@@ -10,9 +10,27 @@ export interface Vec2 { x: number; y: number }
 export interface Rect { x: number; y: number; w: number; h: number }
 export interface Circle { x: number; y: number; r: number }
 
+/**
+ * An annular sector -- a wedge of a ring.
+ *
+ * This is the natural hazard shape for radial choreography: a fan arm, a slice
+ * of a burst ring, the dangerous part of a collapsing ring. Angles are radians
+ * in canvas convention (0 = +x, increasing toward +y, i.e. clockwise on screen)
+ * and `a1` may exceed `a0` by up to 2*PI.
+ */
+export interface Sector {
+  cx: number;
+  cy: number;
+  rInner: number;
+  rOuter: number;
+  a0: number;
+  a1: number;
+}
+
 export type Shape =
   | ({ kind: 'rect' } & Rect)
-  | ({ kind: 'circle' } & Circle);
+  | ({ kind: 'circle' } & Circle)
+  | ({ kind: 'sector' } & Sector);
 
 export function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
@@ -37,8 +55,50 @@ export function circleIntersectsCircle(a: Circle, b: Circle): boolean {
   return dx * dx + dy * dy <= rr * rr;
 }
 
+/** Normalise to [0, 2*PI). */
+export function normalizeAngle(angle: number): number {
+  const twoPi = Math.PI * 2;
+  return ((angle % twoPi) + twoPi) % twoPi;
+}
+
+/** Shortest signed distance from `a` to `b`, in [-PI, PI]. */
+export function angleDelta(a: number, b: number): number {
+  let d = normalizeAngle(b) - normalizeAngle(a);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+
+/** Is `angle` inside the arc running from a0 forward to a1? */
+export function angleInArc(angle: number, a0: number, a1: number): boolean {
+  const span = a1 - a0;
+  if (span >= Math.PI * 2) return true;
+  const offset = normalizeAngle(angle - a0);
+  return offset <= normalizeAngle(span) + 1e-9;
+}
+
+export function circleIntersectsSector(c: Circle, s: Sector): boolean {
+  const dx = c.x - s.cx;
+  const dy = c.y - s.cy;
+  const distance = Math.hypot(dx, dy);
+  if (distance + c.r < s.rInner) return false;
+  if (distance - c.r > s.rOuter) return false;
+
+  const span = s.a1 - s.a0;
+  if (span >= Math.PI * 2) return true;
+  // Inflate the wedge by the angle the player's radius subtends at this
+  // distance, so grazing the edge counts as a hit at any radius.
+  const half = distance < 1e-6 ? Math.PI : Math.asin(Math.min(1, c.r / Math.max(distance, c.r)));
+  const angle = Math.atan2(dy, dx);
+  return angleInArc(angle, s.a0 - half, s.a1 + half);
+}
+
 export function circleIntersectsShape(c: Circle, s: Shape): boolean {
-  return s.kind === 'rect' ? circleIntersectsRect(c, s) : circleIntersectsCircle(c, s);
+  switch (s.kind) {
+    case 'rect': return circleIntersectsRect(c, s);
+    case 'circle': return circleIntersectsCircle(c, s);
+    case 'sector': return circleIntersectsSector(c, s);
+  }
 }
 
 /**

@@ -9,12 +9,8 @@
  */
 
 import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
-import {
-  RADIAL_DIRECTIONS,
-  type InputTargetMechanic,
-  type NoteTarget,
-  type RadialDirection,
-} from '../../core/capabilities';
+import type { InputTargetMechanic, NoteTarget } from '../../core/capabilities';
+import { parseDirection, type Direction8 } from '../../core/direction8';
 import type { Shape } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 
@@ -44,11 +40,14 @@ export class DirectionNoteMechanic extends BaseMechanic implements InputTargetMe
   }
 }
 
-/** Accepts `direction` (single) or `directions` (list); unknown values drop out. */
-export function readDirections(params: Record<string, unknown>): RadialDirection[] {
-  const raw = Array.isArray(params.directions) ? params.directions : [params.direction ?? 'UP'];
+/**
+ * Accepts `direction` (single) or `directions` (list), in either the eight-point
+ * names or the legacy UP/DOWN/LEFT/RIGHT spellings.
+ */
+export function readDirections(params: Record<string, unknown>): Direction8[] {
+  const raw = Array.isArray(params.directions) ? params.directions : [params.direction ?? 'N'];
   const valid = raw
-    .map((v) => String(v).toUpperCase())
-    .filter((v): v is RadialDirection => (RADIAL_DIRECTIONS as readonly string[]).includes(v));
-  return valid.length > 0 ? [...new Set(valid)] : ['UP'];
+    .map((v) => parseDirection(v))
+    .filter((v): v is Direction8 => v !== null);
+  return valid.length > 0 ? [...new Set(valid)] : ['N'];
 }

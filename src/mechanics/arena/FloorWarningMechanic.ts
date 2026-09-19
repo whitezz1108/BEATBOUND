@@ -13,10 +13,11 @@
  *   warningStyle       cosmetic tag              default "red_flash"
  */
 
-import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
+import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext } from '../../core/Mechanic';
 import type { Rect, Shape } from '../../core/geometry';
 import { clamp, makeRng } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
+import { easeIn, easeOutBack } from '../../feel/Easing';
 
 /** Never arm more than this share of the floor, whatever the intensity says. */
 const MAX_ARMED_FRACTION = 0.6;
@@ -77,23 +78,58 @@ export class FloorWarningMechanic extends BaseMechanic {
     return this.tiles.map((t) => ({ kind: 'rect' as const, ...t }));
   }
 
+  /** Centre of the armed area, for effects that need one point. */
+  private centroid(): { x: number; y: number } {
+    if (this.tiles.length === 0) return { x: 0.5, y: 0.5 };
+    let x = 0;
+    let y = 0;
+    for (const t of this.tiles) { x += t.x + t.w / 2; y += t.y + t.h / 2; }
+    return { x: x / this.tiles.length, y: y / this.tiles.length };
+  }
+
+  protected override onPhaseChange(_from: MechanicPhase, to: MechanicPhase): void {
+    if (to === 'TELEGRAPH') {
+      this.feel.sfx('floor_warning');
+      return;
+    }
+    if (to !== 'ACTIVE') return;
+    const c = this.centroid();
+    this.feel.impact('MEDIUM', { x: c.x, y: c.y, colour: '#ff2547', sfx: 'floor_impact' });
+    // Embers thrown up from each tile edge, so the floor reads as erupting.
+    for (const t of this.tiles) {
+      this.feel.emit(t.x + t.w / 2, t.y + t.h / 2, {
+        count: 4, speed: 0.5, colour: '#ff8098', size: 0.006, life: 0.45,
+        shape: 'spark', gravity: 0.35,
+      });
+    }
+  }
+
   render(r: Renderer): void {
-    const beat = this.spawn.clock.absoluteBeat;
+    const beat = this.spawn.clock.visualBeat;
     switch (this.phase) {
       case 'TELEGRAPH': {
-        // Fill ramps up toward activation so "when" is readable, not just "where".
+        // Fill ramps up toward activation so "when" is readable, not just
+        // "where", and the tile shivers harder the closer the hit gets.
         const p = this.telegraphProgress(beat);
+        const shake = 0.004 * easeIn(p) * Math.sin(beat * 46);
         for (const t of this.tiles) {
-          r.fillRect(t, '#ff4d6d', 0.10 + 0.28 * p * p);
-          r.strokeRect(inset(t, 0.004), '#ff8098', 2, 0.35 + 0.5 * p, [6, 5]);
+          const jittered = { ...t, x: t.x + shake, y: t.y - shake };
+          r.fillRect(jittered, '#ff4d6d', 0.10 + 0.28 * p * p);
+          r.strokeRect(inset(jittered, 0.004), '#ff8098', 2, 0.35 + 0.5 * p, [6, 5]);
         }
         break;
       }
       case 'ACTIVE': {
         const p = this.activeProgress(beat);
+        // Overshoot on arrival: the tile snaps past full size and settles.
+        const punch = 1 + 0.06 * (1 - easeOutBack(Math.min(1, p * 4)));
         for (const t of this.tiles) {
-          r.fillRect(t, '#ff2547', 0.92 - 0.25 * p);
-          r.strokeRect(inset(t, 0.003), '#ffd9e0', 2, 0.9);
+          const grown = {
+            x: t.x - (t.w * (punch - 1)) / 2, y: t.y - (t.h * (punch - 1)) / 2,
+            w: t.w * punch, h: t.h * punch,
+          };
+          r.fillRect(grown, '#ff2547', 0.92 - 0.25 * p);
+          r.strokeRect(inset(grown, 0.003), '#ffd9e0', 2, 0.9);
         }
         break;
       }

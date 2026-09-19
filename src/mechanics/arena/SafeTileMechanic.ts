@@ -10,7 +10,7 @@
  *   safeAreas      explicit [[x, y], ...] centres (overrides the above)
  */
 
-import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
+import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext } from '../../core/Mechanic';
 import type { Rect, Shape } from '../../core/geometry';
 import { clamp, lerp, makeRng } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
@@ -83,12 +83,25 @@ export class SafeTileMechanic extends BaseMechanic {
     );
   }
 
+  protected override onPhaseChange(_from: MechanicPhase, to: MechanicPhase): void {
+    if (to === 'TELEGRAPH') {
+      this.feel.sfx('floor_warning');
+      return;
+    }
+    if (to !== 'ACTIVE') return;
+    this.feel.impact('MEDIUM', { colour: '#ff2547', sfx: 'floor_impact', shockwave: false });
+    // Ring each refuge so the eye is pulled to safety, not to the danger.
+    for (const a of this.safeAreas) {
+      this.feel.shockwave(a.x + a.w / 2, a.y + a.h / 2, a.w * 1.6, '#4dffa6', 0.35, 2);
+    }
+  }
+
   protected dangerShapes(): Shape[] {
     return this.danger.map((rect) => ({ kind: 'rect' as const, ...rect }));
   }
 
   render(r: Renderer): void {
-    const beat = this.spawn.clock.absoluteBeat;
+    const beat = this.spawn.clock.visualBeat;
 
     if (this.phase === 'TELEGRAPH') {
       const p = this.telegraphProgress(beat);

@@ -14,6 +14,7 @@ import type { BeatClock } from './BeatClock';
 import type { Shape } from './geometry';
 import type { Renderer } from './Renderer';
 import type { EventRole, MechanicDefinition, ParamBag } from './types';
+import type { FeelSink } from '../feel/FeelSink';
 
 export type MechanicPhase = 'SCHEDULED' | 'TELEGRAPH' | 'ACTIVE' | 'RECOVERY' | 'FINISHED';
 
@@ -39,6 +40,8 @@ export interface MechanicSpawnContext {
   /** Deterministic seed derived from level + pattern + event position. */
   seed: number;
   clock: BeatClock;
+  /** Where a mechanic asks for camera, particle and audio response. */
+  feel: FeelSink;
 }
 
 export interface MechanicUpdate {
@@ -69,6 +72,7 @@ export abstract class BaseMechanic implements RuntimeMechanic {
   protected readonly activationBeat: number;
   protected readonly intensity: number;
   protected readonly seed: number;
+  protected readonly feel: FeelSink;
 
   private _phase: MechanicPhase = 'SCHEDULED';
 
@@ -80,6 +84,7 @@ export abstract class BaseMechanic implements RuntimeMechanic {
     this.activationBeat = spawn.activationBeat;
     this.intensity = spawn.intensity;
     this.seed = spawn.seed;
+    this.feel = spawn.feel;
   }
 
   get telegraphStartBeat(): number { return this.activationBeat - this.timing.telegraphBeats; }
@@ -105,9 +110,18 @@ export abstract class BaseMechanic implements RuntimeMechanic {
   }
 
   update(u: MechanicUpdate): void {
+    const previous = this._phase;
     this._phase = this.computePhase(u.beat);
+    if (previous !== this._phase) this.onPhaseChange(previous, this._phase, u.beat);
     this.onUpdate(u);
   }
+
+  /**
+   * Hook for the presentation grammar: subclasses fire their anticipation cue
+   * entering TELEGRAPH, their impact entering ACTIVE, and their settle entering
+   * RECOVERY, without every one of them re-deriving the transition.
+   */
+  protected onPhaseChange(_from: MechanicPhase, _to: MechanicPhase, _beat: number): void {}
 
   private computePhase(beat: number): MechanicPhase {
     if (beat < this.telegraphStartBeat) return 'SCHEDULED';

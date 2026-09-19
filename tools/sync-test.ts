@@ -182,9 +182,99 @@ async function main(): Promise<void> {
   check('all AP02 events use A03', ap02.every((s) => s.mechanic.definitionId === 'A03'));
 
   await checkEveryLevel();
+  await checkEveryPattern();
 
   console.log(failures === 0 ? '\nAll timing checks passed.\n' : `\n${failures} check(s) failed.\n`);
   process.exit(failures === 0 ? 0 : 1);
+}
+
+/**
+ * Every pattern in the library, scheduled and run on its own.
+ *
+ * The shipped levels only use a fraction of the library, so without this a new
+ * pattern or mechanic could be broken for a long time before anyone played the
+ * one lab that uses it. Each pattern gets a synthetic single-section level --
+ * the same thing a Polish Lab builds -- and has to schedule, spawn, update and
+ * retire cleanly.
+ */
+async function checkEveryPattern(): Promise<void> {
+  console.log('\nLibrary coverage');
+  const loader = new LevelLoader();
+  await loader.loadLibraries('/patterns.mvp.json', '/mechanics.mvp.json');
+  const registry = new MechanicRegistry();
+  registry.loadLibrary(loader.mechanics);
+  registerAllMechanics(registry);
+
+  const unimplemented = registry.unimplementedIn();
+  check(`every library mechanic has a runtime (${loader.mechanics.mechanics.length} mechanics)`,
+    unimplemented.length === 0, unimplemented.join(', '));
+
+  const patterns = [...loader.patternLibrary.values()];
+  let broken = 0;
+  let totalEvents = 0;
+  const byMode = new Map<string, number>();
+
+  for (const pattern of patterns) {
+    const bars = Math.max(1, Math.ceil(pattern.lengthBars) * 2);
+    const level = loader.build({
+      version: '1.0.0',
+      song: {
+        id: `probe_${pattern.id}`, title: pattern.id, audio: 'none.mp3',
+        bpm: 128, timeSignature: [4, 4],
+      },
+      sections: [{
+        id: `${pattern.id}-S1`, startBar: 1, lengthBars: bars, mode: pattern.mode,
+        function: 'PRACTICE', difficulty: 3,
+        patterns: [{ patternId: pattern.id, repeat: 2, intensity: 0.8 }],
+        transitionOut: null,
+      }],
+    });
+
+    const player = new FakeSongPlayer();
+    const clock = new BeatClock(player, level.tempo);
+    const scheduler = new PatternScheduler(clock, registry);
+    const live: Array<{ update: (u: { beat: number; deltaSeconds: number; secondsPerBeat: number }) => void; isFinished: boolean; hazards: () => unknown[] }> = [];
+    scheduler.onMechanicSpawned((info) => live.push(info.mechanic));
+    scheduler.scheduleLevel(level);
+
+    const beatsPerBar = level.tempo.beatsPerBar;
+    const endBeat = (level.endBar - 1) * beatsPerBar + 8;
+    let failure = '';
+    try {
+      // Run the whole thing at a fine step so mechanics that emit over time
+      // (spirals, sweeps) are actually exercised, not just constructed.
+      for (let beat = -4; beat <= endBeat; beat += 1 / 8) {
+        player.playbackTime = level.tempo.beatsToTime(beat);
+        clock.update();
+        for (const m of live) {
+          m.update({ beat, deltaSeconds: 0.03, secondsPerBeat: level.tempo.secondsPerBeatAt(beat) });
+          m.hazards();
+        }
+        for (let i = live.length - 1; i >= 0; i--) if (live[i].isFinished) live.splice(i, 1);
+      }
+      if (scheduler.spawnedMechanicCount !== scheduler.scheduledEventCount) {
+        failure = `spawned ${scheduler.spawnedMechanicCount}/${scheduler.scheduledEventCount}`;
+      } else if (live.length > 0) {
+        failure = `${live.length} mechanic(s) never retired`;
+      }
+    } catch (error) {
+      failure = `threw: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    totalEvents += scheduler.spawnedMechanicCount;
+    byMode.set(pattern.mode, (byMode.get(pattern.mode) ?? 0) + 1);
+    if (failure) {
+      broken += 1;
+      check(`${pattern.id} ${pattern.name}`, false, failure);
+    }
+  }
+
+  const summary = [...byMode.entries()].map(([mode, n]) => `${mode} ${n}`).join(', ');
+  check(
+    `all ${patterns.length} patterns schedule, run and retire (${summary}; ${totalEvents} mechanics)`,
+    broken === 0,
+    broken > 0 ? `${broken} pattern(s) failed` : '',
+  );
 }
 
 function registerAllMechanics(registry: MechanicRegistry): void {

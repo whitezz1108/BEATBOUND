@@ -12,6 +12,7 @@
  * one-way: modes know about mechanics, mechanics never know about modes.
  */
 
+import { DIRECTION8, type Direction8 } from './direction8';
 import type { Rect } from './geometry';
 import type { RuntimeMechanic } from './Mechanic';
 
@@ -19,10 +20,21 @@ import type { RuntimeMechanic } from './Mechanic';
 // Timed input (VERTICAL, RADIAL)
 // --------------------------------------------------------------------------
 
-export const RADIAL_DIRECTIONS = ['UP', 'RIGHT', 'DOWN', 'LEFT'] as const;
-export type RadialDirection = (typeof RADIAL_DIRECTIONS)[number];
+/**
+ * Radial prompts use the shared eight-direction vocabulary. The alias exists so
+ * mechanics written against the old four-direction type keep compiling.
+ */
+export const RADIAL_DIRECTIONS = DIRECTION8;
+export type RadialDirection = Direction8;
 
 export type NoteState = 'PENDING' | 'HOLDING' | 'HIT' | 'MISSED' | 'BROKEN';
+
+/** One checkpoint of a drift hold: "by this beat, be in this lane". */
+export interface NoteSegment {
+  /** Beats after the note's head. */
+  beatOffset: number;
+  lane: number;
+}
 
 /**
  * One thing the player has to press, at one musical moment.
@@ -42,6 +54,47 @@ export interface NoteTarget {
   state: NoteState;
   /** Beat the player actually hit on, for scoring feedback. */
   hitBeat?: number;
+  /**
+   * Drift holds only: lane checkpoints the hold travels through. The required
+   * lane moves while the note is held, so the player traces the melody across
+   * the board instead of pinning one key.
+   */
+  path?: NoteSegment[];
+  /** Runtime scratch: beats spent off the required lane during a hold. */
+  offBeats?: number;
+  /** Runtime scratch: the last checkpoint index a cue was played for. */
+  lastCheckpoint?: number;
+}
+
+/**
+ * Lane required at `beat`, following a drift path if the note has one.
+ *
+ * Checkpoints are steps, not ramps: the lane changes at each checkpoint and the
+ * visual path draws the ramp between them as the warning. Interpolating the
+ * *requirement* would make it ambiguous which key is currently correct.
+ */
+export function requiredLaneAt(target: NoteTarget, beat: number): number {
+  const base = target.lane ?? 1;
+  if (!target.path || target.path.length === 0) return base;
+  const elapsed = beat - target.beat;
+  let lane = target.path[0].lane;
+  for (const segment of target.path) {
+    if (elapsed >= segment.beatOffset) lane = segment.lane;
+    else break;
+  }
+  return lane;
+}
+
+/** Index of the most recently passed checkpoint, or -1. */
+export function checkpointIndexAt(target: NoteTarget, beat: number): number {
+  if (!target.path) return -1;
+  const elapsed = beat - target.beat;
+  let index = -1;
+  for (let i = 0; i < target.path.length; i++) {
+    if (elapsed >= target.path[i].beatOffset) index = i;
+    else break;
+  }
+  return index;
 }
 
 export interface InputTargetMechanic {

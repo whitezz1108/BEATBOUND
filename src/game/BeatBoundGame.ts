@@ -9,6 +9,11 @@
  *
  * This class only connects those systems and pumps them once per frame. It
  * contains no mechanic behaviour, no pattern timing and no level specifics.
+ *
+ * It runs two kinds of session through the identical path:
+ *   - a level loaded from JSON (the full demo), and
+ *   - a Polish Lab, whose level is built in memory but still compiled and
+ *     scheduled exactly like a file-backed one.
  */
 
 import { AudioEngine, BufferSongPlayer, ClickTrackPlayer, type SongPlayer } from '../core/AudioEngine';
@@ -20,6 +25,8 @@ import { ModeManager } from '../core/ModeManager';
 import { PatternScheduler } from '../core/PatternScheduler';
 import { Renderer } from '../core/Renderer';
 import { RunStatus } from '../core/RunStatus';
+import type { LevelDefinition } from '../core/types';
+import { GameFeel } from '../feel/GameFeel';
 import { ArenaMode } from '../modes/arena/ArenaMode';
 import { RunnerMode } from '../modes/runner/RunnerMode';
 import { VerticalMode } from '../modes/vertical/VerticalMode';
@@ -28,11 +35,17 @@ import { registerArenaMechanics } from '../mechanics/arena';
 import { registerRunnerMechanics } from '../mechanics/runner';
 import { registerVerticalMechanics } from '../mechanics/vertical';
 import { registerRadialMechanics } from '../mechanics/radial';
-import { COUNT_IN_BEATS, type DevOptions } from '../config';
+import { COUNT_IN_BEATS, DATA, type DevOptions } from '../config';
 import { Hud } from './Hud';
+
+export interface StartOptions extends Partial<DevOptions> {
+  /** Labs loop forever and skip the long count-in. */
+  countInBeats?: number;
+}
 
 export class BeatBoundGame {
   private readonly audio = new AudioEngine();
+  readonly feel = new GameFeel(this.audio);
   private readonly input = new Input();
   private readonly registry = new MechanicRegistry();
   private readonly loader = new LevelLoader();
@@ -45,6 +58,7 @@ export class BeatBoundGame {
   private songPlayer!: SongPlayer;
   private level!: CompiledLevel;
   private hud: Hud | null = null;
+  private unsubscribeBeat: (() => void) | null = null;
 
   private detachInput: (() => void) | null = null;
   private detachLifecycle: (() => void) | null = null;
@@ -52,9 +66,12 @@ export class BeatBoundGame {
   private running = false;
   private paused = false;
   private pauseReason: 'MANUAL' | 'STALL' = 'MANUAL';
-  /** False until the clock has run once, so the initial lead-in is not a "stall". */
   private hasTicked = false;
   private startBar = 1;
+  private countInBeats = COUNT_IN_BEATS;
+  /** Labs restart instead of ending, so a failure costs a beat not a session. */
+  private loopOnEnd = false;
+
   /**
    * A frame gap larger than this means the browser stopped rendering (hidden
    * window, occluded tab, heavy GC). Playing on would fire every missed beat in
@@ -69,22 +86,80 @@ export class BeatBoundGame {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas context unavailable');
     this.renderer = new Renderer(ctx);
+    this.registry.useFeel(this.feel);
   }
 
-  /** Load data and build every system. Does not start playback. */
+  get compiledLevel(): CompiledLevel {
+    return this.level;
+  }
+
+  get runStatus(): RunStatus {
+    return this.status;
+  }
+
+  /**
+   * Load the pattern and mechanic libraries without a level.
+   *
+   * Labs need this first: they size their own sections from real pattern
+   * lengths, so asking before the library exists silently produces one-bar
+   * sections.
+   */
+  async prepareLibraries(): Promise<void> {
+    await this.loader.loadLibraries(DATA.patterns, DATA.mechanics);
+  }
+
+  /** Bars a pattern occupies, for labs that size their own sections. */
+  lengthOfPattern(patternId: string): number {
+    return this.loader.patternLibrary.get(patternId)?.lengthBars ?? 0;
+  }
+
+  /** Fire one mechanic on the next beat. The Polish Lab's trigger key. */
+  labTrigger(mechanicId: string, params: Record<string, unknown>, intensity: number): boolean {
+    if (!this.scheduler) return false;
+    const nextBeat = Math.floor(this.clock.absoluteBeat) + 1;
+    return this.scheduler.spawnOneShot(mechanicId, params, intensity, nextBeat);
+  }
+
+  // ---- loading ----------------------------------------------------------
+
+  /** Load a level from JSON. */
   async load(sources: LevelSources): Promise<CompiledLevel> {
-    this.level = await this.loader.load(sources);
+    await this.loader.loadLibraries(sources.patternsUrl, sources.mechanicsUrl);
+    const definition = await fetchLevel(sources.levelUrl);
+    return this.adopt(this.loader.build(definition), false);
+  }
+
+  /** Load a level built in memory (the Polish Lab path). */
+  async loadDefinition(definition: LevelDefinition, options: { loop?: boolean } = {}): Promise<CompiledLevel> {
+    await this.loader.loadLibraries(DATA.patterns, DATA.mechanics);
+    return this.adopt(this.loader.build(definition), options.loop ?? false);
+  }
+
+  private adopt(level: CompiledLevel, loop: boolean): CompiledLevel {
+    this.level = level;
+    this.loopOnEnd = loop;
+
     this.registry.loadLibrary(this.loader.mechanics);
     registerArenaMechanics(this.registry);
     registerRunnerMechanics(this.registry);
     registerVerticalMechanics(this.registry);
     registerRadialMechanics(this.registry);
 
-    this.songPlayer = await this.createSongPlayer();
+    this.buildSystems();
+    this.reportReadiness();
+    return level;
+  }
+
+  /** (Re)create every per-run system. Called on load and on a lab rebuild. */
+  private buildSystems(): void {
+    this.unsubscribeBeat?.();
+    this.songPlayer?.stop();
+
+    this.songPlayer = this.makeSongPlayer();
     this.clock = new BeatClock(this.songPlayer, this.level.tempo);
     this.scheduler = new PatternScheduler(this.clock, this.registry);
 
-    const modeContext = { clock: this.clock, input: this.input, status: this.status };
+    const modeContext = { clock: this.clock, input: this.input, status: this.status, feel: this.feel };
     this.modes = new ModeManager(this.clock, modeContext);
     // One line per mode. DUO has no mechanics or patterns in the library yet,
     // so it still falls through to the placeholder.
@@ -97,6 +172,10 @@ export class BeatBoundGame {
     this.scheduleSections();
     this.scheduler.scheduleLevel(this.level);
 
+    this.unsubscribeBeat = this.clock.onBeat((wholeBeat) => {
+      this.feel.onBeat(wholeBeat, this.clock.beatsPerBar);
+    });
+
     this.hud = new Hud(this.hudRoot, {
       clock: this.clock,
       level: this.level,
@@ -107,50 +186,58 @@ export class BeatBoundGame {
       currentSection: () => this.currentSection(),
       countIn: () => this.isCountingIn,
     });
-
-    this.reportReadiness();
-    return this.level;
   }
 
   /** Mode changes happen on the section's bar line, minus its telegraph lead-in. */
   private scheduleSections(): void {
     const beatsPerBar = this.clock.beatsPerBar;
     let previousTransition: string | null = null;
-
     for (const section of this.level.sections) {
       const startBeat = (section.startBar - 1) * beatsPerBar;
       // Negative switch beats are fine and intended: the count-in runs at
-      // negative song time, so bar 1's mode is already live (and its transition
-      // already finished) by the time beat 0 arrives.
-      const switchBeat = startBeat - section.leadInBeats;
-      this.modes.scheduleMode(section.mode, switchBeat, previousTransition);
+      // negative song time, so bar 1's mode is already live by beat 0.
+      this.modes.scheduleMode(section.mode, startBeat - section.leadInBeats, previousTransition);
       previousTransition = section.transitionOut;
     }
   }
 
-  private async createSongPlayer(): Promise<SongPlayer> {
-    const buffer = await this.audio.loadBuffer(this.level.song.audio);
-    if (buffer) return new BufferSongPlayer(this.audio, buffer, this.level.song.audio);
-    // No audio asset -> synthesize a metronome so the rhythm systems still run
-    // on the real audio clock. Drop the mp3 in and it is used automatically.
-    console.info(`[BeatBound] audio "${this.level.song.audio}" not found -- using a generated click track.`);
-    const lengthSeconds = this.level.tempo.beatsToTime((this.level.endBar - 1) * this.level.tempo.beatsPerBar + 4);
+  private makeSongPlayer(): SongPlayer {
+    const lengthSeconds = this.level.tempo.beatsToTime(
+      (this.level.endBar - 1) * this.level.tempo.beatsPerBar + 8,
+    );
     return new ClickTrackPlayer(this.audio, this.level.tempo, lengthSeconds);
   }
 
-  async start(dev: Partial<DevOptions> = {}): Promise<void> {
+  /** Try the level's audio asset; fall back to the click track if it is absent. */
+  private async attachSongAudio(): Promise<void> {
+    const buffer = await this.audio.loadBuffer(this.level.song.audio);
+    if (!buffer) {
+      console.info(`[BeatBound] audio "${this.level.song.audio}" not found -- using a generated click track.`);
+      return;
+    }
+    this.songPlayer = new BufferSongPlayer(this.audio, buffer, this.level.song.audio);
+    this.clock = new BeatClock(this.songPlayer, this.level.tempo);
+  }
+
+  // ---- session ----------------------------------------------------------
+
+  async start(dev: StartOptions = {}): Promise<void> {
     if (this.running) return;
     await this.audio.resume();
+    if (!this.loopOnEnd) await this.attachSongAudio();
+
     this.detachInput = this.input.attach();
     this.detachLifecycle = this.attachLifecycle();
+    this.countInBeats = dev.countInBeats ?? COUNT_IN_BEATS;
     this.status.reset();
     this.status.invincible = dev.invincible ?? false;
+    this.feel.reset();
     this.hasTicked = false;
+    this.paused = false;
 
     const startBeat = this.applyStartBar(dev.startBar ?? 1);
-    // Count-in is musical: N beats of lead before the start bar, any tempo.
     this.songPlayer.start(
-      this.level.tempo.beatsToTime(COUNT_IN_BEATS),
+      this.level.tempo.beatsToTime(this.countInBeats),
       this.level.tempo.beatsToTime(startBeat),
     );
     this.running = true;
@@ -158,32 +245,34 @@ export class BeatBoundGame {
   }
 
   /**
-   * Dev seek. Everything scheduled before the start bar is discarded rather
-   * than fired in a burst, and the mode for that bar is activated directly
-   * since its scheduled switch was one of the things dropped.
+   * Rebuild and relaunch with a new level definition, keeping the session
+   * alive. The lab uses this for BPM, intensity and variant changes.
    */
-  /** Absolute beat the run actually begins at (after any dev seek). */
-  private get startBeat(): number {
-    return (this.startBar - 1) * this.clock.beatsPerBar;
+  async swapDefinition(definition: LevelDefinition, dev: StartOptions = {}): Promise<void> {
+    const wasRunning = this.running;
+    this.running = false;
+    cancelAnimationFrame(this.rafHandle);
+    this.level = this.loader.build(definition);
+    this.buildSystems();
+    if (wasRunning) {
+      this.detachInput?.();
+      this.detachLifecycle?.();
+      this.detachInput = null;
+      this.detachLifecycle = null;
+      await this.start(dev);
+    }
   }
 
-  /** True while the silent lead-in before the start bar is still running. */
-  get isCountingIn(): boolean {
-    return this.clock.absoluteBeat < this.startBeat;
-  }
-
-  private applyStartBar(startBar: number): number {
-    const lastBar = Math.max(1, this.level.endBar - 1);
-    const bar = Math.min(Math.max(1, Math.floor(startBar)), lastBar);
-    this.startBar = bar;
-    if (bar === 1) return 0;
-
-    const startBeat = (bar - 1) * this.clock.beatsPerBar;
-    const dropped = this.clock.seekTo(startBeat);
-    const section = this.level.sections.find((s) => bar >= s.startBar && bar < s.endBar);
-    if (section) this.modes.setMode(section.mode, startBeat, null);
-    console.info(`[BeatBound] starting at bar ${bar}; skipped ${dropped} scheduled event(s).`);
-    return startBeat;
+  /** Instant restart -- the lab's R key, and what a looping lab does at the end. */
+  async restart(dev: StartOptions = {}): Promise<void> {
+    this.running = false;
+    cancelAnimationFrame(this.rafHandle);
+    this.detachInput?.();
+    this.detachLifecycle?.();
+    this.detachInput = null;
+    this.detachLifecycle = null;
+    this.buildSystems();
+    await this.start(dev);
   }
 
   stop(): void {
@@ -196,14 +285,12 @@ export class BeatBoundGame {
     this.detachLifecycle = null;
   }
 
-  /**
-   * requestAnimationFrame stops in a hidden tab while the audio clock keeps
-   * running. Without this, returning to the tab would dump every missed beat
-   * into a single frame. Freezing song time keeps the run honest instead.
-   */
   private attachLifecycle(): () => void {
     const onVisibility = () => { if (document.hidden) this.pause(); };
-    const onKey = (e: KeyboardEvent) => { if (e.key.toLowerCase() === 'p') this.togglePause(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (document.activeElement instanceof HTMLInputElement) return;
+      if (e.key.toLowerCase() === 'p') this.togglePause();
+    };
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('keydown', onKey);
     return () => {
@@ -230,10 +317,34 @@ export class BeatBoundGame {
     else this.pause();
   }
 
+  /** Absolute beat the run begins at (after any dev seek). */
+  private get startBeat(): number {
+    return (this.startBar - 1) * this.clock.beatsPerBar;
+  }
+
+  get isCountingIn(): boolean {
+    return this.clock.absoluteBeat < this.startBeat;
+  }
+
+  private applyStartBar(startBar: number): number {
+    const lastBar = Math.max(1, this.level.endBar - 1);
+    const bar = Math.min(Math.max(1, Math.floor(startBar)), lastBar);
+    this.startBar = bar;
+    if (bar === 1) return 0;
+
+    const startBeat = (bar - 1) * this.clock.beatsPerBar;
+    const dropped = this.clock.seekTo(startBeat);
+    const section = this.level.sections.find((s) => bar >= s.startBar && bar < s.endBar);
+    if (section) this.modes.setMode(section.mode, startBeat, null);
+    console.info(`[BeatBound] starting at bar ${bar}; skipped ${dropped} scheduled event(s).`);
+    return startBeat;
+  }
+
+  // ---- frame ------------------------------------------------------------
+
   private frame = (): void => {
     if (!this.running) return;
     if (this.paused) {
-      // Hold everything: no clock update means no callbacks and no drift.
       this.draw();
       this.hud?.render();
       this.rafHandle = requestAnimationFrame(this.frame);
@@ -241,7 +352,6 @@ export class BeatBoundGame {
     }
     this.songPlayer.update();
 
-    // Detect a rendering stall before advancing musical time.
     const gap = this.songPlayer.playbackTime - this.clock.songTime;
     if (this.hasTicked && gap > BeatBoundGame.STALL_SECONDS) {
       this.pause(this.clock.songTime, 'STALL');
@@ -251,6 +361,8 @@ export class BeatBoundGame {
       return;
     }
 
+    // A hit-stop freezes what is drawn, never the schedule or the music.
+    if (this.feel.isHitStopped) this.clock.holdVisual(1 / 60);
     this.clock.update();
     this.hasTicked = true;
 
@@ -260,9 +372,9 @@ export class BeatBoundGame {
       secondsPerBeat: this.clock.secondsPerBeat,
     };
     this.modes.update(update);
-    // Press-edge flags live for exactly one frame; clear them once every mode
-    // that cares has read them.
     this.input.endFrame();
+    this.feel.update(this.clock.deltaSeconds, this.clock.visualBeat);
+    this.feel.setEnergy(this.sectionEnergy());
 
     this.checkRunEnd();
     this.draw();
@@ -270,11 +382,23 @@ export class BeatBoundGame {
     this.rafHandle = requestAnimationFrame(this.frame);
   };
 
+  /** Section difficulty drives how busy the ambient layer is. */
+  private sectionEnergy(): number {
+    const section = this.currentSection();
+    if (!section) return 0.3;
+    const difficulty = section.definition.difficulty ?? 2;
+    const intensity = section.placements[0]?.intensity ?? 0.5;
+    return Math.min(1, (difficulty - 1) / 4 * 0.6 + intensity * 0.4);
+  }
+
   private checkRunEnd(): void {
     const endBeat = (this.level.endBar - 1) * this.clock.beatsPerBar;
-    if (this.clock.absoluteBeat >= endBeat && this.status.outcome === 'PLAYING') {
-      this.status.complete();
+    if (this.clock.absoluteBeat < endBeat) return;
+    if (this.loopOnEnd) {
+      void this.restart({ invincible: this.status.invincible, countInBeats: this.countInBeats });
+      return;
     }
+    if (this.status.outcome === 'PLAYING') this.status.complete();
   }
 
   private draw(): void {
@@ -287,10 +411,18 @@ export class BeatBoundGame {
       canvas.height = Math.round(cssHeight * dpr);
     }
     renderer.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    renderer.resetCamera();
     renderer.clear(cssWidth, cssHeight, '#05070d');
     renderer.layout(cssWidth, cssHeight);
 
+    // Rendering priority (see the architecture notes): background, ambient,
+    // level geometry + telegraph + hazards, player, feedback, then UI.
+    this.feel.applyCamera(renderer);
+    renderer.withFieldClip(() => this.feel.renderBackground(renderer));
     this.modes.render(renderer);
+    renderer.withFieldClip(() => this.feel.renderForeground(renderer));
+    renderer.resetCamera();
+    this.feel.renderScreen(renderer, cssWidth, cssHeight);
     this.drawOverlays(renderer);
   }
 
@@ -328,7 +460,6 @@ export class BeatBoundGame {
     return this.level.sections.find((s) => bar >= s.startBar && bar < s.endBar) ?? null;
   }
 
-  /** One consolidated console report: data problems and missing implementations. */
   private reportReadiness(): void {
     for (const w of this.level.warnings) console.warn(`[LevelLoader] ${w}`);
     const missing = new Set<string>();
@@ -343,4 +474,10 @@ export class BeatBoundGame {
       console.info(`[BeatBound] level references mechanics without runtimes yet: ${[...missing].sort().join(', ')}`);
     }
   }
+}
+
+async function fetchLevel(url: string): Promise<LevelDefinition> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to load ${url}: HTTP ${res.status}`);
+  return (await res.json()) as LevelDefinition;
 }

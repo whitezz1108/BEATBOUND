@@ -13,10 +13,14 @@
  * SCROLL_LEAD_BEATS of spawn lead instead.
  */
 
+import { TUNING } from '../../tuning';
+
 export const GROUND_Y = 0.72;
+/** Mirror of GROUND_Y, used when gravity is inverted. */
+export const CEILING_Y = 1 - GROUND_Y;
 export const PLAYER_X = 0.22;
 /** Field units the track travels per beat. */
-export const UNITS_PER_BEAT = 0.2;
+export const UNITS_PER_BEAT = TUNING.runner.unitsPerBeat;
 /** One bar of run-up: obstacles enter just off the right edge. */
 export const SCROLL_LEAD_BEATS = 4;
 /** Beats after passing the player before a mechanic is retired. */

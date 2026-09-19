@@ -11,10 +11,11 @@
  *   thickness    band thickness              default 0.15
  */
 
-import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
+import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext } from '../../core/Mechanic';
 import type { Rect, Shape } from '../../core/geometry';
 import { clamp, lerp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
+import { easeIn, easeOutExpo } from '../../feel/Easing';
 
 /** Keep a crossed pair from sealing off the arena. */
 const MAX_THICKNESS = 0.2;
@@ -43,28 +44,65 @@ export class LaserMechanic extends BaseMechanic {
       : { x: this.position - this.thickness / 2, y: 0, w: this.thickness, h: 1 };
   }
 
+  protected override onPhaseChange(_from: MechanicPhase, to: MechanicPhase): void {
+    const along = this.horizontal ? { x: 0.5, y: this.position } : { x: this.position, y: 0.5 };
+    if (to === 'TELEGRAPH') {
+      this.feel.sfx('laser_charge');
+      return;
+    }
+    if (to === 'ACTIVE') {
+      this.feel.impact('MEDIUM', {
+        x: along.x, y: along.y, colour: '#ff2f86', sfx: 'laser_fire',
+        dirX: this.horizontal ? 0 : 1, dirY: this.horizontal ? 1 : 0,
+      });
+      // Sparks along the whole beam, not just at a point.
+      this.feel.emit(along.x, along.y, {
+        count: 16, speed: 0.8, colour: '#ffb3d5', size: 0.007, shape: 'spark', life: 0.3,
+        direction: this.horizontal ? 0 : Math.PI / 2, spread: Math.PI * 0.35,
+      });
+    }
+  }
+
   protected dangerShapes(): Shape[] {
     return [{ kind: 'rect', ...this.beam() }];
   }
 
   render(r: Renderer): void {
-    const beat = this.spawn.clock.absoluteBeat;
+    const beat = this.spawn.clock.visualBeat;
     const beam = this.beam();
 
     if (this.phase === 'TELEGRAPH') {
-      // A thin sight-line thickens into the full beam as the hit approaches.
+      // AIM: a hairline sight. CHARGE: it thickens and particles converge.
       const p = this.telegraphProgress(beat);
+      const charge = easeIn(p);
       const preview: Rect = this.horizontal
-        ? { ...beam, y: this.position - (this.thickness * p) / 2, h: this.thickness * p }
-        : { ...beam, x: this.position - (this.thickness * p) / 2, w: this.thickness * p };
+        ? { ...beam, y: this.position - (this.thickness * charge) / 2, h: this.thickness * charge }
+        : { ...beam, x: this.position - (this.thickness * charge) / 2, w: this.thickness * charge };
       r.fillRect(preview, '#ff5fa2', 0.12 + 0.2 * p);
-      if (this.horizontal) r.line(0, this.position, 1, this.position, '#ff8ec4', 2, 0.4 + 0.5 * p);
-      else r.line(this.position, 0, this.position, 1, '#ff8ec4', 2, 0.4 + 0.5 * p);
+      if (this.horizontal) r.line(0, this.position, 1, this.position, '#ff8ec4', 1.5, 0.4 + 0.5 * p);
+      else r.line(this.position, 0, this.position, 1, '#ff8ec4', 1.5, 0.4 + 0.5 * p);
+
+      // Emitter nodes at both ends pulse in time with the charge.
+      const nodeRadius = 0.012 + 0.02 * charge;
+      const ends = this.horizontal
+        ? [{ x: 0, y: this.position }, { x: 1, y: this.position }]
+        : [{ x: this.position, y: 0 }, { x: this.position, y: 1 }];
+      for (const e of ends) {
+        r.glow(e.x, e.y, nodeRadius * 3, '#ff8ec4', 0.25 + 0.45 * charge);
+        r.fillCircle(e.x, e.y, nodeRadius, '#ffe3f0', 0.6 + 0.4 * charge);
+      }
+      if (p > 0.55) this.feel.telegraph(ends[0].x, ends[0].y, '#ff8ec4', p);
       return;
     }
 
     if (this.phase === 'ACTIVE') {
-      r.fillRect(beam, '#ff2f86', 0.9);
+      // FIRE then STABILIZE: an overshoot on contact settling to the steady beam.
+      const settle = easeOutExpo(Math.min(1, this.activeProgress(beat) * 5));
+      const swell = 1 + 0.5 * (1 - settle);
+      const fired: Rect = this.horizontal
+        ? { ...beam, y: this.position - (this.thickness * swell) / 2, h: this.thickness * swell }
+        : { ...beam, x: this.position - (this.thickness * swell) / 2, w: this.thickness * swell };
+      r.fillRect(fired, '#ff2f86', 0.9);
       // Hot core, so the lethal band reads instantly.
       const core: Rect = this.horizontal
         ? { ...beam, y: this.position - this.thickness / 6, h: this.thickness / 3 }

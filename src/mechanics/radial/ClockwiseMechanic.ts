@@ -11,12 +11,8 @@
  */
 
 import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
-import {
-  RADIAL_DIRECTIONS,
-  type InputTargetMechanic,
-  type NoteTarget,
-  type RadialDirection,
-} from '../../core/capabilities';
+import type { InputTargetMechanic, NoteTarget } from '../../core/capabilities';
+import { DIRECTION8, parseDirection, type Direction8 } from '../../core/direction8';
 import type { Shape } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 
@@ -48,12 +44,11 @@ export class ClockwiseMechanic extends BaseMechanic implements InputTargetMechan
   }
 }
 
-function readSequence(params: Record<string, unknown>): RadialDirection[] {
+/** Defaults to a full eight-step clockwise turn when no sequence is given. */
+function readSequence(params: Record<string, unknown>): Direction8[] {
   const raw = Array.isArray(params.sequence) ? params.sequence : [];
-  const valid = raw
-    .map((v) => String(v).toUpperCase())
-    .filter((v): v is RadialDirection => (RADIAL_DIRECTIONS as readonly string[]).includes(v));
-  return valid.length > 0 ? valid : [...RADIAL_DIRECTIONS];
+  const valid = raw.map((v) => parseDirection(v)).filter((v): v is Direction8 => v !== null);
+  return valid.length > 0 ? valid : [...DIRECTION8];
 }
 
 function numberOr(value: unknown, fallback: number): number {

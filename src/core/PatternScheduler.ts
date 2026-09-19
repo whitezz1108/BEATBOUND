@@ -20,7 +20,7 @@ import type { CompiledLevel, CompiledPlacement, CompiledSection } from './LevelL
 import type { RuntimeMechanic } from './Mechanic';
 import type { MechanicRegistry } from './MechanicRegistry';
 import { specToRelativeBeats } from './TempoMap';
-import type { EventRole, GameMode, MechanicDefinition, PatternEvent } from './types';
+import type { EventRole, GameMode, MechanicDefinition, ParamBag, PatternEvent } from './types';
 
 /** Context handed out with every spawned mechanic. */
 export interface SpawnedMechanicInfo {
@@ -123,6 +123,38 @@ export class PatternScheduler {
         `${pattern.id}#${eventIndex}->${event.mechanicId}`,
       );
     }
+  }
+
+  /**
+   * Spawn a single mechanic outside any pattern.
+   *
+   * This exists for the Polish Lab's "trigger it again" key. It still goes
+   * through MechanicRegistry with resolved params and timing, so a lab is
+   * exercising the same construction path a real pattern would.
+   */
+  spawnOneShot(
+    mechanicId: string,
+    params: ParamBag,
+    intensity: number,
+    activationBeat: number,
+    sectionId = 'LAB',
+  ): boolean {
+    const definition = this.registry.getDefinition(mechanicId);
+    if (!definition) return false;
+    const mechanic = this.registry.create(
+      { mechanicId, activationBeat, params, intensity, role: 'SYSTEM', seed: (Math.random() * 1e9) >>> 0 },
+      this.clock,
+    );
+    if (!mechanic) return false;
+    this.spawned += 1;
+    const event: PatternEvent = { at: { bar: 1, beat: 1 }, mechanicId, params };
+    for (const sink of this.sinks) {
+      sink({
+        mechanic, definition, mode: definition.mode, sectionId, patternId: 'ONE_SHOT',
+        activationBeat, role: 'SYSTEM', event,
+      });
+    }
+    return true;
   }
 
   reset(): void {

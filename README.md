@@ -17,14 +17,34 @@ npm run audit        # can any section be beaten standing still?
 npm run build        # typecheck + production bundle
 ```
 
+### Polish Lab
+
+The combined demo is no longer the tuning environment. `?lab=<id>` launches an
+isolated test that loops forever — one mode, one mechanic or one pattern family,
+with live BPM and intensity controls. The lab menu is on the start screen.
+
+| Keys | |
+| --- | --- |
+| `R` | instant reset |
+| `Space` | trigger this lab's mechanic again |
+| `1` `2` `3` | intensity preset (0.25 / 0.55 / 0.90) |
+| `-` `=` | BPM ±5 |
+| `[` `]` | cycle pattern variant |
+| `,` `.` | polish preset: SUBTLE / STANDARD / MAX |
+| `Tab` | back to the lab menu |
+
+Labs build their level in memory and hand it to the same `LevelLoader` the JSON
+levels use, so a lab exercises the real compile → schedule → spawn path rather
+than a shortcut.
+
 ### Modes and controls
 
 | Mode | Gameplay | Controls |
 | --- | --- | --- |
 | ARENA | Top-down dodging | **WASD / arrows** move |
-| RUNNER | Side-scrolling platforming | **W / ↑ / space** jump, **S / ↓** slide |
+| RUNNER | Auto-run rhythm platforming | **W / ↑ / space** jump (hold = higher), **S / ↓** slide |
 | VERTICAL | Four-lane falling notes | **D F J K** (or **1–4**) |
-| RADIAL | Four-direction notes | **arrows** or **WASD** |
+| RADIAL | Eight-direction notes | **arrows** or **WASD**; diagonals are two keys at once |
 | DUO | Two-player co-op | not implemented — no mechanics in the library yet |
 
 **P** pauses, **R** restarts. The start screen has a level picker, a start-bar
@@ -131,13 +151,43 @@ warning is spatial. They ask the registry for `spawnLeadBeats` instead, so
 `PatternScheduler` creates them a bar early without knowing why, and
 `ModeManager` holds them until the RUNNER section actually starts.
 
+### Game feel
+
+Presentation lives in `src/feel/` behind one facade. Mechanics describe *what
+happened* — "a heavy impact here, pointing that way" — and `GameFeel` decides
+what the camera, particles, screen and audio do about it. Nothing else owns a
+shake timer or a flash.
+
+| File | Role |
+| --- | --- |
+| `GameFeel.ts` | The facade: `impact`, `playerHit`, `perfectDodge`, `telegraph`, ambient layer |
+| `CameraFX.ts` | Beat and downbeat pulses (in beats), shake and directional kick (in seconds) |
+| `ScreenFX.ts` | Flashes, vignette pulses, shockwave rings — all one-shot |
+| `ParticlePool.ts` | 900-particle pool, no per-emission allocation |
+| `AudioFX.ts` | ~28 named cues, synthesized, mixed under the music |
+| `Easing.ts` | The motion grammar: telegraph easeIn, attack easeOut, impact easeOutBack |
+| `FeelSink.ts` | The narrow interface mechanics use; `NULL_FEEL` lets headless tools run the same code |
+
+Impact levels are `LIGHT` / `MEDIUM` / `HEAVY`. A player hit also triggers a
+60 ms **hit-stop**: `BeatClock.visualBeat` is held while `absoluteBeat` keeps
+running, so the picture freezes but scheduling, judging and the music never do.
+
+All tuning is centralised in `src/tuning.ts` — camera, arena, runner, vertical,
+radial and ambient values, plus the three polish presets.
+
 ### Mechanic coverage
 
 | Mode | Implemented |
 | --- | --- |
-| ARENA | A01 Floor Warning, A02 Safe Tile, A03 Projectile, A05 Chain, A06 Laser |
+| ARENA | A01 Floor Warning, A02 Safe Tile, A03 Projectile, **A04 Radial Burst**, A05 Chain, A06 Laser, **A07 Rotating Fan**, **A08 Spiral**, **A09 Wave Sweep**, **A10 Ring** |
 | RUNNER | R01 Spike, R02 Gap, R03 Low Wall, R08 Bounce Pad, R09 Gravity Flip |
-| VERTICAL | V01 Tap, V02 Hold, V03 Double |
-| RADIAL | D01 Single, D02 Opposite Double, D06 Clockwise |
+| VERTICAL | V01 Tap, V02 Hold, V03 Double, **V04 Drift Hold** |
+| RADIAL | D01 Single, D02 Opposite Double, D06 Clockwise — all across **eight** directions |
 
-Every mechanic in `mechanics.mvp.json` now has a runtime.
+All 22 mechanics and all 45 patterns have runtimes, and `npm test` fails if any
+pattern stops scheduling, spawning or retiring cleanly.
+
+Directions live in `src/core/direction8.ts`: one table maps N/NE/E/SE/S/SW/W/NW
+to angles, vectors, glyphs, colours and the cardinal keys that enter them. The
+legacy `UP`/`DOWN`/`LEFT`/`RIGHT` spellings still parse, so existing patterns
+were not touched.
