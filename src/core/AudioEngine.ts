@@ -17,7 +17,11 @@ export interface SongPlayer {
   readonly duration: number;
   /** Human-readable source, for the HUD. */
   readonly sourceLabel: string;
-  start(leadInSeconds?: number): void;
+  /**
+   * Begin playback after `leadInSeconds` of silence, at `startOffsetSeconds`
+   * into the song (the dev "start at bar N" path).
+   */
+  start(leadInSeconds?: number, startOffsetSeconds?: number): void;
   stop(): void;
   /**
    * Freeze song time. Used when the page stops rendering so the run cannot
@@ -117,11 +121,14 @@ abstract class ContextClockPlayer implements SongPlayer {
     this.onResume(this.pausedSongTime);
   }
 
-  start(leadInSeconds = 0.15): void {
+  start(leadInSeconds = 0.15, startOffsetSeconds = 0): void {
     if (this.started) return;
-    this.startCtxTime = this.engine.ctx.currentTime + leadInSeconds;
+    // Sound begins at `playAt`; startCtxTime is the audio-clock time at which
+    // song time would read zero, which may be in the past when seeking forward.
+    const playAt = this.engine.ctx.currentTime + leadInSeconds;
+    this.startCtxTime = playAt - startOffsetSeconds;
     this.started = true;
-    this.onStart(this.startCtxTime);
+    this.onStart(playAt, startOffsetSeconds);
   }
 
   stop(): void {
@@ -132,7 +139,7 @@ abstract class ContextClockPlayer implements SongPlayer {
 
   update(): void {}
 
-  protected abstract onStart(atCtxTime: number): void;
+  protected abstract onStart(playAtCtxTime: number, startOffsetSeconds: number): void;
   protected abstract onStop(): void;
   protected abstract onPause(): void;
   protected abstract onResume(songTime: number): void;
@@ -150,11 +157,11 @@ export class BufferSongPlayer extends ContextClockPlayer {
     return this.buffer.duration;
   }
 
-  protected onStart(atCtxTime: number): void {
+  protected onStart(playAtCtxTime: number, startOffsetSeconds: number): void {
     const node = this.engine.ctx.createBufferSource();
     node.buffer = this.buffer;
     node.connect(this.engine.master);
-    node.start(atCtxTime);
+    node.start(playAtCtxTime, Math.max(0, startOffsetSeconds));
     this.node = node;
   }
 
@@ -205,8 +212,8 @@ export class ClickTrackPlayer extends ContextClockPlayer {
     this.out.connect(engine.master);
   }
 
-  protected onStart(_atCtxTime: number): void {
-    this.nextBeat = 0;
+  protected onStart(_playAtCtxTime: number, startOffsetSeconds: number): void {
+    this.nextBeat = Math.max(0, Math.ceil(this.tempo.timeToBeats(startOffsetSeconds)));
   }
 
   protected onStop(): void {

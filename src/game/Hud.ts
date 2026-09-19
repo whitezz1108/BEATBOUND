@@ -15,6 +15,7 @@ export interface HudSources {
   status: RunStatus;
   player: SongPlayer;
   currentSection: () => CompiledSection | null;
+  countIn: () => boolean;
 }
 
 export class Hud {
@@ -25,7 +26,7 @@ export class Hud {
     const pos = clock.position;
     const section = this.sources.currentSection();
     const stats = clock.stats;
-    const countIn = clock.songTime < 0;
+    const countIn = this.sources.countIn();
 
     this.root.innerHTML = [
       row('SONG', `${level.song.title ?? level.song.id} · ${level.song.bpm} BPM · ${level.song.timeSignature.join('/')}`),
@@ -37,7 +38,7 @@ export class Hud {
       row('STATE', modes.activeMode?.statusLine ?? '—'),
       row('SCHEDULER', `queued:${clock.pendingCount} scheduled:${scheduler.scheduledEventCount} spawned:${scheduler.spawnedMechanicCount} dropped:${modes.droppedSpawnCount}`),
       row('SYNC', `last ${stats.lastLatencyMs.toFixed(1)}ms · mean ${stats.meanLatencyMs.toFixed(1)}ms · max ${stats.maxLatencyMs.toFixed(1)}ms`),
-      row('RUN', `${'♥'.repeat(status.hp)}${'·'.repeat(Math.max(0, status.maxHp - status.hp))}  hits:${status.hits}  ${status.outcome}`),
+      row('RUN', `${'♥'.repeat(status.hp)}${'·'.repeat(Math.max(0, status.maxHp - status.hp))}  hits:${status.hits}  ${status.outcome}${status.invincible ? '  [INVINCIBLE]' : ''}`),
     ].join('');
   }
 }

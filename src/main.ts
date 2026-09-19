@@ -1,5 +1,5 @@
 import { BeatBoundGame } from './game/BeatBoundGame';
-import { DATA, levelUrlFromLocation } from './config';
+import { DATA, devOptionsFromLocation, levelUrlFromLocation } from './config';
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const hudRoot = document.getElementById('hud') as HTMLElement;
@@ -26,7 +26,13 @@ game
 
 startButton.addEventListener('click', () => {
   overlay.classList.add('hidden');
-  void game.start();
+  // A failure inside start() would otherwise leave a blank canvas with no clue.
+  game.start(devOptionsFromLocation()).catch((error: unknown) => {
+    overlay.classList.remove('hidden');
+    subtitle.innerHTML = `<span class="error">${String(error instanceof Error ? error.stack ?? error.message : error)}</span>`;
+    startButton.textContent = 'Start failed';
+    console.error('[BeatBound] start failed', error);
+  });
 });
 
 window.addEventListener('keydown', (e) => {

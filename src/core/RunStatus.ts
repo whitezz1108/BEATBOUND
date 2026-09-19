@@ -11,6 +11,8 @@ export class RunStatus {
   hp: number;
   hits = 0;
   outcome: RunOutcome = 'PLAYING';
+  /** Dev flag: still counts and flashes hits, but never loses health. */
+  invincible = false;
   private invulnerableUntilBeat = -Infinity;
 
   constructor(readonly maxHp = 3, readonly invulnerableBeats = 1) {
@@ -25,8 +27,9 @@ export class RunStatus {
   registerHit(beat: number): boolean {
     if (this.outcome !== 'PLAYING' || this.isInvulnerable(beat)) return false;
     this.hits += 1;
-    this.hp -= 1;
     this.invulnerableUntilBeat = beat + this.invulnerableBeats;
+    if (this.invincible) return true; // counted and flashed, but survivable
+    this.hp -= 1;
     if (this.hp <= 0) {
       this.hp = 0;
       this.outcome = 'FAILED';

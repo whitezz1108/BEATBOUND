@@ -137,6 +137,18 @@ export class BeatClock {
     this.queue = [];
   }
 
+  /**
+   * Jump the schedule to `absoluteBeat`: discard everything already due and move
+   * the beat cursor, so starting mid-song does not dump the skipped half of the
+   * level into one frame. Returns how many events were dropped.
+   */
+  seekTo(absoluteBeat: number): number {
+    const before = this.queue.length;
+    this.queue = this.queue.filter((e) => e.beat >= absoluteBeat);
+    this.lastWholeBeat = Math.max(this.lastWholeBeat, Math.floor(absoluteBeat) - 1);
+    return before - this.queue.length;
+  }
+
   get pendingCount(): number {
     return this.queue.length;
   }

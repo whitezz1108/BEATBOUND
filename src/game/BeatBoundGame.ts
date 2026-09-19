@@ -22,7 +22,7 @@ import { Renderer } from '../core/Renderer';
 import { RunStatus } from '../core/RunStatus';
 import { ArenaMode } from '../modes/arena/ArenaMode';
 import { registerArenaMechanics } from '../mechanics/arena';
-import { COUNT_IN_BEATS } from '../config';
+import { COUNT_IN_BEATS, type DevOptions } from '../config';
 import { Hud } from './Hud';
 
 export class BeatBoundGame {
@@ -48,6 +48,7 @@ export class BeatBoundGame {
   private pauseReason: 'MANUAL' | 'STALL' = 'MANUAL';
   /** False until the clock has run once, so the initial lead-in is not a "stall". */
   private hasTicked = false;
+  private startBar = 1;
   /**
    * A frame gap larger than this means the browser stopped rendering (hidden
    * window, occluded tab, heavy GC). Playing on would fire every missed beat in
@@ -92,6 +93,7 @@ export class BeatBoundGame {
       status: this.status,
       player: this.songPlayer,
       currentSection: () => this.currentSection(),
+      countIn: () => this.isCountingIn,
     });
 
     this.reportReadiness();
@@ -124,17 +126,52 @@ export class BeatBoundGame {
     return new ClickTrackPlayer(this.audio, this.level.tempo, lengthSeconds);
   }
 
-  async start(): Promise<void> {
+  async start(dev: Partial<DevOptions> = {}): Promise<void> {
     if (this.running) return;
     await this.audio.resume();
     this.detachInput = this.input.attach();
     this.detachLifecycle = this.attachLifecycle();
     this.status.reset();
+    this.status.invincible = dev.invincible ?? false;
     this.hasTicked = false;
-    // Count-in is musical: N beats of lead before bar 1, whatever the tempo.
-    this.songPlayer.start(this.level.tempo.beatsToTime(COUNT_IN_BEATS));
+
+    const startBeat = this.applyStartBar(dev.startBar ?? 1);
+    // Count-in is musical: N beats of lead before the start bar, any tempo.
+    this.songPlayer.start(
+      this.level.tempo.beatsToTime(COUNT_IN_BEATS),
+      this.level.tempo.beatsToTime(startBeat),
+    );
     this.running = true;
     this.rafHandle = requestAnimationFrame(this.frame);
+  }
+
+  /**
+   * Dev seek. Everything scheduled before the start bar is discarded rather
+   * than fired in a burst, and the mode for that bar is activated directly
+   * since its scheduled switch was one of the things dropped.
+   */
+  /** Absolute beat the run actually begins at (after any dev seek). */
+  private get startBeat(): number {
+    return (this.startBar - 1) * this.clock.beatsPerBar;
+  }
+
+  /** True while the silent lead-in before the start bar is still running. */
+  get isCountingIn(): boolean {
+    return this.clock.absoluteBeat < this.startBeat;
+  }
+
+  private applyStartBar(startBar: number): number {
+    const lastBar = Math.max(1, this.level.endBar - 1);
+    const bar = Math.min(Math.max(1, Math.floor(startBar)), lastBar);
+    this.startBar = bar;
+    if (bar === 1) return 0;
+
+    const startBeat = (bar - 1) * this.clock.beatsPerBar;
+    const dropped = this.clock.seekTo(startBeat);
+    const section = this.level.sections.find((s) => bar >= s.startBar && bar < s.endBar);
+    if (section) this.modes.setMode(section.mode, startBeat, null);
+    console.info(`[BeatBound] starting at bar ${bar}; skipped ${dropped} scheduled event(s).`);
+    return startBeat;
   }
 
   stop(): void {
@@ -252,11 +289,12 @@ export class BeatBoundGame {
       );
       return;
     }
-    if (this.clock.songTime < 0) {
-      const beatsLeft = Math.ceil(-this.clock.absoluteBeat);
+    if (this.isCountingIn) {
+      const beatsLeft = Math.ceil(this.startBeat - this.clock.absoluteBeat);
       r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#05070d', 0.55);
-      r.text('GET READY', 0.5, 0.44, '#e8ecf8', 30);
-      r.text(`${beatsLeft}`, 0.5, 0.54, '#6de3ff', 44);
+      r.text('GET READY', 0.5, 0.42, '#e8ecf8', 30);
+      r.text(`${beatsLeft}`, 0.5, 0.52, '#6de3ff', 44);
+      if (this.startBar > 1) r.text(`starting at bar ${this.startBar}`, 0.5, 0.6, '#9aa4bd', 13);
       return;
     }
     if (this.status.outcome === 'FAILED') {
