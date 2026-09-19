@@ -21,7 +21,7 @@
       "patterns": [
         {
           "patternId": "AP01",
-          "repeat": 2,
+          "repeat": 3,
           "intensity": 0.35
         },
         {
@@ -42,12 +42,12 @@
       "patterns": [
         {
           "patternId": "RP01",
-          "repeat": 2,
+          "repeat": 4,
           "intensity": 0.4
         },
         {
           "patternId": "RP03",
-          "repeat": 2,
+          "repeat": 4,
           "intensity": 0.55
         }
       ],
@@ -63,12 +63,12 @@
       "patterns": [
         {
           "patternId": "DP01",
-          "repeat": 2,
+          "repeat": 4,
           "intensity": 0.45
         },
         {
           "patternId": "DP02",
-          "repeat": 2,
+          "repeat": 4,
           "intensity": 0.6
         }
       ],
@@ -84,12 +84,12 @@
       "patterns": [
         {
           "patternId": "VP01",
-          "repeat": 2,
+          "repeat": 4,
           "intensity": 0.5
         },
         {
           "patternId": "VP03",
-          "repeat": 2,
+          "repeat": 4,
           "intensity": 0.65
         }
       ],

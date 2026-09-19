@@ -28,14 +28,22 @@ const ARROW: Record<ChainDirection, string> = {
   BOTTOM_TO_TOP: '↑',
 };
 
-/** Thickness bounds keep a lane dodgeable no matter what params/intensity ask for. */
-const MIN_THICKNESS = 0.05;
-const MAX_THICKNESS = 0.2;
+/**
+ * Lanes must TILE the arena.
+ *
+ * The first version used a fixed band thickness (0.13) on lane centres spaced
+ * 0.25 apart, which left uncovered strips between lanes -- 19% of the field,
+ * including dead centre and all four edges, was safe from every chain forever.
+ * A chain now claims whole lanes, so wherever the player stands some lane
+ * covers them and standing still is never an answer.
+ */
+const DEFAULT_LANE_COUNT = 4;
 
 export class ChainMechanic extends BaseMechanic {
   private readonly direction: ChainDirection;
   private readonly horizontal: boolean;
-  private readonly laneCenter: number;
+  /** Start of the claimed band, 0..1. */
+  private readonly laneStart: number;
   private readonly thickness: number;
   /** How long the whip takes to reach the far edge, in beats. */
   private readonly extendBeats: number;
@@ -48,24 +56,30 @@ export class ChainMechanic extends BaseMechanic {
       : 'LEFT_TO_RIGHT';
     this.horizontal = this.direction === 'LEFT_TO_RIGHT' || this.direction === 'RIGHT_TO_LEFT';
 
-    const width = numberOr(this.params.width, 1);
-    this.thickness = clamp(0.13 * width * lerp(1, 1.25, this.intensity), MIN_THICKNESS, MAX_THICKNESS);
+    const laneCount = Math.max(2, Math.round(numberOr(this.params.laneCount, DEFAULT_LANE_COUNT)));
+    // `width` is now measured in lanes. One lane is the default; the arena is
+    // never fully covered, so there is always somewhere to go.
+    const span = clamp(Math.round(numberOr(this.params.width, 1)), 1, laneCount - 1);
+    this.thickness = span / laneCount;
 
-    const laneCount = Math.max(1, Math.round(numberOr(this.params.laneCount, 4)));
-    const explicit = this.params.lane;
-    this.laneCenter = typeof explicit === 'number'
-      ? clamp(explicit, this.thickness / 2, 1 - this.thickness / 2)
-      : (Math.floor(makeRng(this.seed)() * laneCount) + 0.5) / laneCount;
+    const explicitLane = this.params.lane;
+    const laneIndex = typeof explicitLane === 'number'
+      ? clamp(Math.round(explicitLane), 0, laneCount - span)
+      : Math.floor(makeRng(this.seed)() * (laneCount - span + 1));
+    this.laneStart = laneIndex / laneCount;
 
-    this.extendBeats = Math.max(0.15, Math.min(0.4, this.timing.durationBeats * 0.45));
+    // Intensity cannot thicken the band without breaking the tiling, so it
+    // sharpens the whip instead: the same lane, arriving faster.
+    const sweep = this.timing.durationBeats * lerp(0.45, 0.28, this.intensity);
+    this.extendBeats = Math.max(0.12, Math.min(0.4, sweep));
   }
 
   /** The full corridor the chain will occupy once fully extended. */
   private laneRect(): Rect {
     const t = this.thickness;
     return this.horizontal
-      ? { x: 0, y: this.laneCenter - t / 2, w: 1, h: t }
-      : { x: this.laneCenter - t / 2, y: 0, w: t, h: 1 };
+      ? { x: 0, y: this.laneStart, w: 1, h: t }
+      : { x: this.laneStart, y: 0, w: t, h: 1 };
   }
 
   /** The portion currently swept, growing from the origin edge. */
@@ -90,9 +104,11 @@ export class ChainMechanic extends BaseMechanic {
 
     if (this.phase === 'TELEGRAPH') {
       const p = this.telegraphProgress(beat);
-      r.fillRect(lane, '#8c6bff', 0.08 + 0.22 * p * p);
-      r.strokeRect(lane, '#b9a4ff', 2, 0.4 + 0.5 * p, [10, 6]);
-      this.renderArrow(r, lane, 0.5 + 0.5 * p);
+      // The whole claimed lane lights up, so "leave this strip" is the reading.
+      r.fillRect(lane, '#8c6bff', 0.12 + 0.3 * p * p);
+      r.strokeRect(lane, '#b9a4ff', 3, 0.5 + 0.45 * p, [12, 7]);
+      this.renderIncomingEdge(r, lane, p);
+      this.renderArrows(r, lane, 0.45 + 0.55 * p);
       return;
     }
 
@@ -121,10 +137,27 @@ export class ChainMechanic extends BaseMechanic {
     }
   }
 
-  private renderArrow(r: Renderer, lane: Rect, alpha: number): void {
-    const cx = lane.x + lane.w / 2;
-    const cy = lane.y + lane.h / 2;
-    r.text(ARROW[this.direction].repeat(3), cx, cy, '#d8ccff', 22, 'center', alpha);
+  /** Arrows repeated along the lane, so the travel direction reads from anywhere. */
+  private renderArrows(r: Renderer, lane: Rect, alpha: number): void {
+    const glyph = ARROW[this.direction];
+    const steps = 5;
+    for (let i = 0; i < steps; i++) {
+      const t = (i + 0.5) / steps;
+      const x = this.horizontal ? t : lane.x + lane.w / 2;
+      const y = this.horizontal ? lane.y + lane.h / 2 : t;
+      r.text(glyph, x, y, '#d8ccff', 20, 'center', alpha);
+    }
+  }
+
+  /** A bright sliver at the origin edge, growing as the strike approaches. */
+  private renderIncomingEdge(r: Renderer, lane: Rect, progress: number): void {
+    const depth = 0.03 + 0.05 * progress;
+    const edge: Rect =
+      this.direction === 'LEFT_TO_RIGHT' ? { ...lane, w: depth }
+      : this.direction === 'RIGHT_TO_LEFT' ? { ...lane, x: 1 - depth, w: depth }
+      : this.direction === 'TOP_TO_BOTTOM' ? { ...lane, h: depth }
+      : { ...lane, y: 1 - depth, h: depth };
+    r.fillRect(edge, '#d8ccff', 0.3 + 0.5 * progress);
   }
 }
 

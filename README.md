@@ -32,7 +32,18 @@ box and an invincible toggle; all three are mirrored in the URL.
 
 `npm run level` prints a bar-by-bar report of what a level schedules — every
 mechanic, its musical position, its resolved params and its telegraph/active
-window — so you can read a level instead of surviving it.
+window — so you can read a level instead of surviving it. Each section also
+gets a **bar map** of events per bar, where a `.` marks a bar with nothing in
+it (dead air the player just stands through):
+
+```text
+S01  ARENA  bars 1-8  TEACH  difficulty 1
+  patterns: AP01@1 AP01@3 AP01@5 AP03@7 AP03@8
+  bar map:  2 2 2 2 2 2 4 4
+```
+
+`npm run test:timing` fails if any level has an empty bar, so dead air cannot
+creep back in.
 
 ```bash
 npm run level                                 # the default arena test level

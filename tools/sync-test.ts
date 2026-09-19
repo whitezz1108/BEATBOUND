@@ -243,15 +243,27 @@ async function checkEveryLevel(): Promise<void> {
     const allSpawned = scheduler.spawnedMechanicCount === scheduler.scheduledEventCount;
     const drained = clock.pendingCount === 0;
     const earlyEnough = spawns.every((s, i) => spawnBeats[i] <= s.activationBeat + 1e-9);
+
+    // Dead air: a bar inside a section with nothing scheduled in it. The player
+    // spends those bars doing nothing, which is what made the prototype level
+    // drag before its sections were filled.
+    const activeBars = new Set(spawns.map((s) => Math.floor(s.activationBeat / beatsPerBar) + 1));
+    const emptyBars: number[] = [];
+    for (const section of level.sections) {
+      for (let bar = section.startBar; bar < section.endBar; bar++) {
+        if (!activeBars.has(bar)) emptyBars.push(bar);
+      }
+    }
     const label = `${entry.file.padEnd(28)} ${modes.padEnd(28)} ${String(scheduler.spawnedMechanicCount).padStart(3)} events`;
     check(
       label,
-      allSpawned && drained && earlyEnough && missing.length === 0,
+      allSpawned && drained && earlyEnough && missing.length === 0 && emptyBars.length === 0,
       [
         allSpawned ? '' : `spawned ${scheduler.spawnedMechanicCount}/${scheduler.scheduledEventCount}`,
         drained ? '' : `${clock.pendingCount} still queued`,
         earlyEnough ? '' : 'a mechanic spawned after its activation beat',
         missing.length === 0 ? '' : `no runtime for ${missing.join(', ')}`,
+        emptyBars.length === 0 ? '' : `${emptyBars.length} empty bar(s): ${emptyBars.slice(0, 8).join(', ')}`,
       ].filter(Boolean).join('; '),
     );
   }

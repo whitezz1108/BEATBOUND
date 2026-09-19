@@ -133,6 +133,16 @@ function printSection(
     .map((p) => `${p.pattern.id}@${p.startBar}`)
     .join(' ');
   console.log(`  patterns: ${layout || '(none)'}`);
+
+  // Events per bar across the section. A '.' is a bar with nothing scheduled --
+  // dead air the player just stands through.
+  const perBar: number[] = [];
+  for (let bar = section.startBar; bar < section.endBar; bar++) {
+    perBar.push(rows.filter((row) => row.bar === bar).length);
+  }
+  const map = perBar.map((n) => (n === 0 ? '.' : n > 9 ? '+' : String(n))).join(' ');
+  const empty = perBar.filter((n) => n === 0).length;
+  console.log(`  bar map:  ${map}${empty > 0 ? `   <-- ${empty} empty bar(s)` : ''}`);
   console.log(`  ${'bar.beat'.padEnd(9)}${'time'.padEnd(8)}${'pattern'.padEnd(8)}${'mechanic'.padEnd(24)}${'telegraph'.padEnd(11)}${'active'.padEnd(9)}params`);
 
   let lastBar = -1;
