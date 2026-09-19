@@ -1,15 +1,24 @@
-/** Keyboard state. Modes read an axis; they never bind keys themselves. */
+/**
+ * Keyboard state.
+ *
+ * Modes read an axis or ask whether a key was pressed *this frame*; they never
+ * bind keys themselves. Press-edge detection matters for the rhythm modes: a
+ * held key must not re-trigger every frame.
+ */
 export class Input {
   private readonly down = new Set<string>();
+  private readonly pressedThisFrame = new Set<string>();
 
   attach(target: Window | HTMLElement = window): () => void {
     const onDown = (e: Event) => {
-      const k = (e as KeyboardEvent).key.toLowerCase();
+      const event = e as KeyboardEvent;
+      const k = event.key.toLowerCase();
+      if (!event.repeat && !this.down.has(k)) this.pressedThisFrame.add(k);
       this.down.add(k);
-      if (MOVEMENT_KEYS.has(k)) e.preventDefault();
+      if (HANDLED_KEYS.has(k)) e.preventDefault();
     };
     const onUp = (e: Event) => this.down.delete((e as KeyboardEvent).key.toLowerCase());
-    const onBlur = () => this.down.clear();
+    const onBlur = () => { this.down.clear(); this.pressedThisFrame.clear(); };
     target.addEventListener('keydown', onDown);
     target.addEventListener('keyup', onUp);
     window.addEventListener('blur', onBlur);
@@ -24,6 +33,16 @@ export class Input {
     return keys.some((k) => this.down.has(k));
   }
 
+  /** True only on the frame a key went down. Cleared by endFrame(). */
+  wasPressed(...keys: string[]): boolean {
+    return keys.some((k) => this.pressedThisFrame.has(k));
+  }
+
+  /** Called by the game loop once every mode has read its input. */
+  endFrame(): void {
+    this.pressedThisFrame.clear();
+  }
+
   /** -1 / 0 / +1 on each axis; y is positive downward to match field space. */
   axis(): { x: number; y: number } {
     const x = (this.isDown('arrowright', 'd') ? 1 : 0) - (this.isDown('arrowleft', 'a') ? 1 : 0);
@@ -32,4 +51,7 @@ export class Input {
   }
 }
 
-const MOVEMENT_KEYS = new Set(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd']);
+const HANDLED_KEYS = new Set([
+  'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ',
+  'w', 'a', 's', 'd', 'f', 'j', 'k', '1', '2', '3', '4',
+]);

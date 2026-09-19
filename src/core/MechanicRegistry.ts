@@ -18,6 +18,18 @@ import type { EventRole, GameMode, MechanicDefinition, MechanicLibrary, ParamBag
 
 export type MechanicFactory = (ctx: MechanicSpawnContext) => RuntimeMechanic;
 
+export interface MechanicRegistration {
+  /**
+   * Extra beats of lead the *implementation* needs before its activation beat,
+   * beyond the library's `telegraphBeats`.
+   *
+   * RUNNER obstacles are the reason this exists: their library telegraph is 0
+   * because the warning is spatial -- the obstacle scrolling in from the right
+   * edge -- so the runtime must exist well before it is due at the player.
+   */
+  spawnLeadBeats?: number;
+}
+
 /** What PatternScheduler hands the registry. Contains no mechanic-specific logic. */
 export interface SpawnRequest {
   mechanicId: string;
@@ -35,6 +47,7 @@ export interface SpawnRequest {
 export class MechanicRegistry {
   private readonly definitions = new Map<string, MechanicDefinition>();
   private readonly factories = new Map<string, MechanicFactory>();
+  private readonly registrations = new Map<string, MechanicRegistration>();
   private readonly missingWarned = new Set<string>();
 
   /** Load mechanic *data*. Implementations are registered separately. */
@@ -43,11 +56,22 @@ export class MechanicRegistry {
   }
 
   /** Bind a mechanic id to its runtime implementation. */
-  register(id: string, factory: MechanicFactory): void {
+  register(id: string, factory: MechanicFactory, registration: MechanicRegistration = {}): void {
     if (!this.definitions.has(id)) {
       console.warn(`[MechanicRegistry] registering "${id}" with no definition in the mechanic library`);
     }
     this.factories.set(id, factory);
+    this.registrations.set(id, registration);
+  }
+
+  /**
+   * How far ahead of its activation beat a mechanic must be created. The
+   * scheduler asks this instead of reading `telegraphBeats` directly, so a mode
+   * can need more lead than the data declares without the scheduler knowing why.
+   */
+  spawnLeadBeats(id: string): number {
+    const telegraph = this.definitions.get(id)?.timing.telegraphBeats ?? 0;
+    return Math.max(telegraph, this.registrations.get(id)?.spawnLeadBeats ?? 0);
   }
 
   getDefinition(id: string): MechanicDefinition | undefined {

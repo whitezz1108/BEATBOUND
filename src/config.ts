@@ -9,8 +9,32 @@
 export const DATA = {
   mechanics: '/mechanics.mvp.json',
   patterns: '/patterns.mvp.json',
+  levels: '/levels.index.json',
   defaultLevel: '/arena_test.level.json',
 } as const;
+
+/** One entry of levels.index.json -- what the level picker lists. */
+export interface LevelIndexEntry {
+  id: string;
+  file: string;
+  title: string;
+  blurb?: string;
+}
+
+export interface LevelIndex {
+  version: string;
+  levels: LevelIndexEntry[];
+}
+
+export async function loadLevelIndex(): Promise<LevelIndexEntry[]> {
+  try {
+    const res = await fetch(DATA.levels);
+    if (!res.ok) return [];
+    return ((await res.json()) as LevelIndex).levels ?? [];
+  } catch {
+    return [];
+  }
+}
 
 /** `?level=prototype_90s.level.json` swaps the level without touching code. */
 export function levelUrlFromLocation(search = window.location.search): string {

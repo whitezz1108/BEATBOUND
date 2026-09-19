@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "vertical_test_01",
+    "title": "Vertical Practice",
+    "audio": "audio/vertical_test_01.mp3",
+    "bpm": 120,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "V-T01",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "VERTICAL",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        { "patternId": "VP01", "repeat": 8, "intensity": 0.2 }
+      ],
+      "transitionOut": null
+    },
+    {
+      "id": "V-T02",
+      "startBar": 9,
+      "lengthBars": 8,
+      "mode": "VERTICAL",
+      "function": "PRACTICE",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "VP03", "repeat": 8, "intensity": 0.4 }
+      ],
+      "transitionOut": null
+    },
+    {
+      "id": "V-T03",
+      "startBar": 17,
+      "lengthBars": 8,
+      "mode": "VERTICAL",
+      "function": "COMBINE",
+      "difficulty": 3,
+      "patterns": [
+        { "patternId": "VP04", "repeat": 4, "intensity": 0.6 },
+        { "patternId": "VP03", "repeat": 4, "intensity": 0.7 }
+      ],
+      "transitionOut": null
+    }
+  ]
+}

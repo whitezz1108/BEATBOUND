@@ -21,7 +21,13 @@ import { PatternScheduler } from '../core/PatternScheduler';
 import { Renderer } from '../core/Renderer';
 import { RunStatus } from '../core/RunStatus';
 import { ArenaMode } from '../modes/arena/ArenaMode';
+import { RunnerMode } from '../modes/runner/RunnerMode';
+import { VerticalMode } from '../modes/vertical/VerticalMode';
+import { RadialMode } from '../modes/radial/RadialMode';
 import { registerArenaMechanics } from '../mechanics/arena';
+import { registerRunnerMechanics } from '../mechanics/runner';
+import { registerVerticalMechanics } from '../mechanics/vertical';
+import { registerRadialMechanics } from '../mechanics/radial';
 import { COUNT_IN_BEATS, type DevOptions } from '../config';
 import { Hud } from './Hud';
 
@@ -70,6 +76,9 @@ export class BeatBoundGame {
     this.level = await this.loader.load(sources);
     this.registry.loadLibrary(this.loader.mechanics);
     registerArenaMechanics(this.registry);
+    registerRunnerMechanics(this.registry);
+    registerVerticalMechanics(this.registry);
+    registerRadialMechanics(this.registry);
 
     this.songPlayer = await this.createSongPlayer();
     this.clock = new BeatClock(this.songPlayer, this.level.tempo);
@@ -77,9 +86,12 @@ export class BeatBoundGame {
 
     const modeContext = { clock: this.clock, input: this.input, status: this.status };
     this.modes = new ModeManager(this.clock, modeContext);
-    // Only ARENA has a runtime today; every other mode falls back to a
-    // placeholder until its module registers here.
+    // One line per mode. DUO has no mechanics or patterns in the library yet,
+    // so it still falls through to the placeholder.
     this.modes.register('ARENA', (ctx) => new ArenaMode(ctx));
+    this.modes.register('RUNNER', (ctx) => new RunnerMode(ctx));
+    this.modes.register('VERTICAL', (ctx) => new VerticalMode(ctx));
+    this.modes.register('RADIAL', (ctx) => new RadialMode(ctx));
 
     this.scheduler.onMechanicSpawned(this.modes.route);
     this.scheduleSections();
@@ -248,6 +260,9 @@ export class BeatBoundGame {
       secondsPerBeat: this.clock.secondsPerBeat,
     };
     this.modes.update(update);
+    // Press-edge flags live for exactly one frame; clear them once every mode
+    // that cares has read them.
+    this.input.endFrame();
 
     this.checkRunEnd();
     this.draw();

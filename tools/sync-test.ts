@@ -15,6 +15,10 @@ import { LevelLoader } from '../src/core/LevelLoader';
 import { MechanicRegistry } from '../src/core/MechanicRegistry';
 import { PatternScheduler, type SpawnedMechanicInfo } from '../src/core/PatternScheduler';
 import { registerArenaMechanics } from '../src/mechanics/arena';
+import { registerRunnerMechanics } from '../src/mechanics/runner';
+import { registerVerticalMechanics } from '../src/mechanics/vertical';
+import { registerRadialMechanics } from '../src/mechanics/radial';
+import { loadLevelIndex } from '../src/config';
 import { specToRelativeBeats } from '../src/core/TempoMap';
 import type { SongPlayer } from '../src/core/AudioEngine';
 import { COUNT_IN_BEATS } from '../src/config';
@@ -70,7 +74,7 @@ async function main(): Promise<void> {
 
   const registry = new MechanicRegistry();
   registry.loadLibrary(loader.mechanics);
-  registerArenaMechanics(registry);
+  registerAllMechanics(registry);
 
   const player = new FakeSongPlayer();
   const clock = new BeatClock(player, level.tempo);
@@ -177,8 +181,80 @@ async function main(): Promise<void> {
     ap02.map((s) => String(s.event.params?.spawnSide)).join(',') === 'LEFT,RIGHT,TOP,BOTTOM');
   check('all AP02 events use A03', ap02.every((s) => s.mechanic.definitionId === 'A03'));
 
+  await checkEveryLevel();
+
   console.log(failures === 0 ? '\nAll timing checks passed.\n' : `\n${failures} check(s) failed.\n`);
   process.exit(failures === 0 ? 0 : 1);
+}
+
+function registerAllMechanics(registry: MechanicRegistry): void {
+  registerArenaMechanics(registry);
+  registerRunnerMechanics(registry);
+  registerVerticalMechanics(registry);
+  registerRadialMechanics(registry);
+}
+
+/**
+ * Every level in the index gets the same treatment: schedule it, run a full
+ * simulated playthrough, and require that nothing was dropped or late. This is
+ * what catches a new mode whose mechanics need more spawn lead than the data
+ * declares.
+ */
+async function checkEveryLevel(): Promise<void> {
+  console.log('\nAll levels');
+  const index = await loadLevelIndex();
+  check('levels.index.json lists levels', index.length > 0);
+
+  for (const entry of index) {
+    const loader = new LevelLoader();
+    const level = await loader.load({
+      levelUrl: `/${entry.file}`,
+      patternsUrl: '/patterns.mvp.json',
+      mechanicsUrl: '/mechanics.mvp.json',
+    });
+    const registry = new MechanicRegistry();
+    registry.loadLibrary(loader.mechanics);
+    registerAllMechanics(registry);
+
+    const player = new FakeSongPlayer();
+    const clock = new BeatClock(player, level.tempo);
+    const scheduler = new PatternScheduler(clock, registry);
+    const spawns: SpawnedMechanicInfo[] = [];
+    const spawnBeats: number[] = [];
+    scheduler.onMechanicSpawned((info) => { spawns.push(info); spawnBeats.push(clock.absoluteBeat); });
+    scheduler.scheduleLevel(level);
+
+    const beatsPerBar = level.tempo.beatsPerBar;
+    const endTime = level.tempo.beatsToTime((level.endBar - 1) * beatsPerBar) + 4;
+    player.playbackTime = -level.tempo.beatsToTime(COUNT_IN_BEATS);
+    const frameTimes = [0.0166, 0.0166, 0.0083, 0.05, 0.0166, 0.0333, 0.0166];
+    let frame = 0;
+    while (player.playbackTime < endTime) {
+      player.playbackTime += frameTimes[frame++ % frameTimes.length];
+      clock.update();
+    }
+
+    const modes = [...new Set(level.sections.map((s) => s.mode))].join('/');
+    const missing = [...new Set(
+      level.sections.flatMap((s) => s.placements).flatMap((p) => p.pattern.events)
+        .map((e) => e.mechanicId).filter((id) => !registry.hasImplementation(id)),
+    )];
+
+    const allSpawned = scheduler.spawnedMechanicCount === scheduler.scheduledEventCount;
+    const drained = clock.pendingCount === 0;
+    const earlyEnough = spawns.every((s, i) => spawnBeats[i] <= s.activationBeat + 1e-9);
+    const label = `${entry.file.padEnd(28)} ${modes.padEnd(28)} ${String(scheduler.spawnedMechanicCount).padStart(3)} events`;
+    check(
+      label,
+      allSpawned && drained && earlyEnough && missing.length === 0,
+      [
+        allSpawned ? '' : `spawned ${scheduler.spawnedMechanicCount}/${scheduler.scheduledEventCount}`,
+        drained ? '' : `${clock.pendingCount} still queued`,
+        earlyEnough ? '' : 'a mechanic spawned after its activation beat',
+        missing.length === 0 ? '' : `no runtime for ${missing.join(', ')}`,
+      ].filter(Boolean).join('; '),
+    );
+  }
 }
 
 function firstMismatch(

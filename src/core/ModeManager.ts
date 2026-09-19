@@ -30,8 +30,20 @@ export class ModeManager {
   private readonly instances = new Map<GameMode, GameplayMode>();
   private current: GameplayMode | null = null;
   private transition: TransitionState | null = null;
-  /** Mechanics that arrived for a mode that was not live. Surfaced in the HUD. */
+  /**
+   * Mechanics that arrived before their mode went live.
+   *
+   * RUNNER obstacles are created a whole bar early so they can scroll in, which
+   * can be before the section that owns them starts. Holding them here and
+   * handing them over on activation means a mode switch never has to be pulled
+   * forward -- and never costs the previous section a bar.
+   */
+  private readonly pending = new Map<GameMode, SpawnedMechanicInfo[]>();
+  /** Mechanics whose mode never went live. Surfaced in the HUD. */
   private droppedSpawns = 0;
+
+  /** Ceiling on buffered spawns per mode, so a never-activated mode cannot leak. */
+  private static readonly MAX_PENDING = 64;
 
   constructor(
     private readonly clock: BeatClock,
@@ -77,6 +89,7 @@ export class ModeManager {
     const next = this.instanceFor(mode);
     next.activate(atBeat);
     this.current = next;
+    this.flushPending(mode);
     this.transition = {
       id: transitionId ?? `${previous ?? 'NONE'}_TO_${mode}`,
       from: previous,
@@ -91,12 +104,32 @@ export class ModeManager {
    * ModeManager never inspects mechanic ids or params.
    */
   route = (info: SpawnedMechanicInfo): void => {
-    if (!this.current || this.current.mode !== info.mode) {
-      this.droppedSpawns += 1;
+    if (this.current?.mode === info.mode) {
+      this.current.accept(info);
       return;
     }
-    this.current.accept(info);
+    // Not live yet: hold it until that mode activates.
+    const queue = this.pending.get(info.mode) ?? [];
+    if (queue.length >= ModeManager.MAX_PENDING) {
+      queue.shift();
+      this.droppedSpawns += 1;
+    }
+    queue.push(info);
+    this.pending.set(info.mode, queue);
   };
+
+  private flushPending(mode: GameMode): void {
+    const queue = this.pending.get(mode);
+    if (!queue || queue.length === 0) return;
+    this.pending.delete(mode);
+    for (const info of queue) this.current?.accept(info);
+  }
+
+  get pendingSpawnCount(): number {
+    let total = 0;
+    for (const queue of this.pending.values()) total += queue.length;
+    return total;
+  }
 
   update(u: MechanicUpdate): void {
     if (this.transition && u.beat >= this.transition.startBeat + this.transition.lengthBeats) {

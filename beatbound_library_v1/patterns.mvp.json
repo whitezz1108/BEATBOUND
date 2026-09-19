@@ -312,6 +312,64 @@
       }
     },
     {
+      "id": "AP05",
+      "name": "Safe Ground",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 3,
+        "inputComplexity": 1,
+        "informationLoad": 2
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BREAKDOWN",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeAreaCount": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeAreaCount": 2
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A02"
+        ]
+      },
+      "notes": "Teaches reading a safe area instead of a danger area. Uses A02 Safe Tile."
+    },
+    {
       "id": "RP01",
       "name": "Basic Jump",
       "mode": "RUNNER",

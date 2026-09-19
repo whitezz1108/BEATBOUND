@@ -15,7 +15,18 @@ npm run test:timing  # headless BeatClock / scheduler checks
 npm run build        # typecheck + production bundle
 ```
 
-Controls: **WASD / arrows** move, **P** pause, **R** restart.
+### Modes and controls
+
+| Mode | Gameplay | Controls |
+| --- | --- | --- |
+| ARENA | Top-down dodging | **WASD / arrows** move |
+| RUNNER | Side-scrolling platforming | **W / ↑ / space** jump, **S / ↓** slide |
+| VERTICAL | Four-lane falling notes | **D F J K** (or **1–4**) |
+| RADIAL | Four-direction notes | **arrows** or **WASD** |
+| DUO | Two-player co-op | not implemented — no mechanics in the library yet |
+
+**P** pauses, **R** restarts. The start screen has a level picker, a start-bar
+box and an invincible toggle; all three are mirrored in the URL.
 
 ### Inspecting levels without playing them
 
@@ -67,10 +78,38 @@ ModeManager        owns the active gameplay environment (ARENA today)
 | Path | Role |
 | --- | --- |
 | `src/core/` | The five core systems, plus tempo maps, geometry and rendering |
-| `src/modes/` | Per-mode gameplay environments (`arena/`, placeholder for the rest) |
-| `src/mechanics/arena/` | A01 Floor Warning, A03 Projectile, A05 Chain |
+| `src/modes/` | Per-mode environments: `arena/`, `runner/`, `vertical/`, `radial/`, shared `rhythm/` |
+| `src/mechanics/` | One folder per mode; `index.ts` in each binds ids to runtimes |
+| `src/core/capabilities.ts` | Opt-in mechanic capabilities (timed input, runner terrain) |
 | `tools/sync-test.ts` | Headless timing/scheduling verification |
 
-Adding a mechanic is one `register()` call in `src/mechanics/arena/index.ts`
-plus its implementation file; adding a mode is one `register()` call in
-`BeatBoundGame`. Neither touches BeatClock, PatternScheduler or LevelLoader.
+Adding a mechanic is one `register()` call in its mode's `index.ts` plus an
+implementation file; adding a mode is one `register()` call in `BeatBoundGame`.
+Neither touches BeatClock, PatternScheduler or LevelLoader.
+
+Most mechanics only need `RuntimeMechanic` -- run a beat-driven lifecycle,
+expose damaging shapes, draw. Two kinds need more, and say so through opt-in
+interfaces in `src/core/capabilities.ts` rather than by widening the contract
+for everyone:
+
+- **`InputTargetMechanic`** — VERTICAL and RADIAL notes expose `NoteTarget`s
+  (lane or direction, beat, hold length). `NoteMode` judges them; the timing
+  windows are in beats, so accuracy demands scale with tempo.
+- **`RunnerTerrain`** — RUNNER mechanics that change the world rather than
+  damage it: gaps in the ground, bounce pads, gravity flips.
+
+RUNNER obstacles declare `telegraphBeats: 0` in the library because their
+warning is spatial. They ask the registry for `spawnLeadBeats` instead, so
+`PatternScheduler` creates them a bar early without knowing why, and
+`ModeManager` holds them until the RUNNER section actually starts.
+
+### Mechanic coverage
+
+| Mode | Implemented |
+| --- | --- |
+| ARENA | A01 Floor Warning, A02 Safe Tile, A03 Projectile, A05 Chain, A06 Laser |
+| RUNNER | R01 Spike, R02 Gap, R03 Low Wall, R08 Bounce Pad, R09 Gravity Flip |
+| VERTICAL | V01 Tap, V02 Hold, V03 Double |
+| RADIAL | D01 Single, D02 Opposite Double, D06 Clockwise |
+
+Every mechanic in `mechanics.mvp.json` now has a runtime.

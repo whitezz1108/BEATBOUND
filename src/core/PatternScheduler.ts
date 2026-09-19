@@ -83,10 +83,11 @@ export class PatternScheduler {
       // Fractional beats (2.5) and offsetBeats fall out of this for free.
       const activationBeat = patternStartBeat + specToRelativeBeats(event.at, beatsPerBar);
 
-      // The mechanic must exist early enough to render its telegraph. Use the
-      // library telegraph as the *upper bound* -- intensity can only shorten it,
-      // so spawning this early is always safe.
-      const spawnBeat = activationBeat - definition.timing.telegraphBeats;
+      // The mechanic must exist early enough to show its warning. The registry
+      // knows the true lead: the library telegraph, or more if the runtime needs
+      // it (a RUNNER obstacle has to scroll in). Intensity can only shorten a
+      // telegraph, never lengthen it, so spawning this early is always safe.
+      const spawnBeat = activationBeat - this.registry.spawnLeadBeats(event.mechanicId);
       const seed = hashSeed(pattern.id, placement.startBar, placement.repeatIndex, eventIndex);
 
       this.scheduled += 1;

@@ -8,13 +8,15 @@
 
 import type { MechanicRegistry } from '../../core/MechanicRegistry';
 import { FloorWarningMechanic } from './FloorWarningMechanic';
+import { SafeTileMechanic } from './SafeTileMechanic';
 import { ProjectileMechanic } from './ProjectileMechanic';
 import { ChainMechanic } from './ChainMechanic';
+import { LaserMechanic } from './LaserMechanic';
 
 export function registerArenaMechanics(registry: MechanicRegistry): void {
   registry.register('A01', (ctx) => new FloorWarningMechanic(ctx));
+  registry.register('A02', (ctx) => new SafeTileMechanic(ctx));
   registry.register('A03', (ctx) => new ProjectileMechanic(ctx));
   registry.register('A05', (ctx) => new ChainMechanic(ctx));
-  // A02 Safe Tile, A06 Laser, and the RUNNER / VERTICAL / RADIAL / DUO
-  // mechanics register here (or in their own mode module) as they land.
+  registry.register('A06', (ctx) => new LaserMechanic(ctx));
 }

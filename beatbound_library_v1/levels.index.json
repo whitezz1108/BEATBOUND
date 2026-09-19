@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "levels": [
+    {
+      "id": "arena_test",
+      "file": "arena_test.level.json",
+      "title": "Arena Practice",
+      "blurb": "Dodge. Floor warnings, chains and projectiles."
+    },
+    {
+      "id": "runner_test",
+      "file": "runner_test.level.json",
+      "title": "Runner Practice",
+      "blurb": "Jump and slide. Spikes, low walls and bounce pads."
+    },
+    {
+      "id": "vertical_test",
+      "file": "vertical_test.level.json",
+      "title": "Vertical Practice",
+      "blurb": "Four falling lanes. Hit D F J K on the line."
+    },
+    {
+      "id": "radial_test",
+      "file": "radial_test.level.json",
+      "title": "Radial Practice",
+      "blurb": "Four directions converging on the centre ring."
+    },
+    {
+      "id": "arena_showcase",
+      "file": "arena_showcase.level.json",
+      "title": "Arena Showcase",
+      "blurb": "Every ARENA mechanic, including safe tiles and lasers."
+    },
+    {
+      "id": "prototype_90s",
+      "file": "prototype_90s.level.json",
+      "title": "Prototype 90s",
+      "blurb": "The full multi-mode song map: all four modes and their transitions."
+    }
+  ]
+}

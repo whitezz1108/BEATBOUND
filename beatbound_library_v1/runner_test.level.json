@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "runner_test_01",
+    "title": "Runner Practice",
+    "audio": "audio/runner_test_01.mp3",
+    "bpm": 110,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "R-T01",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        { "patternId": "RP01", "repeat": 8, "intensity": 0.2 }
+      ],
+      "transitionOut": null
+    },
+    {
+      "id": "R-T02",
+      "startBar": 9,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "PRACTICE",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "RP03", "repeat": 8, "intensity": 0.4 }
+      ],
+      "transitionOut": null
+    },
+    {
+      "id": "R-T03",
+      "startBar": 17,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [
+        { "patternId": "RP05", "repeat": 4, "intensity": 0.6 }
+      ],
+      "transitionOut": null
+    }
+  ]
+}

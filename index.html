@@ -46,6 +46,15 @@
       #overlay.hidden { opacity: 0; pointer-events: none; }
       #overlay h2 { margin: 0; font-size: 34px; letter-spacing: 0.3em; }
       #overlay-subtitle { color: var(--muted); max-width: 46ch; margin: 0 auto; }
+      #setup { display: grid; gap: 10px; justify-items: center; }
+      #setup label { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
+      #setup select, #setup input[type="number"] {
+        background: #121927; color: var(--text); border: 1px solid var(--line);
+        border-radius: 4px; padding: 6px 8px; font: inherit;
+      }
+      #setup select { min-width: 220px; }
+      #setup input[type="number"] { width: 72px; }
+      #setup .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; }
       .error { color: #ff6b81; text-align: left; display: block; }
       button {
         justify-self: center; background: var(--accent); color: #04121a; border: 0; border-radius: 4px;
@@ -60,6 +69,13 @@
       <div id="overlay">
         <h2>BEATBOUND</h2>
         <p id="overlay-subtitle">Loading level…</p>
+        <div id="setup">
+          <label>Level <select id="level-select"></select></label>
+          <div class="row">
+            <label>Start bar <input id="start-bar" type="number" min="1" value="1" /></label>
+            <label><input id="invincible" type="checkbox" /> Invincible</label>
+          </div>
+        </div>
         <button id="start" disabled>Loading…</button>
       </div>
     </div>
@@ -68,8 +84,11 @@
       <p class="tag">BeatClock · LevelLoader · PatternScheduler · MechanicRegistry · ModeManager</p>
       <div id="hud"></div>
       <div class="keys">
-        <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows — move &nbsp; <kbd>P</kbd> — pause &nbsp; <kbd>R</kbd> — restart</p>
-        <p>Load another level with <code>?level=prototype_90s.level.json</code></p>
+        <p><strong>ARENA</strong> — <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows move</p>
+        <p><strong>RUNNER</strong> — <kbd>W</kbd>/<kbd>↑</kbd>/<kbd>space</kbd> jump, <kbd>S</kbd>/<kbd>↓</kbd> slide</p>
+        <p><strong>VERTICAL</strong> — <kbd>D</kbd><kbd>F</kbd><kbd>J</kbd><kbd>K</kbd> lanes 1–4</p>
+        <p><strong>RADIAL</strong> — arrows / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> directions</p>
+        <p><kbd>P</kbd> — pause &nbsp; <kbd>R</kbd> — restart</p>
       </div>
     </aside>
     <script type="module" src="/src/main.ts"></script>
