@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "arena_test_01",
+    "title": "Arena Vertical Slice",
+    "audio": "audio/arena_test_01.mp3",
+    "bpm": 120,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "T01",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        { "patternId": "AP01", "repeat": 2, "intensity": 0.2 },
+        { "patternId": "AP03", "repeat": 4, "intensity": 0.3 }
+      ],
+      "transitionOut": null
+    },
+    {
+      "id": "T02",
+      "startBar": 9,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "AP02", "repeat": 4, "intensity": 0.45 }
+      ],
+      "transitionOut": null
+    },
+    {
+      "id": "T03",
+      "startBar": 17,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": 3,
+      "patterns": [
+        { "patternId": "AP01", "repeat": 2, "intensity": 0.8 },
+        { "patternId": "AP03", "repeat": 2, "intensity": 0.8 },
+        { "patternId": "AP02", "repeat": 1, "intensity": 0.9 }
+      ],
+      "transitionOut": null
+    }
+  ]
+}

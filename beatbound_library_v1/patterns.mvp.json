@@ -1,0 +1,889 @@
+{
+  "version": "1.0.0",
+  "patterns": [
+    {
+      "id": "AP01",
+      "name": "Checkerboard",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 1,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 2,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "checker_A"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "checker_B"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "checker_A"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "checker_B"
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A01"
+        ]
+      }
+    },
+    {
+      "id": "AP02",
+      "name": "Side Volley",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 2,
+        "inputComplexity": 1,
+        "informationLoad": 2
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A03",
+          "params": {
+            "spawnSide": "LEFT"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A03",
+          "params": {
+            "spawnSide": "RIGHT"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A03",
+          "params": {
+            "spawnSide": "TOP"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A03",
+          "params": {
+            "spawnSide": "BOTTOM",
+            "count": 2
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A03"
+        ]
+      },
+      "notes": "Alternating side volleys. Exercises A03 spawn direction, count and deterministic motion."
+    },
+    {
+      "id": "AP03",
+      "name": "Four Direction Chain",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 1,
+        "informationLoad": 2
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A05",
+          "params": {
+            "direction": "LEFT_TO_RIGHT"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "A05",
+          "params": {
+            "direction": "TOP_TO_BOTTOM"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A05",
+          "params": {
+            "direction": "RIGHT_TO_LEFT"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "A05",
+          "params": {
+            "direction": "BOTTOM_TO_TOP"
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A05"
+        ]
+      }
+    },
+    {
+      "id": "AP04",
+      "name": "Cross Laser",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 1,
+        "informationLoad": 3
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A06",
+          "params": {
+            "orientation": "HORIZONTAL",
+            "position": 0.35
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A06",
+          "params": {
+            "orientation": "VERTICAL",
+            "position": 0.65
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A06",
+          "params": {
+            "orientation": "HORIZONTAL",
+            "position": 0.65
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A06",
+          "params": {
+            "orientation": "VERTICAL",
+            "position": 0.35
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A06"
+        ]
+      }
+    },
+    {
+      "id": "RP01",
+      "name": "Basic Jump",
+      "mode": "RUNNER",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 1,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 1,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1.5,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "R01"
+        ]
+      }
+    },
+    {
+      "id": "RP03",
+      "name": "Jump Slide",
+      "mode": "RUNNER",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 1,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R03"
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1.5,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "R01",
+          "R03"
+        ]
+      }
+    },
+    {
+      "id": "RP05",
+      "name": "Jump Bounce Jump",
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R08"
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R01"
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "R01",
+          "R08"
+        ]
+      }
+    },
+    {
+      "id": "VP01",
+      "name": "Stair Up",
+      "mode": "VERTICAL",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 1,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 1,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 2
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 3
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 4
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "V01"
+        ]
+      }
+    },
+    {
+      "id": "VP03",
+      "name": "Alternating",
+      "mode": "VERTICAL",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT",
+          "SUBDIVISION"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 4
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "V01",
+          "params": {
+            "lane": 4
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "V01"
+        ]
+      }
+    },
+    {
+      "id": "VP04",
+      "name": "Double Beat",
+      "mode": "VERTICAL",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT",
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "V03",
+          "params": {
+            "lanes": [
+              1,
+              4
+            ]
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "V03",
+          "params": {
+            "lanes": [
+              2,
+              3
+            ]
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "V03"
+        ]
+      }
+    },
+    {
+      "id": "DP01",
+      "name": "Cardinal",
+      "mode": "RADIAL",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 1,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 1,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "D01",
+          "params": {
+            "direction": "UP"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "D01",
+          "params": {
+            "direction": "DOWN"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "D01",
+          "params": {
+            "direction": "LEFT"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "D01",
+          "params": {
+            "direction": "RIGHT"
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "D01"
+        ]
+      }
+    },
+    {
+      "id": "DP02",
+      "name": "Clockwise",
+      "mode": "RADIAL",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "D06",
+          "params": {
+            "sequence": [
+              "UP",
+              "RIGHT",
+              "DOWN",
+              "LEFT"
+            ],
+            "stepBeats": 1
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "D06"
+        ]
+      }
+    },
+    {
+      "id": "DP06",
+      "name": "Cross Double",
+      "mode": "RADIAL",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 1,
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT",
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "CHORUS",
+          "DROP"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "D02",
+          "params": {
+            "directions": [
+              "UP",
+              "DOWN"
+            ]
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "D02",
+          "params": {
+            "directions": [
+              "LEFT",
+              "RIGHT"
+            ]
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 0.5,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "D02"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BeatBound</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05070d;
+        --panel: #0c1119;
+        --line: #1c2434;
+        --text: #e8ecf8;
+        --muted: #8d99b5;
+        --accent: #6de3ff;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+      }
+      @media (max-width: 860px) { body { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } }
+      #stage-wrap { position: relative; min-width: 0; }
+      #stage { width: 100%; height: 100%; display: block; }
+      #panel {
+        background: var(--panel);
+        border-left: 1px solid var(--line);
+        padding: 16px;
+        overflow-y: auto;
+      }
+      #panel h1 { font-size: 15px; letter-spacing: 0.14em; margin: 0 0 4px; }
+      #panel .tag { color: var(--muted); margin: 0 0 16px; font-size: 11px; }
+      .hud-row { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid #141a26; }
+      .hud-label { color: var(--muted); flex: 0 0 82px; font-size: 10px; letter-spacing: 0.08em; padding-top: 2px; }
+      .hud-value { flex: 1; word-break: break-word; font-size: 11px; }
+      .keys { margin-top: 16px; color: var(--muted); font-size: 11px; }
+      .keys kbd { background: #182031; border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; color: var(--text); }
+      #overlay {
+        position: absolute; inset: 0; display: grid; place-content: center; gap: 14px;
+        text-align: center; background: rgba(5, 7, 13, 0.94); transition: opacity 180ms ease;
+      }
+      #overlay.hidden { opacity: 0; pointer-events: none; }
+      #overlay h2 { margin: 0; font-size: 34px; letter-spacing: 0.3em; }
+      #overlay-subtitle { color: var(--muted); max-width: 46ch; margin: 0 auto; }
+      .error { color: #ff6b81; text-align: left; display: block; }
+      button {
+        justify-self: center; background: var(--accent); color: #04121a; border: 0; border-radius: 4px;
+        padding: 10px 26px; font: inherit; font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+      }
+      button:disabled { background: #223043; color: var(--muted); cursor: progress; }
+    </style>
+  </head>
+  <body>
+    <div id="stage-wrap">
+      <canvas id="stage"></canvas>
+      <div id="overlay">
+        <h2>BEATBOUND</h2>
+        <p id="overlay-subtitle">Loading level…</p>
+        <button id="start" disabled>Loading…</button>
+      </div>
+    </div>
+    <aside id="panel">
+      <h1>BEATBOUND</h1>
+      <p class="tag">BeatClock · LevelLoader · PatternScheduler · MechanicRegistry · ModeManager</p>
+      <div id="hud"></div>
+      <div class="keys">
+        <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows — move &nbsp; <kbd>P</kbd> — pause &nbsp; <kbd>R</kbd> — restart</p>
+        <p>Load another level with <code>?level=prototype_90s.level.json</code></p>
+      </div>
+    </aside>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

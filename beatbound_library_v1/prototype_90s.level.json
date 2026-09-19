@@ -1,0 +1,147 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "prototype_song_01",
+    "title": "Prototype 90s",
+    "audio": "audio/prototype_song_01.mp3",
+    "bpm": 120,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "S01",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP01",
+          "repeat": 2,
+          "intensity": 0.35
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 2,
+          "intensity": 0.45
+        }
+      ],
+      "transitionOut": "ARENA_TO_RUNNER"
+    },
+    {
+      "id": "S02",
+      "startBar": 9,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "PRACTICE",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "RP01",
+          "repeat": 2,
+          "intensity": 0.4
+        },
+        {
+          "patternId": "RP03",
+          "repeat": 2,
+          "intensity": 0.55
+        }
+      ],
+      "transitionOut": "RUNNER_TO_RADIAL"
+    },
+    {
+      "id": "S03",
+      "startBar": 17,
+      "lengthBars": 8,
+      "mode": "RADIAL",
+      "function": "VARIATION",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "DP01",
+          "repeat": 2,
+          "intensity": 0.45
+        },
+        {
+          "patternId": "DP02",
+          "repeat": 2,
+          "intensity": 0.6
+        }
+      ],
+      "transitionOut": "RADIAL_TO_VERTICAL"
+    },
+    {
+      "id": "S04",
+      "startBar": 25,
+      "lengthBars": 8,
+      "mode": "VERTICAL",
+      "function": "PRACTICE",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "VP01",
+          "repeat": 2,
+          "intensity": 0.5
+        },
+        {
+          "patternId": "VP03",
+          "repeat": 2,
+          "intensity": 0.65
+        }
+      ],
+      "transitionOut": "VERTICAL_TO_ARENA"
+    },
+    {
+      "id": "S05",
+      "startBar": 33,
+      "lengthBars": 6,
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP04",
+          "repeat": 3,
+          "intensity": 0.75
+        }
+      ],
+      "transitionOut": "ARENA_TO_RUNNER"
+    },
+    {
+      "id": "S06",
+      "startBar": 39,
+      "lengthBars": 6,
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "RP05",
+          "repeat": 3,
+          "intensity": 0.8
+        }
+      ],
+      "transitionOut": "RUNNER_TO_RADIAL"
+    },
+    {
+      "id": "S07",
+      "startBar": 45,
+      "lengthBars": 4,
+      "mode": "RADIAL",
+      "function": "CLIMAX",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "DP06",
+          "repeat": 4,
+          "intensity": 1.0
+        }
+      ],
+      "transitionOut": null
+    }
+  ]
+}

@@ -1,0 +1,719 @@
+{
+  "version": "1.0.0",
+  "mechanics": [
+    {
+      "id": "A01",
+      "name": "Floor Warning",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 1,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "HIHAT",
+          "SNARE"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "timing",
+        "spatial_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A02",
+          "A05",
+          "A03"
+        ],
+        "avoidWith": [
+          "A15"
+        ]
+      },
+      "defaults": {
+        "shape": "tile",
+        "damageActiveBeats": 1,
+        "warningStyle": "red_flash"
+      }
+    },
+    {
+      "id": "A02",
+      "name": "Safe Tile",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 2,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT"
+        ],
+        "instruments": [
+          "KICK"
+        ],
+        "sections": [
+          "VERSE",
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "positioning"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A01",
+          "A03"
+        ],
+        "avoidWith": [
+          "A14"
+        ]
+      },
+      "defaults": {
+        "safeAreaCount": 1,
+        "safeAreaSize": 0.25
+      }
+    },
+    {
+      "id": "A03",
+      "name": "Projectile",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 2,
+        "telegraphBeats": 0.5,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT",
+          "SUBDIVISION"
+        ],
+        "instruments": [
+          "MELODY",
+          "HIHAT"
+        ],
+        "sections": [
+          "VERSE",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "trajectory_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A01",
+          "A05"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "speed": 1.0,
+        "count": 1,
+        "spawnSide": "random"
+      }
+    },
+    {
+      "id": "A05",
+      "name": "Chain",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 1,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT"
+        ],
+        "instruments": [
+          "SNARE",
+          "KICK"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "direction_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A01",
+          "A03"
+        ],
+        "avoidWith": [
+          "A14"
+        ]
+      },
+      "defaults": {
+        "direction": "LEFT_TO_RIGHT",
+        "width": 1.0
+      }
+    },
+    {
+      "id": "A06",
+      "name": "Laser",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 1,
+        "telegraphBeats": 1,
+        "cooldownBeats": 1
+      },
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "BASS"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "timing",
+        "lane_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A01",
+          "A02"
+        ],
+        "avoidWith": [
+          "A06"
+        ]
+      },
+      "defaults": {
+        "orientation": "HORIZONTAL",
+        "position": 0.5,
+        "thickness": 0.15
+      }
+    },
+    {
+      "id": "R01",
+      "name": "Spike",
+      "mode": "RUNNER",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 0,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "KICK"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "jump_timing"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "R02",
+          "R08"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "height": 1.0
+      }
+    },
+    {
+      "id": "R02",
+      "name": "Gap",
+      "mode": "RUNNER",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 0,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "KICK"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "jump_timing",
+        "distance_judgement"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "R01",
+          "R08"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "width": 1.0
+      }
+    },
+    {
+      "id": "R03",
+      "name": "Low Wall",
+      "mode": "RUNNER",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 0,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "SNARE"
+        ],
+        "sections": [
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "slide_timing"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "R01"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "clearance": 0.5
+      }
+    },
+    {
+      "id": "R08",
+      "name": "Bounce Pad",
+      "mode": "RUNNER",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 0.25,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT"
+        ],
+        "instruments": [
+          "BASS",
+          "KICK"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "air_control",
+        "timing"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "R01",
+          "R02",
+          "R09"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "launchStrength": 1.0
+      }
+    },
+    {
+      "id": "R09",
+      "name": "Gravity Flip",
+      "mode": "RUNNER",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 4,
+        "telegraphBeats": 1,
+        "cooldownBeats": 2
+      },
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "instruments": [
+          "BASS"
+        ],
+        "sections": [
+          "BUILD",
+          "DROP",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "playerSkills": [
+        "orientation_switch",
+        "timing"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "R08",
+          "R01"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "gravityScale": -1
+      }
+    },
+    {
+      "id": "V01",
+      "name": "Tap",
+      "mode": "VERTICAL",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT",
+          "SUBDIVISION"
+        ],
+        "instruments": [
+          "MELODY",
+          "KICK",
+          "SNARE"
+        ],
+        "sections": [
+          "VERSE",
+          "CHORUS"
+        ],
+        "energy": [
+          "LOW",
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "V02",
+          "V03"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "lane": 1
+      }
+    },
+    {
+      "id": "V02",
+      "name": "Hold",
+      "mode": "VERTICAL",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 2,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "MELODY",
+          "VOCAL"
+        ],
+        "sections": [
+          "VERSE",
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "hold_control",
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "V01"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "lane": 1,
+        "holdBeats": 2
+      }
+    },
+    {
+      "id": "V03",
+      "name": "Double",
+      "mode": "VERTICAL",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT",
+          "DOWNBEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "BASS"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "simultaneous_input",
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "V01"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "lanes": [
+          1,
+          4
+        ]
+      }
+    },
+    {
+      "id": "D01",
+      "name": "Single",
+      "mode": "RADIAL",
+      "status": "MVP",
+      "difficulty": 1,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "MELODY",
+          "SNARE"
+        ],
+        "sections": [
+          "INTRO",
+          "VERSE"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "direction_reading",
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "D02",
+          "D06"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "direction": "UP"
+      }
+    },
+    {
+      "id": "D02",
+      "name": "Opposite Double",
+      "mode": "RADIAL",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 2,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "STRONG_BEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "BASS"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "simultaneous_input",
+        "direction_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "D01"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "directions": [
+          "UP",
+          "DOWN"
+        ]
+      }
+    },
+    {
+      "id": "D06",
+      "name": "Clockwise",
+      "mode": "RADIAL",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 4,
+        "telegraphBeats": 1,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "MELODY"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "pattern_memory",
+        "direction_reading",
+        "rhythm_accuracy"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "D01",
+          "D02"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "sequence": [
+          "UP",
+          "RIGHT",
+          "DOWN",
+          "LEFT"
+        ],
+        "stepBeats": 1
+      }
+    }
+  ]
+}
