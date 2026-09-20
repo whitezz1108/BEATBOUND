@@ -6,11 +6,16 @@
  * the game data inside src/.
  */
 
+// BASE_URL is '/' under `vite`/`vite preview` and '/BEATBOUND/' on GitHub
+// Pages, so data URLs must be prefixed to work in both places.
+const BASE = import.meta.env.BASE_URL;
+const dataUrl = (path: string) => BASE + path.replace(/^\//, '');
+
 export const DATA = {
-  mechanics: '/mechanics.mvp.json',
-  patterns: '/patterns.mvp.json',
-  levels: '/levels.index.json',
-  defaultLevel: '/arena_test.level.json',
+  mechanics: dataUrl('/mechanics.mvp.json'),
+  patterns: dataUrl('/patterns.mvp.json'),
+  levels: dataUrl('/levels.index.json'),
+  defaultLevel: dataUrl('/arena_test.level.json'),
 } as const;
 
 /** One entry of levels.index.json -- what the level picker lists. */
@@ -40,7 +45,7 @@ export async function loadLevelIndex(): Promise<LevelIndexEntry[]> {
 export function levelUrlFromLocation(search = window.location.search): string {
   const requested = new URLSearchParams(search).get('level');
   if (!requested) return DATA.defaultLevel;
-  return requested.startsWith('/') ? requested : `/${requested}`;
+  return requested.startsWith('/') ? dataUrl(requested) : dataUrl(`/${requested}`);
 }
 
 /** Beats of silence before the start bar, so the player can get ready. */
