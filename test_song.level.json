@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "editor": {
+    "seed": 42,
+    "analysisSource": "aee018a41b2d12c9",
+    "blueprintVersion": "1.0.0"
+  },
+  "song": {
+    "id": "test_song",
+    "title": "test_song",
+    "audio": "audio/editor/test_song.wav",
+    "bpm": 120,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "S01",
+      "startBar": 1,
+      "lengthBars": 9,
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.14
+        },
+        {
+          "patternId": "AP05",
+          "repeat": 3,
+          "intensity": 0.3
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.3
+        }
+      ],
+      "transitionOut": "ARENA_TO_RUNNER",
+      "scene": {
+        "effects": [
+          {
+            "effect": "paletteShift",
+            "params": {
+              "target": "modePalette"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "lightFlash",
+            "params": {
+              "color": "#ffffff",
+              "decay": 0.25
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S02",
+      "startBar": 10,
+      "lengthBars": 19,
+      "mode": "RUNNER",
+      "function": "PRACTICE",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "RP01",
+          "repeat": 1,
+          "intensity": 0.29
+        },
+        {
+          "patternId": "RP01",
+          "repeat": 1,
+          "intensity": 0.25
+        },
+        {
+          "patternId": "RP04",
+          "repeat": 4,
+          "intensity": 0.41
+        },
+        {
+          "patternId": "RP03",
+          "repeat": 4,
+          "intensity": 0.41
+        },
+        {
+          "patternId": "RP05",
+          "repeat": 4,
+          "intensity": 0.41
+        }
+      ],
+      "transitionOut": "RUNNER_TO_VERTICAL",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraPan",
+            "params": {
+              "direction": "followMode"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "particles",
+            "params": {
+              "burst": "boundaryCrossing"
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S03",
+      "startBar": 29,
+      "lengthBars": 30,
+      "mode": "VERTICAL",
+      "function": "CLIMAX",
+      "difficulty": 4,
+      "patterns": [
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.55
+        },
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.47
+        },
+        {
+          "patternId": "VP04",
+          "repeat": 4,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "VP03",
+          "repeat": 4,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "VP08",
+          "repeat": 4,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "VP03",
+          "repeat": 4,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "VP09",
+          "repeat": 1,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "VP08",
+          "repeat": 1,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "VP03",
+          "repeat": 1,
+          "intensity": 0.79
+        }
+      ],
+      "transitionOut": "VERTICAL_TO_RADIAL",
+      "scene": {
+        "effects": [
+          {
+            "effect": "envMovement",
+            "params": {
+              "kind": "drift"
+            },
+            "durationBeats": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "S04",
+      "startBar": 59,
+      "lengthBars": 6,
+      "mode": "RADIAL",
+      "function": "VARIATION",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "DP01",
+          "repeat": 1,
+          "intensity": 0.33
+        },
+        {
+          "patternId": "DP09",
+          "repeat": 4,
+          "intensity": 0.46
+        },
+        {
+          "patternId": "DP03",
+          "repeat": 1,
+          "intensity": 0.46
+        }
+      ],
+      "transitionOut": null
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "runner_test_12_double_jump",
+    "title": "Runner Test 12 — Double Jump",
+    "audio": "audio/editor/test_song.wav",
+    "bpm": 120,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "R-DJ",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "TEACH",
+      "difficulty": 3,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 1,
+        "phrases": [
+          {
+            "archetype": "GROOVE",
+            "role": "INTRO",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": [
+              "GROUND_RUN",
+              "MEDIUM_JUMP",
+              "GROUND_RUN",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "GROOVE",
+            "role": "INTRO",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.4,
+            "verbs": [
+              "MEDIUM_JUMP",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "REPEAT",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": [
+              "DOUBLE_JUMP_MOUNT",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "REPEAT",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.4,
+            "verbs": [
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "VARIATION",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.55,
+            "verbs": [
+              "DOUBLE_JUMP_MOUNT",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "VARIATION",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.55,
+            "verbs": [
+              "DOUBLE_JUMP_MOUNT",
+              "DROP",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "GROOVE",
+            "role": "CLIMAX",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.6,
+            "verbs": [
+              "MEDIUM_JUMP",
+              "MEDIUM_JUMP",
+              "SHORT_JUMP",
+              "MEDIUM_JUMP"
+            ]
+          },
+          {
+            "archetype": "RELEASE",
+            "role": "RELEASE",
+            "motif": "mount",
+            "beats": 4,
+            "intensity": 0.3,
+            "verbs": [
+              "RELEASE_RUN"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

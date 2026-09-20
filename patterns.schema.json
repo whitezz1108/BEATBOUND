@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/schema/patterns.schema.json",
+  "title": "BeatBound Pattern Library",
+  "type": "object",
+  "required": [
+    "version",
+    "patterns"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "mode",
+          "function",
+          "difficulty",
+          "lengthBars",
+          "musicTags",
+          "events"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}[0-9]{2}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "ARENA",
+              "RUNNER",
+              "VERTICAL",
+              "RADIAL",
+              "DUO"
+            ]
+          },
+          "function": {
+            "type": "string",
+            "enum": [
+              "TEACH",
+              "PRACTICE",
+              "VARIATION",
+              "COMBINE",
+              "CLIMAX",
+              "RECOVERY",
+              "TRANSITION",
+              "BOSS"
+            ]
+          },
+          "difficulty": {
+            "type": "object",
+            "required": [
+              "overall",
+              "reaction",
+              "rhythmComplexity",
+              "spatialComplexity",
+              "inputComplexity",
+              "informationLoad"
+            ],
+            "properties": {
+              "overall": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "reaction": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "rhythmComplexity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "spatialComplexity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "inputComplexity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "informationLoad": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "additionalProperties": false
+          },
+          "lengthBars": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "musicTags": {
+            "type": "object",
+            "properties": {
+              "rhythm": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "energy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "at",
+                "mechanicId"
+              ],
+              "properties": {
+                "at": {
+                  "type": "object",
+                  "required": [
+                    "bar",
+                    "beat"
+                  ],
+                  "properties": {
+                    "bar": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "beat": {
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "offsetBeats": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "mechanicId": {
+                  "type": "string"
+                },
+                "params": {
+                  "type": "object"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "PLAYER_A",
+                    "PLAYER_B",
+                    "BOTH",
+                    "SYSTEM"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "constraints": {
+            "type": "object",
+            "properties": {
+              "minReactionBeats": {
+                "type": "number",
+                "minimum": 0
+              },
+              "maxSimultaneousThreats": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "requiresMechanics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

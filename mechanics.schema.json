@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/schema/mechanics.schema.json",
+  "title": "BeatBound Mechanic Library",
+  "type": "object",
+  "required": [
+    "version",
+    "mechanics"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "mechanics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "mode",
+          "status",
+          "difficulty",
+          "timing",
+          "musicTags",
+          "playerSkills",
+          "defaults"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z][0-9]{2}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "ARENA",
+              "RUNNER",
+              "VERTICAL",
+              "RADIAL",
+              "DUO"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "MVP",
+              "OPTIONAL",
+              "STRETCH"
+            ]
+          },
+          "difficulty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "timing": {
+            "type": "object",
+            "required": [
+              "durationBeats",
+              "telegraphBeats"
+            ],
+            "properties": {
+              "durationBeats": {
+                "type": "number",
+                "minimum": 0
+              },
+              "telegraphBeats": {
+                "type": "number",
+                "minimum": 0
+              },
+              "cooldownBeats": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "musicTags": {
+            "type": "object",
+            "properties": {
+              "rhythm": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "instruments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "energy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "playerSkills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "compatibility": {
+            "type": "object",
+            "properties": {
+              "goodWith": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "avoidWith": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "defaults": {
+            "type": "object"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
