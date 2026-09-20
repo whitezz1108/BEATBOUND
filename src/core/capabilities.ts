@@ -15,6 +15,7 @@
 import { DIRECTION8, type Direction8 } from './direction8';
 import type { Rect } from './geometry';
 import type { RuntimeMechanic } from './Mechanic';
+import type { Renderer } from './Renderer';
 
 // --------------------------------------------------------------------------
 // Timed input (VERTICAL, RADIAL)
@@ -254,4 +255,64 @@ export function surfaceFor(
 ): TrackSurfaceLike {
   const t = m as Partial<RunnerTerrain>;
   return typeof t.activeSurface === 'function' ? t.activeSurface() : fallback;
+}
+
+// --------------------------------------------------------------------------
+// Sequence encounters (ARENA)
+// --------------------------------------------------------------------------
+
+/**
+ * A mechanic that borrows the player's controls for a scripted musical moment.
+ *
+ * ARENA is a dodge mode: the avatar is steered, never *played*. A12 Rhythm
+ * Breakout breaks that for the length of one encounter -- the player is sealed
+ * in and has to perform a short rhythm phrase to get out -- and this is the
+ * narrow surface that makes it possible without ARENA growing a second input
+ * system or the mechanic learning what a mode is.
+ *
+ * The mode does three things with it, all of them per-frame and stateless, so
+ * an encounter that ends (or dies mid-flight) can never leave the controls in
+ * a strange state:
+ *
+ *   1. asks whether the encounter currently wants directional input,
+ *   2. forwards the presses it wants, and scales movement while it does,
+ *   3. draws the encounter's UI *above* the avatar, which ordinary mechanic
+ *      rendering cannot do because it happens underneath.
+ */
+/** One scored moment of an encounter, drained by the mode into the run's stats. */
+export type SequenceVerdict = 'PERFECT' | 'GOOD' | 'MISS';
+
+export interface SequenceEncounter {
+  /**
+   * True while directional keys belong to the encounter rather than to
+   * movement. False before it starts and after it resolves, so the mode's
+   * control context follows the encounter's own timeline.
+   */
+  capturesInput(beat: number): boolean;
+  /** 0..1 multiplier on walking speed right now. 1 when nothing is happening. */
+  movementScale(beat: number): number;
+  /** A cardinal direction was entered on this frame. */
+  pressDirection(direction: Direction8, beat: number): void;
+  /** The confirm key was pressed on this frame. */
+  pressConfirm(beat: number): void;
+  /** Where the body this encounter is wrapped around currently is. */
+  focusOn(x: number, y: number): void;
+  /** Drawn after the avatar. Everything else goes through `render`. */
+  renderOverlay(r: Renderer, beat: number): void;
+  /**
+   * Verdicts scored since the last call, and clear them.
+   *
+   * The encounter judges its own phrase -- it owns the windows -- but the
+   * *run* owns the tally, so the notes land in RunStatus through the mode like
+   * every other scored input in the game. Drained rather than pushed so the
+   * mechanic never holds a reference to anything outside itself.
+   */
+  drainJudgements(): SequenceVerdict[];
+  /** Short HUD string: how the encounter is going. */
+  readonly encounterLabel: string;
+}
+
+export function isSequenceEncounter(m: RuntimeMechanic): m is RuntimeMechanic & SequenceEncounter {
+  return typeof (m as Partial<SequenceEncounter>).capturesInput === 'function'
+    && typeof (m as Partial<SequenceEncounter>).pressDirection === 'function';
 }

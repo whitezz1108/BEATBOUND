@@ -40,7 +40,7 @@ const TARGET_BARS = 32;
 const ARENA_PATTERNS = [
   'AP01', 'AP02', 'AP03', 'AP04', 'AP05', 'AP06', 'AP07', 'AP08', 'AP09', 'AP10',
   'AP11', 'AP12', 'AP13', 'AP14', 'AP15', 'AP16', 'AP17', 'AP18', 'AP19', 'AP20',
-  'AP21', 'AP22', 'AP23', 'AP24', 'AP25', 'AP26',
+  'AP21', 'AP22', 'AP23', 'AP24', 'AP25', 'AP26', 'AP27', 'AP28', 'AP29',
 ];
 const RUNNER_PATTERNS = [
   'RP01', 'RP02', 'RP03', 'RP04', 'RP05', 'RP06', 'RP07', 'RP08',
@@ -357,7 +357,18 @@ export const LABS: LabDefinition[] = [
       [pick(['RP13', 'RP11', 'RP14', 'RP15'], c.variantIndex)], 3),
   },
   {
-    index: 25, id: 'full-demo', group: 'GLOBAL', title: 'Full Demo',
+    index: 25, id: 'arena-seal-break', group: 'ARENA', title: 'Rhythm Breakout',
+    hint: 'A12 sealed barrier. Arrows play the phrase, SPACE breaks it on the accent. '
+      + 'Cycle easy/syncopated/gauntlet with [ and ]; retune BPM with - and = to check the timing holds.',
+    variants: ['AP27 four on the floor', 'AP28 syncopated', 'AP29 gauntlet'],
+    // No Space trigger: Space is the encounter's final hit, and a lab that
+    // spawned a second seal every time the player broke the first would be
+    // testing the wrong thing.
+    build: (c) => loop(c, 'arena-seal-break', 'Arena Rhythm Breakout', 'ARENA',
+      [pick(['AP27', 'AP28', 'AP29'], c.variantIndex)], 2),
+  },
+  {
+    index: 26, id: 'full-demo', group: 'GLOBAL', title: 'Full Demo',
     hint: 'The complete multi-mode song. Not a lab.',
     build: null,
   },

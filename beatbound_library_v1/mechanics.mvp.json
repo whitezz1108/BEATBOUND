@@ -1092,6 +1092,90 @@
         "width": 1.0
       },
       "notes": "A solid block rising from the running surface. The front face damages; jump onto the top and it becomes terrain -- stand on it, hop between heights, run off the far edge. Platforms at or under the step-up height are walked over automatically. Inverted gravity hangs them from the ceiling."
+    },
+    {
+      "id": "A12",
+      "name": "Rhythm Breakout",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 6,
+        "telegraphBeats": 4,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "BUILD",
+          "ACCENT"
+        ],
+        "instruments": [
+          "KICK",
+          "SNARE",
+          "RISER"
+        ],
+        "sections": [
+          "BUILD",
+          "DROP",
+          "CHORUS",
+          "BRIDGE"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "rhythm_input",
+        "timing_precision",
+        "sequence_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A01",
+          "A02"
+        ],
+        "avoidWith": [
+          "A04",
+          "A07",
+          "A08",
+          "A10",
+          "A11"
+        ]
+      },
+      "defaults": {
+        "variant": "SINGLE_RING",
+        "prepBeats": 4,
+        "sequence": [
+          {
+            "beatOffset": 0,
+            "direction": "LEFT"
+          },
+          {
+            "beatOffset": 1,
+            "direction": "UP"
+          },
+          {
+            "beatOffset": 2,
+            "direction": "RIGHT"
+          },
+          {
+            "beatOffset": 3,
+            "direction": "DOWN"
+          }
+        ],
+        "finalBeatOffset": 4,
+        "releaseBeats": 2,
+        "perfectWindowBeats": 0.12,
+        "goodWindowBeats": 0.24,
+        "maxMisses": 1,
+        "failureMode": "DAMAGE",
+        "startRadius": 0.72,
+        "criticalRadius": 0.13,
+        "thickness": 0.05,
+        "movementScale": 0.6
+      },
+      "notes": "A sealed circular barrier with no gap. The player performs the directional phrase in `sequence` (arrow keys), then breaks the seal on `finalBeatOffset` with SPACE, releasing a shockwave that shatters the ring. Timing is judged in beats like VERTICAL and RADIAL; `perfectWindowMs`/`goodWindowMs` are accepted as an alternative for generated data. A seal that takes more than `maxMisses` step misses can no longer be broken, and an unbroken seal collapses through the player for `failureMode` damage (LIGHT/DAMAGE/HEAVY). Prep is stretched automatically when the tempo would make the encounter unescapable, and step spacing, judging windows and the critical radius are all floored by fairness -- see breakoutPlan.ts. `variant` picks the silhouette, which is real geometry and not just a palette: SINGLE_RING and DOUBLE_RING are circular, HEX_SEAL is a slowly turning hexagon and RUNE_SEAL an octagon. Radii are inradii -- the distance to the nearest wall -- so every silhouette is equally fair at the same numbers."
     }
   ]
 }

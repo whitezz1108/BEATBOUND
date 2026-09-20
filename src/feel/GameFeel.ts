@@ -134,7 +134,7 @@ export class GameFeel implements FeelSink {
 
   /** Player took damage. Short freeze, hard kick, red vignette. */
   playerHit(x: number, y: number, dirX = 0, dirY = -1): void {
-    this.hitStopRemaining = Math.max(this.hitStopRemaining, TUNING.hitStop.playerHitSeconds);
+    this.hitStop(TUNING.hitStop.playerHitSeconds);
     this.impact('HEAVY', { x, y, dirX, dirY, colour: '#ff3355', sfx: 'player_hit' });
     this.screen.flash('#ff3355', 0.3, 0.2);
     this.screen.vignette('#ff1133', 0.5);
@@ -152,6 +152,12 @@ export class GameFeel implements FeelSink {
 
   sfx(name: SfxName, gainScale = 1): void {
     this.audio.play(name, gainScale);
+  }
+
+  /** Hold the drawn frame. Clamped, and never shortens a longer freeze. */
+  hitStop(seconds: number): void {
+    const capped = Math.min(Math.max(0, seconds), TUNING.hitStop.maxSeconds);
+    this.hitStopRemaining = Math.max(this.hitStopRemaining, capped);
   }
 
   /** Direct particle access, for mechanics that shape their own debris. */

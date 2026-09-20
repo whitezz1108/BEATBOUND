@@ -138,6 +138,12 @@
       "file": "runner_test_13_sky_steps.level.json",
       "title": "Runner Test 13 — Sky Steps",
       "blurb": "Isolates SKY_STEPS: floating blocks over holes, one full jump apart -- miss the beat, take the fall."
+    },
+    {
+      "id": "arena_breakout",
+      "file": "arena_breakout.level.json",
+      "title": "Arena Seal Break",
+      "blurb": "A12 Rhythm Breakout: dodge, get sealed in, play the phrase, break out on the downbeat. Three difficulties."
     }
   ]
 }

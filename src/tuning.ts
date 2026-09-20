@@ -127,6 +127,18 @@ export const TUNING = {
     /** Visual freeze on a player hit. The audio timeline is never paused. */
     playerHitSeconds: 0.06,
     heavySeconds: 0.08,
+    /**
+     * The player breaking an A12 seal. Longer than a hit, because this one is
+     * a *reward*: the freeze is the beat of silence before the shockwave, and
+     * the player is meant to feel it land rather than merely notice it.
+     */
+    sealBreakSeconds: 0.10,
+    /**
+     * Ceiling on anything a mechanic may request. A freeze is the one effect
+     * that stops the player seeing the game, so no caller gets to hold the
+     * frame for longer than this however enthusiastic its argument.
+     */
+    maxSeconds: 0.16,
   },
 
   arena: {

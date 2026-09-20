@@ -8,7 +8,13 @@
 
 // BASE_URL is '/' under `vite`/`vite preview` and '/BEATBOUND/' on GitHub
 // Pages, so data URLs must be prefixed to work in both places.
-const BASE = import.meta.env.BASE_URL;
+//
+// Read defensively, because this module is also bundled by esbuild into the
+// headless tools (`npm run audit`, `fairness`, `level`, `runner-check`), which
+// run under plain Node where `import.meta.env` does not exist. Vite still
+// substitutes the real base in both dev and build; Node falls back to '/',
+// which is what the tools' fetch shim resolves library paths against anyway.
+const BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 const dataUrl = (path: string) => BASE + path.replace(/^\//, '');
 
 export const DATA = {

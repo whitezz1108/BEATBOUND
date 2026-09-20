@@ -28,7 +28,11 @@ export class ArenaPlayer {
   /** Collision radius. Deliberately smaller than what is drawn. */
   readonly radius = TUNING.arena.playerRadius;
   private readonly visualRadius = TUNING.arena.playerVisualRadius;
-  speed = TUNING.arena.playerSpeed;
+  /**
+   * Walking speed. Mutable: a rhythm encounter (A12) damps it while it owns
+   * the controls, and the mode restores it from TUNING every frame it does not.
+   */
+  speed: number = TUNING.arena.playerSpeed;
 
   /**
    * Cosmetic slots. Assigned once at load and never read by gameplay -- see

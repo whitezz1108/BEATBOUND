@@ -14,6 +14,13 @@
  * Avatar (the player sprite). The mode keeps only what is actually gameplay:
  * collision, the hit/perfect bookkeeping, and the two decaying pulses those
  * produce, which the stage turns into rim colour and the avatar into a blink.
+ *
+ * One mechanic family needs more than collision: A12 Rhythm Breakout asks the
+ * player to *play* a phrase rather than dodge one, so for the length of an
+ * encounter the arrow keys are a rhythm input instead of a direction. That is
+ * handled by BreakoutController through the `SequenceEncounter` capability --
+ * the mode still never learns what A12 is, only that something on the field
+ * would like the controls for a moment.
  */
 
 import { circleIntersectsShape } from '../../core/geometry';
@@ -25,6 +32,7 @@ import { TUNING } from '../../tuning';
 import type { GameplayMode, ModeContext } from '../GameplayMode';
 import { ArenaPlayer } from './ArenaPlayer';
 import { ArenaStage } from './ArenaStage';
+import { BreakoutController } from './BreakoutController';
 
 /** How long the hit and perfect-dodge pulses take to fade, in beats. */
 const HIT_PULSE_BEATS = 0.5;
@@ -34,6 +42,8 @@ export class ArenaMode implements GameplayMode {
   readonly mode: GameMode = 'ARENA';
   readonly player = new ArenaPlayer();
   private readonly stage = new ArenaStage();
+  /** Owns the arrow-keys-as-rhythm-input context. Stateless between frames. */
+  private readonly breakout: BreakoutController;
   private mechanics: RuntimeMechanic[] = [];
   private lastHitBeat = -Infinity;
   /** Debug label for the HUD: what pattern most recently fed this mode. */
@@ -45,11 +55,15 @@ export class ArenaMode implements GameplayMode {
   private lastPerfectBeat = -Infinity;
   private perfects = 0;
 
-  constructor(private readonly ctx: ModeContext) {}
+  constructor(private readonly ctx: ModeContext) {
+    this.breakout = new BreakoutController(ctx.input, ctx.status);
+  }
 
   activate(_atBeat: number): void {
     this.player.reset();
+    this.player.speed = TUNING.arena.playerSpeed;
     this.mechanics = [];
+    this.breakout.reset();
     this.grazing = false;
     this.lastHitBeat = -Infinity;
     this.lastPerfectBeat = -Infinity;
@@ -57,10 +71,12 @@ export class ArenaMode implements GameplayMode {
 
   deactivate(_atBeat: number): void {
     this.mechanics = [];
+    this.breakout.reset();
   }
 
   clearHazards(): void {
     this.mechanics = [];
+    this.breakout.reset();
   }
 
   accept(info: SpawnedMechanicInfo): void {
@@ -72,7 +88,11 @@ export class ArenaMode implements GameplayMode {
     // Death disables input but leaves the scene standing so the player can see
     // what killed them.
     if (this.ctx.status.outcome === 'PLAYING') {
-      this.player.update(u.deltaSeconds, this.ctx.input.axis());
+      // Encounters are polled before the avatar moves, so the binding the
+      // player steers with matches the one the encounter just read.
+      this.breakout.update(this.mechanics, u.beat, this.player.x, this.player.y);
+      this.player.speed = TUNING.arena.playerSpeed * this.breakout.movementScale(u.beat);
+      this.player.update(u.deltaSeconds, this.ctx.input.axisFrom(this.breakout.moveKeys));
     }
 
     for (const m of this.mechanics) m.update(u);
@@ -140,6 +160,9 @@ export class ArenaMode implements GameplayMode {
     r.withFieldClip(() => {
       for (const m of this.mechanics) m.render(r);
       this.player.render(r, this.ctx.status.isInvulnerable(this.ctx.clock.songTime), beat);
+      // Encounter effects that belong on top of the body -- the charge it
+      // gathers, and the shockwave that leaves it.
+      this.breakout.renderOverlay(r, this.mechanics, beat);
       this.renderHitFlash(r, beat);
       this.renderPerfectLabel(r, beat);
     });
@@ -163,7 +186,9 @@ export class ArenaMode implements GameplayMode {
   }
 
   get statusLine(): string {
-    return `ARENA  mechanics:${this.mechanics.length}  perfect:${this.perfects}  last pattern:${this.lastPatternId}`;
+    const encounter = this.breakout.label(this.mechanics);
+    return `ARENA  mechanics:${this.mechanics.length}  perfect:${this.perfects}`
+      + `  last pattern:${this.lastPatternId}${encounter ? `  ${encounter}` : ''}`;
   }
 }
 

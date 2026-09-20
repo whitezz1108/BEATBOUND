@@ -5984,6 +5984,227 @@
         }
       ],
       "notes": "One low shelf per bar and nothing else: a landing beat the player can breathe on without the runner ever stopping."
+    },
+    {
+      "id": "AP27",
+      "name": "Seal Break",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 4,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 2
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The teaching form: four cardinals, one per beat, resolving on the next downbeat. One bar of build-up, one bar of phrase, the accent on the bar line. Two misses are forgiven, so a first encounter is survivable while it is still being learned."
+    },
+    {
+      "id": "AP28",
+      "name": "Seal Break Syncopated",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 3,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 1,
+        "inputComplexity": 4,
+        "informationLoad": 3
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "BUILD"
+        ],
+        "sections": [
+          "BUILD",
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "variant": "HEX_SEAL",
+            "prepBeats": 4,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Six inputs mixing beats and half-beats, with a bar of anticipation before the accent on beat 5. The off-beats are what make it a phrase rather than a list, and the hexagonal seal gives the sharper rhythm a sharper silhouette."
+    },
+    {
+      "id": "AP29",
+      "name": "Seal Break Gauntlet",
+      "mode": "ARENA",
+      "function": "BOSS",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 4,
+        "rhythmComplexity": 5,
+        "spatialComplexity": 1,
+        "inputComplexity": 5,
+        "informationLoad": 4
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP",
+          "BRIDGE"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "variant": "RUNE_SEAL",
+            "prepBeats": 4,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 4,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "perfectWindowBeats": 0.09,
+            "goodWindowBeats": 0.18,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "criticalRadius": 0.115
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Eight inputs including a repeated direction and three half-beats, tighter windows, one forgiven miss and a heavier collapse. The hardest thing the mechanic can ask for that still leaves the seal escapable at every tempo."
     }
   ]
 }

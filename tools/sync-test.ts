@@ -346,7 +346,24 @@ async function checkEveryLevel(): Promise<void> {
     // Dead air: a bar inside a section with nothing scheduled in it. The player
     // spends those bars doing nothing, which is what made the prototype level
     // drag before its sections were filled.
-    const activeBars = new Set(spawns.map((s) => Math.floor(s.activationBeat / beatsPerBar) + 1));
+    //
+    // A bar counts as active when a mechanic is *present* in it, not merely
+    // when one activates in it. Presence runs from the telegraph -- the player
+    // is already reading the warning -- to the end of the danger window. For
+    // almost every mechanic that is the same bar and this changes nothing; it
+    // matters for the long ones, where an encounter such as A12 Rhythm
+    // Breakout has a single activation but holds the whole arena for three
+    // bars either side of it. Counting only activations would call those bars
+    // dead while the player is sealed inside a closing barrier.
+    const activeBars = new Set<number>();
+    for (const spawn of spawns) {
+      const timing = spawn.definition.timing;
+      const from = spawn.activationBeat - (timing.telegraphBeats ?? 0);
+      const to = spawn.activationBeat + (timing.durationBeats ?? 0);
+      for (let bar = Math.floor(from / beatsPerBar) + 1; bar <= Math.floor(to / beatsPerBar) + 1; bar++) {
+        activeBars.add(bar);
+      }
+    }
     // A course is *one* mechanic for the whole section, so counting spawns per
     // bar would call a solid 30-bar course 29 bars of dead air. Its terrain is
     // continuous by construction, so the bars it covers are the bars its
