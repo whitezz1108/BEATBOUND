@@ -14,6 +14,7 @@ import { BeatClock } from '../src/core/BeatClock';
 import { LevelLoader } from '../src/core/LevelLoader';
 import { MechanicRegistry } from '../src/core/MechanicRegistry';
 import { PatternScheduler, type SpawnedMechanicInfo } from '../src/core/PatternScheduler';
+import { scheduleCourse } from '../src/mechanics/runner/courseSchedule';
 import { registerArenaMechanics } from '../src/mechanics/arena';
 import { registerRunnerMechanics } from '../src/mechanics/runner';
 import { registerVerticalMechanics } from '../src/mechanics/vertical';
@@ -313,6 +314,14 @@ async function checkEveryLevel(): Promise<void> {
     const spawnBeats: number[] = [];
     scheduler.onMechanicSpawned((info) => { spawns.push(info); spawnBeats.push(clock.absoluteBeat); });
     scheduler.scheduleLevel(level);
+    // A RUNNER course has no pattern and no library entry, so it never appears
+    // in `section.placements` -- it is scheduled separately, on this same clock
+    // and through this same sink, by the game. Without it here the showcase reads
+    // as 30 empty bars, which is a lie about a section that is in fact solid
+    // terrain from its first beat to its last.
+    for (const section of level.sections) {
+      scheduleCourse(clock, registry, section, (info) => { spawns.push(info); spawnBeats.push(clock.absoluteBeat); });
+    }
 
     const beatsPerBar = level.tempo.beatsPerBar;
     const endTime = level.tempo.beatsToTime((level.endBar - 1) * beatsPerBar) + 4;
@@ -338,6 +347,17 @@ async function checkEveryLevel(): Promise<void> {
     // spends those bars doing nothing, which is what made the prototype level
     // drag before its sections were filled.
     const activeBars = new Set(spawns.map((s) => Math.floor(s.activationBeat / beatsPerBar) + 1));
+    // A course is *one* mechanic for the whole section, so counting spawns per
+    // bar would call a solid 30-bar course 29 bars of dead air. Its terrain is
+    // continuous by construction, so the bars it covers are the bars its
+    // trajectory spans -- which is the honest answer to "is the player doing
+    // something here".
+    for (const section of level.sections) {
+      if (!section.course) continue;
+      const from = Math.floor(section.course.startBeat / beatsPerBar) + 1;
+      const to = Math.ceil(section.course.trajectory.endBeat / beatsPerBar);
+      for (let bar = from; bar <= to; bar++) activeBars.add(bar);
+    }
     const emptyBars: number[] = [];
     for (const section of level.sections) {
       // Bars the mode-change breather deliberately emptied are not dead air.
@@ -348,7 +368,7 @@ async function checkEveryLevel(): Promise<void> {
         if (!activeBars.has(bar)) emptyBars.push(bar);
       }
     }
-    const label = `${entry.file.padEnd(28)} ${modes.padEnd(28)} ${String(scheduler.spawnedMechanicCount).padStart(3)} events`;
+    const label = `${entry.file.padEnd(28)} ${modes.padEnd(28)} ${String(spawns.length).padStart(3)} events`;
     check(
       label,
       allSpawned && drained && earlyEnough && missing.length === 0 && emptyBars.length === 0,

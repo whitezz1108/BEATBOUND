@@ -1,0 +1,112 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "runner_test_03_staircase",
+    "title": "Runner Test 03 — Staircase",
+    "audio": "audio/editor/test_song.wav",
+    "bpm": 120,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "R-T",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "TEACH",
+      "difficulty": 2,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 1,
+        "phrases": [
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "INTRO",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": [
+              "STAIRCASE_UP"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "INTRO",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": [
+              "STAIRCASE_DOWN"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "REPEAT",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.45,
+            "verbs": [
+              "STAIRCASE_UP"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "REPEAT",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.45,
+            "verbs": [
+              "STAIRCASE_DOWN"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "VARIATION",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.55,
+            "verbs": [
+              "STAIRCASE_UP"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "VARIATION",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": [
+              "PLATFORM_DESCENT",
+              "STAIRCASE_UP"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "CLIMAX",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.65,
+            "verbs": [
+              "STAIRCASE_UP"
+            ]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "RELEASE",
+            "motif": "stairs",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": [
+              "STAIRCASE_DOWN"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

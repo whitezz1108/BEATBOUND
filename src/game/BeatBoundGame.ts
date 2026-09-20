@@ -25,7 +25,7 @@ import { ModeManager } from '../core/ModeManager';
 import { PatternScheduler } from '../core/PatternScheduler';
 import { Renderer } from '../core/Renderer';
 import { RunStatus } from '../core/RunStatus';
-import type { LevelDefinition } from '../core/types';
+import type { GameMode, LevelDefinition } from '../core/types';
 import { GameFeel } from '../feel/GameFeel';
 import { ArenaMode } from '../modes/arena/ArenaMode';
 import { RunnerMode } from '../modes/runner/RunnerMode';
@@ -33,10 +33,13 @@ import { VerticalMode } from '../modes/vertical/VerticalMode';
 import { RadialMode } from '../modes/radial/RadialMode';
 import { registerArenaMechanics } from '../mechanics/arena';
 import { registerRunnerMechanics } from '../mechanics/runner';
+import { scheduleCourse } from '../mechanics/runner/courseSchedule';
 import { registerVerticalMechanics } from '../mechanics/vertical';
 import { registerRadialMechanics } from '../mechanics/radial';
 import { COUNT_IN_BEATS, DATA, type DevOptions } from '../config';
+import { MODE_CONTROLS } from '../core/controls';
 import { MODE_COLOURS } from '../core/ModeManager';
+import { beatsForSeconds, TUNING } from '../tuning';
 import { Hud } from './Hud';
 import { HealthBar } from './HealthBar';
 
@@ -185,6 +188,7 @@ export class BeatBoundGame {
     this.scheduler.onMechanicSpawned(this.modes.route);
     this.scheduleSections();
     this.scheduler.scheduleLevel(this.level);
+    this.scheduleCourses();
 
     this.unsubscribeBeat = this.clock.onBeat((wholeBeat) => {
       this.feel.onBeat(wholeBeat, this.clock.beatsPerBar);
@@ -216,6 +220,20 @@ export class BeatBoundGame {
   }
 
   /**
+   * RUNNER courses go through the scheduler like everything else.
+   *
+   * A course has no pattern and no library entry, so the pattern timeline cannot
+   * produce it -- but it still has to arrive as a mechanic so the mode accepts it
+   * through the one road it knows. This schedules that spawn, one bar early, on
+   * the same clock and through the same sink as every pattern event.
+   */
+  private scheduleCourses(): void {
+    for (const section of this.level.sections) {
+      scheduleCourse(this.clock, this.registry, section, this.modes.route);
+    }
+  }
+
+  /**
    * The song, or a click track when the level has no audio asset.
    *
    * The buffer is decoded during load, before any system is built, because the
@@ -239,7 +257,9 @@ export class BeatBoundGame {
     await this.audio.resume();
     this.detachInput = this.input.attach();
     this.detachLifecycle = this.attachLifecycle();
-    this.countInBeats = dev.countInBeats ?? COUNT_IN_BEATS;
+    // The count-in is three real seconds, converted to beats at this tempo.
+    this.countInBeats = dev.countInBeats
+      ?? Math.max(4, beatsForSeconds(this.level.song.bpm, TUNING.transition.countdownSeconds));
     this.status.reset();
     this.status.invincible = dev.invincible ?? false;
     this.healthBar.reset();
@@ -472,7 +492,9 @@ export class BeatBoundGame {
    * Countdown into a mode change.
    *
    * The scheduler has already stopped spawning by this point, so the arena is
-   * emptying; this says why, and what is arriving.
+   * emptying; this says why, what is arriving, and which keys the player will
+   * need. The numbers are a three-second 3-2-1, mapped onto the breather's
+   * beats at the current tempo.
    */
   private drawBreather(r: Renderer): void {
     const section = this.currentSection();
@@ -481,11 +503,16 @@ export class BeatBoundGame {
     const sectionEnd = (section.endBar - 1) * this.clock.beatsPerBar;
     if (beat < section.breatherFromBeat || beat > sectionEnd) return;
 
-    const remaining = sectionEnd - beat;
-    const colour = MODE_COLOURS[section.nextMode] ?? '#6de3ff';
     const alpha = Math.min(1, (beat - section.breatherFromBeat) / 1.5);
-    r.text(`NEXT: ${section.nextMode}`, 0.5, 0.08, colour, 15, 'center', alpha * 0.85);
-    r.text(`${Math.ceil(remaining)}`, 0.5, 0.135, '#e8ecf8', 20, 'center', alpha * 0.7);
+    const colour = MODE_COLOURS[section.nextMode] ?? '#6de3ff';
+    r.text(`NEXT: ${section.nextMode}`, 0.5, 0.08, colour, 16, 'center', alpha * 0.9);
+    const hints = MODE_CONTROLS[section.nextMode] ?? [];
+    hints.forEach((hint, i) => {
+      r.text(`${hint.label}  ${hint.keys.join('  ')}`, 0.5, 0.135 + i * 0.03, '#9aa4bd', 12, 'center', alpha * 0.8);
+    });
+    const remainingSeconds = (sectionEnd - beat) * this.clock.secondsPerBeat;
+    const count = Math.min(3, Math.max(1, Math.ceil(remainingSeconds / (TUNING.transition.countdownSeconds / 3))));
+    r.text(`${count}`, 0.5, 0.16 + hints.length * 0.03, '#e8ecf8', 26, 'center', alpha * 0.9);
   }
 
   private drawOverlays(r: Renderer): void {
@@ -499,11 +526,22 @@ export class BeatBoundGame {
       return;
     }
     if (this.isCountingIn) {
-      const beatsLeft = Math.ceil(this.startBeat - this.clock.absoluteBeat);
+      // Three real seconds, displayed as 3-2-1: mode name, its controls from
+      // the shared binding table, then the count itself.
       r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#05070d', 0.55);
-      r.text('GET READY', 0.5, 0.42, '#e8ecf8', 30);
-      r.text(`${beatsLeft}`, 0.5, 0.52, '#6de3ff', 44);
-      if (this.startBar > 1) r.text(`starting at bar ${this.startBar}`, 0.5, 0.6, '#9aa4bd', 13);
+      r.text('GET READY', 0.5, 0.34, '#e8ecf8', 28);
+      const mode = this.modeAtBeat(Math.max(0, this.startBeat));
+      if (mode) {
+        r.text(mode, 0.5, 0.41, MODE_COLOURS[mode] ?? '#6de3ff', 20, 'center');
+        const hints = MODE_CONTROLS[mode] ?? [];
+        hints.forEach((hint, i) => {
+          r.text(`${hint.label}  ${hint.keys.join('  ')}`, 0.5, 0.47 + i * 0.03, '#9aa4bd', 13, 'center');
+        });
+      }
+      const remainingSeconds = (this.startBeat - this.clock.absoluteBeat) * this.clock.secondsPerBeat;
+      const count = Math.min(3, Math.max(1, Math.ceil(remainingSeconds / (TUNING.transition.countdownSeconds / 3))));
+      r.text(`${count}`, 0.5, 0.62, '#6de3ff', 40, 'center');
+      if (this.startBar > 1) r.text(`starting at bar ${this.startBar}`, 0.5, 0.7, '#9aa4bd', 13);
       return;
     }
     this.drawBreather(r);
@@ -531,6 +569,12 @@ export class BeatBoundGame {
   private currentSection(): CompiledSection | null {
     const bar = Math.floor(Math.max(0, this.clock.absoluteBeat) / this.clock.beatsPerBar) + 1;
     return this.level.sections.find((s) => bar >= s.startBar && bar < s.endBar) ?? null;
+  }
+
+  /** Mode of the section containing `beat`, for the count-in overlay. */
+  private modeAtBeat(beat: number): GameMode | null {
+    const bar = Math.floor(Math.max(0, beat) / this.clock.beatsPerBar) + 1;
+    return this.level.sections.find((s) => bar >= s.startBar && bar < s.endBar)?.mode ?? null;
   }
 
   private reportReadiness(): void {

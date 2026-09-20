@@ -26,7 +26,10 @@ const UI_DIR = path.join(ROOT, 'editor', 'ui');
 const OUTPUT_DIR = path.join(ROOT, 'editor', 'output');
 const LIB_DIR = path.join(ROOT, 'beatbound_library_v1');
 const AUDIO_DIR = path.join(LIB_DIR, 'audio', 'editor');
-const ANALYSIS_SCRIPT = path.join(ROOT, 'editor', 'music-analysis', 'analyze_music.py');
+const ANALYSIS_SCRIPT = path.join(ROOT, 'editor', 'music-analysis', 'analyze_music_v2.py');
+const V2_OUTPUT = path.join(OUTPUT_DIR, 'music_analysis_v2.json');
+const LEGACY_OUTPUT = path.join(OUTPUT_DIR, 'music_analysis.json');
+const DIRECTOR_OUTPUT = path.join(OUTPUT_DIR, 'director_context.json');
 const PORT = Number(process.env.EDITOR_PORT) || 5174;
 const HOST = '127.0.0.1';
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
@@ -143,26 +146,38 @@ function slugify(name) {
   );
 }
 
-/** Run the Python analyser; resolves with the analysis object. */
-function runAnalysis(audioAbsPath, { bpm, timesig } = {}) {
+/** Run the V2 Python analyser (music_analysis_v2 + v1 projection + director context).
+ *
+ * The CLI is invoked with --quiet: everything the editor needs is read back
+ * from the JSON files it writes, so nothing here depends on stdout parsing.
+ * Resolves with a small summary for the UI; rejects on a non-zero exit.
+ */
+function runAnalysis(audioAbsPath, { bpm, timesig, mode } = {}) {
   return new Promise((resolve, reject) => {
-    const args = [ANALYSIS_SCRIPT, audioAbsPath, path.join(OUTPUT_DIR, 'music_analysis.json')];
+    const args = [ANALYSIS_SCRIPT, audioAbsPath, V2_OUTPUT, '--quiet'];
+    if (mode === 'fast') args.push('--fast');
     if (bpm) args.push('--bpm', String(bpm));
     if (timesig && Array.isArray(timesig)) args.push('--timesig', ...timesig.map(String));
     const child = spawn('python', args, { cwd: ROOT });
-    let out = '';
     let err = '';
-    child.stdout.on('data', (d) => (out += d));
+    child.stdout.on('data', () => {}); // --quiet keeps stdout empty; drain regardless
     child.stderr.on('data', (d) => (err += d));
     child.on('close', (code) => {
-      if (code !== 0) return reject(new Error(err.trim() || `python exited with ${code}`));
-      try {
-        resolve(JSON.parse(out.trim()));
-      } catch {
-        reject(new Error(`analysis produced no report: ${out.slice(0, 200)}`));
-      }
+      if (code !== 0) return reject(new Error(err.trim().slice(-800) || `python exited with ${code}`));
+      resolve({ ok: true });
     });
   });
+}
+
+/** Serve one of the analysis JSON files, optionally as a forced download. */
+function sendAnalysisFile(res, filePath, filename, download) {
+  if (!existsSync(filePath)) {
+    return json(res, 404, { error: `${filename} not generated yet -- run an analysis first` });
+  }
+  const headers = { 'Content-Type': 'application/json; charset=utf-8' };
+  if (download) headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+  res.writeHead(200, headers);
+  createReadStream(filePath).pipe(res);
 }
 
 /** The authoritative check: the game's own level-report tool. */
@@ -281,6 +296,8 @@ const server = createServer(async (req, res) => {
         hasAnalysis: state.analysis !== null,
         hasBlueprint: state.blueprint !== null,
         levelFile: state.levelFile,
+        hasDirectorContext: existsSync(DIRECTOR_OUTPUT),
+        hasFullAnalysis: existsSync(V2_OUTPUT),
         tuningMirror: { ...tuningMirror, missing: [...tuningMirror.missing] },
         consistencyNotes: [...rulesConsistencyNotes],
         analysis: state.analysis
@@ -317,6 +334,10 @@ const server = createServer(async (req, res) => {
       state.analysis = null;
       state.blueprint = null;
       state.levelFile = null;
+      // Stale analysis exports must not be downloadable against the new song.
+      for (const stale of [V2_OUTPUT, LEGACY_OUTPUT, DIRECTOR_OUTPUT]) {
+        await fs.rm(stale, { force: true });
+      }
       return json(res, 200, { ok: true, song: state.song });
     }
 
@@ -325,26 +346,62 @@ const server = createServer(async (req, res) => {
       if (!state.song) return json(res, 400, { error: 'upload a song first' });
       const opts = await readJsonBody(req);
       const audioAbs = path.join(LIB_DIR, state.song.audioPath);
-      const report = await runAnalysis(audioAbs, opts);
-      const analysis = JSON.parse(
-        await fs.readFile(path.join(OUTPUT_DIR, 'music_analysis.json'), 'utf8')
-      );
+      await runAnalysis(audioAbs, opts);
+      const analysis = JSON.parse(await fs.readFile(LEGACY_OUTPUT, 'utf8'));
       // Store library-relative paths so the compiler emits runtime-ready audio.
       analysis.song.audioPath = state.song.audioPath;
       analysis.song.id = state.song.id;
       analysis.song.title = state.song.title;
-      await fs.writeFile(
-        path.join(OUTPUT_DIR, 'music_analysis.json'),
-        JSON.stringify(analysis, null, 2)
-      );
+      await fs.writeFile(LEGACY_OUTPUT, JSON.stringify(analysis, null, 2));
       state.analysis = analysis;
-      return json(res, 200, { ok: true, report, analysis: state.analysis });
+
+      // The director context is the headline V2.1 export; summarise it so the
+      // UI can confirm what the download button will deliver.
+      let directorSummary = null;
+      try {
+        const dc = JSON.parse(await fs.readFile(DIRECTOR_OUTPUT, 'utf8'));
+        directorSummary = {
+          sections: dc.sections.length,
+          phrases: dc.phrases.length,
+          repeat_groups: dc.repeat_groups.length,
+          repeat_comparisons: dc.repeat_comparisons.length,
+          important_events: dc.important_events.length,
+          bars: dc.grid.bars.length,
+          bar_phase_confidence: dc.grid.bar_phase_confidence,
+          lyrics_available: dc.lyrics.available,
+        };
+      } catch {
+        directorSummary = null;
+      }
+      return json(res, 200, {
+        ok: true,
+        report: {
+          bpm_override: Boolean(opts.bpm),
+          bpm: analysis.tempo.bpm,
+          bars: analysis.bars.length,
+          sections: analysis.sections.length,
+          onsets: analysis.onsets.length,
+          mode: opts.mode === 'fast' ? 'fast' : 'full',
+        },
+        directorContext: directorSummary,
+        analysis: state.analysis,
+      });
     }
 
     // ---- analysis ----
     if (req.method === 'GET' && p === '/api/analysis') {
       if (!state.analysis) return json(res, 404, { error: 'no analysis yet' });
       return json(res, 200, state.analysis);
+    }
+
+    // ---- director context (the agent-facing export, V2.1) ----
+    if (req.method === 'GET' && p === '/api/director-context') {
+      return sendAnalysisFile(res, DIRECTOR_OUTPUT, 'director_context.json', url.searchParams.get('download') === '1');
+    }
+
+    // ---- full V2 analysis (optional secondary download) ----
+    if (req.method === 'GET' && p === '/api/analysis-v2') {
+      return sendAnalysisFile(res, V2_OUTPUT, 'music_analysis_v2.json', url.searchParams.get('download') === '1');
     }
 
     // ---- blueprint ----

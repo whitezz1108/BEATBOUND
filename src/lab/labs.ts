@@ -40,6 +40,7 @@ const TARGET_BARS = 32;
 const ARENA_PATTERNS = [
   'AP01', 'AP02', 'AP03', 'AP04', 'AP05', 'AP06', 'AP07', 'AP08', 'AP09', 'AP10',
   'AP11', 'AP12', 'AP13', 'AP14', 'AP15', 'AP16', 'AP17', 'AP18', 'AP19', 'AP20',
+  'AP21', 'AP22', 'AP23', 'AP24', 'AP25', 'AP26',
 ];
 const RUNNER_PATTERNS = [
   'RP01', 'RP02', 'RP03', 'RP04', 'RP05', 'RP06', 'RP07', 'RP08',

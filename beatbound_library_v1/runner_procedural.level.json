@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "runner_procedural",
+    "title": "Runner Procedural — Seed 7",
+    "audio": "audio/editor/test_song.wav",
+    "bpm": 100,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "R-P",
+      "startBar": 1,
+      "lengthBars": 16,
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 7,
+        "phrases": [],
+        "generate": { "beats": 64, "seed": 7, "intensity": 0.6 }
+      }
+    }
+  ]
+}

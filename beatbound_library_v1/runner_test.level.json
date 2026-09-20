@@ -5,7 +5,10 @@
     "title": "Runner Practice",
     "audio": "audio/runner_test_01.mp3",
     "bpm": 110,
-    "timeSignature": [4, 4]
+    "timeSignature": [
+      4,
+      4
+    ]
   },
   "sections": [
     {
@@ -16,7 +19,16 @@
       "function": "TEACH",
       "difficulty": 1,
       "patterns": [
-        { "patternId": "RP01", "repeat": 8, "intensity": 0.2 }
+        {
+          "patternId": "RP01",
+          "repeat": 2,
+          "intensity": 0.2
+        },
+        {
+          "patternId": "RP16",
+          "repeat": 3,
+          "intensity": 0.2
+        }
       ],
       "transitionOut": null
     },
@@ -28,7 +40,16 @@
       "function": "PRACTICE",
       "difficulty": 2,
       "patterns": [
-        { "patternId": "RP03", "repeat": 8, "intensity": 0.4 }
+        {
+          "patternId": "RP03",
+          "repeat": 2,
+          "intensity": 0.4
+        },
+        {
+          "patternId": "RP17",
+          "repeat": 3,
+          "intensity": 0.45
+        }
       ],
       "transitionOut": null
     },
@@ -40,7 +61,16 @@
       "function": "VARIATION",
       "difficulty": 3,
       "patterns": [
-        { "patternId": "RP05", "repeat": 4, "intensity": 0.6 }
+        {
+          "patternId": "RP20",
+          "repeat": 2,
+          "intensity": 0.6
+        },
+        {
+          "patternId": "RP19",
+          "repeat": 2,
+          "intensity": 0.65
+        }
       ],
       "transitionOut": null
     }

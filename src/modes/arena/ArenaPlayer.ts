@@ -7,14 +7,20 @@
  * There is a short acceleration ramp so starts and stops have weight, but it is
  * deliberately under a tenth of a second: the avatar leans into a direction, it
  * never slides past where the player let go.
+ *
+ * The class owns the *body* -- position, velocity and the collision circle --
+ * and nothing else. How the body is drawn lives in Avatar.ts, behind a cosmetic
+ * slot structure, so a skin can change the look without touching any of the
+ * movement code (or, more importantly, the hitbox).
  */
 
 import type { Circle } from '../../core/geometry';
 import { clamp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 import { TUNING } from '../../tuning';
+import { AVATAR_TRAIL_LENGTH, renderAvatar, type Cosmetics } from './Avatar';
 
-const TRAIL_LENGTH = 10;
+const TRAIL_LENGTH = AVATAR_TRAIL_LENGTH;
 
 export class ArenaPlayer {
   x = 0.5;
@@ -24,8 +30,17 @@ export class ArenaPlayer {
   private readonly visualRadius = TUNING.arena.playerVisualRadius;
   speed = TUNING.arena.playerSpeed;
 
+  /**
+   * Cosmetic slots. Assigned once at load and never read by gameplay -- see
+   * Avatar.ts. Left as a plain field so a future skin picker has somewhere
+   * obvious to write.
+   */
+  cosmetics: Partial<Cosmetics> | undefined;
+
   private vx = 0;
   private vy = 0;
+  /** Facing, held when stationary so the avatar does not spin on the spot. */
+  private facing = -Math.PI / 2;
   private readonly trail: Array<{ x: number; y: number }> = [];
 
   reset(): void {
@@ -33,6 +48,7 @@ export class ArenaPlayer {
     this.y = 0.5;
     this.vx = 0;
     this.vy = 0;
+    this.facing = -Math.PI / 2;
     this.trail.length = 0;
   }
 
@@ -53,6 +69,13 @@ export class ArenaPlayer {
     this.x = clamp(this.x + this.vx * deltaSeconds, this.radius, 1 - this.radius);
     this.y = clamp(this.y + this.vy * deltaSeconds, this.radius, 1 - this.radius);
 
+    // Only re-aim once there is real movement to aim with: a resting avatar
+    // that keeps its last heading reads as "waiting", one that snaps to the
+    // last key pressed reads as "twitchy".
+    if (Math.hypot(this.vx, this.vy) > this.speed * 0.12) {
+      this.facing = Math.atan2(this.vy, this.vx);
+    }
+
     this.trail.push({ x: this.x, y: this.y });
     if (this.trail.length > TRAIL_LENGTH) this.trail.shift();
   }
@@ -67,37 +90,17 @@ export class ArenaPlayer {
   }
 
   render(r: Renderer, invulnerable: boolean, beat: number): void {
-    // Blink during i-frames, on the beat subdivision so feedback stays musical.
-    const blink = invulnerable && Math.floor(beat * 8) % 2 === 0;
-    const alpha = blink ? 0.35 : 1;
-    const moving = this.speedFraction;
-
-    if (this.trail.length > 2 && moving > 0.08) {
-      r.polyline(this.trail, '#6de3ff', 3, 0.16 * moving * alpha);
-    }
-
-    // Squash along the direction of travel: a subtle lean, never a deformation
-    // big enough to change how big the hitbox looks.
-    const stretch = 1 + 0.16 * moving;
-    const squash = 1 - 0.10 * moving;
-    const angle = Math.atan2(this.vy, this.vx);
-    const rx = this.visualRadius * (moving > 0.05 ? stretch : 1);
-    const ry = this.visualRadius * (moving > 0.05 ? squash : 1);
-
-    const c = r.ctx;
-    c.save();
-    c.globalAlpha = alpha;
-    c.translate(r.px(this.x), r.py(this.y));
-    c.rotate(angle);
-    c.fillStyle = '#ffffff';
-    c.beginPath();
-    c.ellipse(0, 0, r.len(rx), r.len(ry), 0, 0, Math.PI * 2);
-    c.fill();
-    c.restore();
-
-    r.strokeCircle(this.x, this.y, this.visualRadius + 0.006, '#6de3ff', 2, alpha * 0.9);
-    // A faint ring at the true collision radius, so what kills you is visible.
-    r.strokeCircle(this.x, this.y, this.radius, '#ffffff', 1, alpha * 0.35);
-    r.glow(this.x, this.y, this.visualRadius * 3.4, '#6de3ff', 0.16 * alpha);
+    renderAvatar(r, {
+      x: this.x,
+      y: this.y,
+      angle: this.facing,
+      moving: this.speedFraction,
+      radius: this.radius,
+      visualRadius: this.visualRadius,
+      invulnerable,
+      beat,
+      trail: this.trail,
+      cosmetics: this.cosmetics,
+    });
   }
 }

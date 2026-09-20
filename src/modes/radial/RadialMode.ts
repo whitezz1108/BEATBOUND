@@ -6,16 +6,19 @@
  * only the geometry and the input model differ.
  *
  * Input model (§30 Option B): four cardinal keys, with a diagonal entered by
- * holding two at once. Two keys never land on the same frame, so a diagonal
- * counts as entered when both components are down and the *second* one arrived
- * within `diagonalToleranceSeconds`. A cardinal prompt refuses a press that is
- * part of a diagonal, so the eight directions stay genuinely distinct.
+ * holding two *adjacent* ones at once. Two keys never land on the same frame,
+ * so a diagonal counts as entered when both components are down and the
+ * *second* one arrived within `diagonalToleranceSeconds`. A cardinal prompt
+ * refuses a press that is part of a diagonal, so the eight directions stay
+ * genuinely distinct. Opposite cardinals (up+down, left+right) form no
+ * direction, so both presses stay independent and an opposite double scores
+ * as two hits.
  */
 
 import type { NoteTarget } from '../../core/capabilities';
 import {
   CARDINAL_KEYS, DIRECTION8, DIRECTION_ANGLE, DIRECTION_COLOUR, DIRECTION_COMPONENTS,
-  DIRECTION_GLYPH, DIRECTION_VECTOR, isDiagonal, type Direction8,
+  DIRECTION_GLYPH, DIRECTION_VECTOR, isDiagonal, isDiagonalPair, type Direction8,
 } from '../../core/direction8';
 import type { Renderer } from '../../core/Renderer';
 import type { GameMode } from '../../core/types';
@@ -87,8 +90,11 @@ export class RadialMode extends NoteMode {
     const c = components[0];
     if (!this.freshThisFrame.has(c)) return false;
     // A press that is half of a diagonal must not satisfy a cardinal prompt.
+    // Opposite cardinals are not a diagonal, so those fire freely -- that is
+    // how an opposite double (D02) lands as two hits on one beat.
     return !CARDINAL_LIST.some(
       (other) => other !== c && this.isCardinalDown(other)
+        && isDiagonalPair(c, other)
         && Math.abs(this.pressedAt[other] - this.pressedAt[c]) <= tolerance,
     );
   }
@@ -120,7 +126,10 @@ export class RadialMode extends NoteMode {
     if (!components.every((c) => this.isCardinalDown(c))) return false;
     if (components.length === 2) return true;
     // Highlight a cardinal only when it is not part of a diagonal being entered.
-    return !CARDINAL_LIST.some((other) => other !== components[0] && this.isCardinalDown(other));
+    return !CARDINAL_LIST.some(
+      (other) => other !== components[0] && this.isCardinalDown(other)
+        && isDiagonalPair(components[0], other),
+    );
   }
 
   protected renderStage(r: Renderer, beat: number): void {

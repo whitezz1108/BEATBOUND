@@ -5,6 +5,9 @@
  * bind keys themselves. Press-edge detection matters for the rhythm modes: a
  * held key must not re-trigger every frame.
  */
+
+import { ARENA_MOVE_KEYS } from './controls';
+
 export class Input {
   private readonly down = new Set<string>();
   private readonly pressedThisFrame = new Set<string>();
@@ -45,8 +48,8 @@ export class Input {
 
   /** -1 / 0 / +1 on each axis; y is positive downward to match field space. */
   axis(): { x: number; y: number } {
-    const x = (this.isDown('arrowright', 'd') ? 1 : 0) - (this.isDown('arrowleft', 'a') ? 1 : 0);
-    const y = (this.isDown('arrowdown', 's') ? 1 : 0) - (this.isDown('arrowup', 'w') ? 1 : 0);
+    const x = (this.isDown(...ARENA_MOVE_KEYS.right) ? 1 : 0) - (this.isDown(...ARENA_MOVE_KEYS.left) ? 1 : 0);
+    const y = (this.isDown(...ARENA_MOVE_KEYS.down) ? 1 : 0) - (this.isDown(...ARENA_MOVE_KEYS.up) ? 1 : 0);
     return { x, y };
   }
 }

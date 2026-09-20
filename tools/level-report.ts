@@ -14,10 +14,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { LevelLoader, type CompiledLevel } from '../src/core/LevelLoader';
 import { MechanicRegistry } from '../src/core/MechanicRegistry';
+import type { MechanicDefinition } from '../src/core/types';
 import { registerArenaMechanics } from '../src/mechanics/arena';
 import { specToRelativeBeats, absoluteToPosition } from '../src/core/TempoMap';
 import { scaleTelegraphBeats } from '../src/core/Intensity';
 import { DATA } from '../src/config';
+import { REACTION_FLOOR_SECONDS, minimumGapWidth } from '../src/core/fairness';
+import { tierForDifficulty, travelScale } from '../src/mechanics/arena/arenaTiming';
 
 const LIBRARY_DIR = resolve(process.cwd(), 'beatbound_library_v1');
 
@@ -39,6 +42,8 @@ interface Row {
   activeBeats: number;
   intensity: number;
   params: string;
+  /** The mechanic's library definition, for the reaction-seconds column. */
+  definition: MechanicDefinition | null;
 }
 
 async function main(): Promise<void> {
@@ -88,6 +93,7 @@ async function main(): Promise<void> {
           activeBeats: definition.timing.durationBeats,
           intensity: placement.intensity,
           params: formatParams(event.params),
+          definition,
         });
       }
     }
@@ -143,7 +149,7 @@ function printSection(
   const map = perBar.map((n) => (n === 0 ? '.' : n > 9 ? '+' : String(n))).join(' ');
   const empty = perBar.filter((n) => n === 0).length;
   console.log(`  bar map:  ${map}${empty > 0 ? `   <-- ${empty} empty bar(s)` : ''}`);
-  console.log(`  ${'bar.beat'.padEnd(9)}${'time'.padEnd(8)}${'pattern'.padEnd(8)}${'mechanic'.padEnd(24)}${'telegraph'.padEnd(11)}${'active'.padEnd(9)}params`);
+  console.log(`  ${'bar.beat'.padEnd(9)}${'time'.padEnd(8)}${'pattern'.padEnd(8)}${'mechanic'.padEnd(24)}${'telegraph'.padEnd(11)}${'active'.padEnd(9)}${'react'.padEnd(9)}params`);
 
   let lastBar = -1;
   for (const row of rows) {
@@ -159,10 +165,35 @@ function printSection(
       `${name.padEnd(24)}` +
       `${`${fmt(row.telegraphBeats)} beat`.padEnd(11)}` +
       `${`${fmt(row.activeBeats)} beat`.padEnd(9)}` +
+      `${reactionCell(level, section, row).padEnd(9)}` +
       `${row.params}${row.intensity !== 0.5 ? `  intensity=${row.intensity}` : ''}`,
     );
   }
   if (rows.every((r) => r.bar < fromBar)) console.log('  (no events at or after the requested bar)');
+}
+
+/**
+ * Seconds of warning this event gives, against the floor a player needs.
+ *
+ * ARENA only: the number is the telegraph plus the hazard's travel at the
+ * section's tier, and it is the same arithmetic `npm run fairness` audits. It
+ * is printed here so a designer reading a level can see the margin per event
+ * rather than having to run a second tool.
+ */
+function reactionCell(
+  level: CompiledLevel,
+  section: CompiledLevel['sections'][number],
+  row: Row,
+): string {
+  if (section.mode !== 'ARENA') return '-';
+  const definition = row.definition;
+  const tier = tierForDifficulty(section.definition.difficulty);
+  const spb = level.tempo.secondsPerBeatAt(0);
+  const telegraph = (definition?.timing.telegraphBeats ?? 0) * tier.telegraphScale;
+  const travel = Math.min(definition?.timing.durationBeats ?? 0, 3) * travelScale(tier);
+  const seconds = (telegraph + travel) * spb;
+  const needed = REACTION_FLOOR_SECONDS + minimumGapWidth() / 2;
+  return seconds >= needed ? `${seconds.toFixed(2)}s` : `${seconds.toFixed(2)}s!`;
 }
 
 function printLegend(registry: MechanicRegistry, used: Set<string>): void {

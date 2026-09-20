@@ -1,0 +1,286 @@
+{
+  "mode": "RADIAL",
+  "audited_at": "2026-09-20",
+  "audit_type": "READ_ONLY_RUNTIME_AUDIT",
+  "source_of_truth": {
+    "mode": "src/modes/radial/RadialMode.ts",
+    "judgement_base": "src/modes/rhythm/NoteMode.ts",
+    "direction_system": "src/core/direction8.ts",
+    "mechanics": ["src/mechanics/radial/DirectionNoteMechanic.ts", "src/mechanics/radial/ClockwiseMechanic.ts", "src/mechanics/radial/index.ts"],
+    "scheduling": ["src/core/LevelLoader.ts", "src/core/PatternScheduler.ts", "src/core/MechanicRegistry.ts", "src/core/ModeManager.ts"],
+    "input": ["src/core/Input.ts", "src/core/controls.ts"],
+    "tuning": "src/tuning.ts",
+    "library": ["beatbound_library_v1/mechanics.mvp.json", "beatbound_library_v1/patterns.mvp.json", "beatbound_library_v1/radial_test.level.json"]
+  },
+  "summary": {
+    "runtime_usable_primitives": 3,
+    "library_patterns": 11,
+    "unreachable_or_dead_findings": 6,
+    "metadata_only_findings": 8,
+    "actual_direction_count": 8,
+    "eight_direction_wiring_verified": true
+  },
+  "direction_system": {
+    "direction_count": 8,
+    "enum": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+    "eight_direction_wiring_verified": true,
+    "angle_convention": "canvas radians, x right, y DOWN (direction8.ts DEG table)",
+    "directions": {
+      "N":  { "angle_deg": -90, "screen": "top",          "vector": [0, -1],               "input": ["arrowup", "w"],     "glyph": "↑", "colour": "#6de3ff", "components": ["N"],    "json_aliases": ["UP", "NORTH"] },
+      "NE": { "angle_deg": -45, "screen": "top-right",    "vector": [0.7071, -0.7071],     "input": "N+E two keys",       "glyph": "↗", "colour": "#7cf5d0", "components": ["N", "E"], "json_aliases": ["UP_RIGHT", "NORTH_EAST"] },
+      "E":  { "angle_deg": 0,   "screen": "right",        "vector": [1, 0],                "input": ["arrowright", "d"],  "glyph": "→", "colour": "#ffc46d", "components": ["E"],    "json_aliases": ["RIGHT", "EAST"] },
+      "SE": { "angle_deg": 45,  "screen": "bottom-right", "vector": [0.7071, 0.7071],      "input": "S+E two keys",       "glyph": "↘", "colour": "#ff9e6d", "components": ["S", "E"], "json_aliases": ["DOWN_RIGHT", "SOUTH_EAST"] },
+      "S":  { "angle_deg": 90,  "screen": "bottom",       "vector": [0, 1],                "input": ["arrowdown", "s"],   "glyph": "↓", "colour": "#ff8ec4", "components": ["S"],    "json_aliases": ["DOWN", "SOUTH"] },
+      "SW": { "angle_deg": 135, "screen": "bottom-left",  "vector": [-0.7071, 0.7071],     "input": "S+W two keys",       "glyph": "↙", "colour": "#d18cff", "components": ["S", "W"], "json_aliases": ["DOWN_LEFT", "SOUTH_WEST"] },
+      "W":  { "angle_deg": 180, "screen": "left",         "vector": [-1, 0],               "input": ["arrowleft", "a"],   "glyph": "←", "colour": "#9a8cff", "components": ["W"],    "json_aliases": ["LEFT", "WEST"] },
+      "NW": { "angle_deg": 225, "screen": "top-left",     "vector": [-0.7071, -0.7071],    "input": "N+W two keys",       "glyph": "↖", "colour": "#8cb8ff", "components": ["N", "W"], "json_aliases": ["UP_LEFT", "NORTH_WEST"] }
+    },
+    "diagonal_model": "Option B: diagonal = two ADJACENT cardinals held together; second key must land within 0.09s of the first; both held through the judging frame",
+    "judgement_receptor": "point on the judgement ring at the direction's angle: centre + DIRECTION_VECTOR * RING_RADIUS",
+    "renderer": "cardinal notes = discs r=0.027; diagonal notes = squares half-side 0.024; per-direction colour; note visuals drawn entirely by RadialMode (mechanic render() is empty)",
+    "direction_parse_fallback": "invalid entries silently dropped; D01/D02 all-invalid falls back to ['N']; D06 all-invalid falls back to full 8-step clockwise",
+    "dead_helpers": ["direction8.rotate() (no src consumer)", "direction8.opposite() (no src consumer)", "capabilities.RADIAL_DIRECTIONS const (never imported)", "direction8.CARDINALS / DIAGONALS consts (never imported; RadialMode keeps its own CARDINAL_LIST)"]
+  },
+  "input": {
+    "cardinal_keys": { "N": ["arrowup", "w"], "E": ["arrowright", "d"], "S": ["arrowdown", "s"], "W": ["arrowleft", "a"] },
+    "diagonal_components": { "NE": ["N", "E"], "SE": ["S", "E"], "SW": ["S", "W"], "NW": ["N", "W"] },
+    "diagonal_tolerance_seconds": 0.09,
+    "diagonal_tolerance_clock": "accumulated frame deltaSeconds (real time), BPM-independent",
+    "cardinal_refusal_rule": "a cardinal target refuses its key while an ADJACENT cardinal is down with press-time difference <= 0.09s (the press reads as a diagonal); opposite cardinals are exempt and fire independently",
+    "edge_detection": "per-frame pressedThisFrame; OS key-repeat filtered; endFrame() clears each frame",
+    "input_buffer": "none (presses before -0.25 beat do nothing and are not cached)",
+    "opposite_keys": "independent, both fire (opposite double = two hits)",
+    "adjacent_keys_within_tolerance": "interpreted as diagonal; both cardinal judgements refused",
+    "adjacent_keys_beyond_tolerance": "independent; a stale (>0.09s) key neither blocks a cardinal nor completes a diagonal",
+    "press_consumption": "non-consuming: one press edge can satisfy multiple pending targets in the same frame snapshot (duplicate same-direction notes double-score; NE+SE can share one E press)",
+    "simultaneous_cap_runtime": "none; physical limit is 4 cardinal keys",
+    "max_scoreable_targets_single_instant": 4,
+    "max_scoreable_targets_note": "4 keys pressed together hit at most the 4 DIAGONAL targets; the 4 cardinal targets are refused by the aliasing rule, so an 8-target same-beat chord can never be fully cleared",
+    "chord_aliasing": "N+E+S+W pressed together (<=0.09s) reads as NE+SE+SW+NW, never as four cardinal hits",
+    "blur_behaviour": "all key state cleared on window blur",
+    "frame_snapshot": "cardinal edges sampled once per frame before judging; all chord targets see the same snapshot (RadialMode.update)"
+  },
+  "judgement": {
+    "unit": "beats (BPM-scaled); windows from TUNING.radial, shared NoteMode judge path",
+    "windows_beats": { "PERFECT": 0.09, "NICE": 0.16, "GOOD": 0.25, "MISS": "> 0.25 late" },
+    "seconds_at_120bpm": { "PERFECT": 0.045, "NICE": 0.08, "GOOD": 0.125 },
+    "early_late": "symmetric on abs(offset); presses before -0.25 beat ignored without penalty; no per-ms early/late split",
+    "direction_mismatch": "no immediate penalty; wrong-direction press simply fails justPressed; note resolves as MISS when the window passes",
+    "simultaneous_directions": "each target judged independently against the same per-frame input snapshot; no exclusivity",
+    "hold_release": "NOT SUPPORTED (no radial mechanic emits holdBeats > 0; BROKEN state unreachable in RADIAL)",
+    "miss_consequences": { "health": -8, "health_source": "TUNING.health.damage.MISS", "bypasses_invulnerability": true, "invulnerability_window_seconds": 0.8, "combo_reset": true, "counts_notesMissed": true, "max_health": 100 },
+    "hit_consequences": { "combo": "+1, flourish every 10", "health": 0, "sfx": ["direction_perfect (PERFECT)", "direction_hit (NICE/GOOD)", "radial_combo (every 10 combo)"] },
+    "score_system": "none (no point score); accuracy = notesHit/(notesHit+notesMissed); verdictCounts tracked but not rendered by RadialMode",
+    "death": "health 0 -> outcome FAILED -> judging stops; onDeath clears schedule and hazards"
+  },
+  "geometry": {
+    "centre": { "x": 0.5, "y": 0.5 },
+    "judgement_ring_radius": 0.13,
+    "spawn_radius": 0.46,
+    "visible_cull_radius": 0.52,
+    "expire_radius": 0.012,
+    "travel": "straight line inward along the direction vector; radius linear in beats: RING + (beatsAway/approachBeats)*(SPAWN-RING)",
+    "travel_rotation_or_arc": false,
+    "travel_easing": "none (linear); easeOutCubic only on the hit ripple",
+    "approach_beats": 2,
+    "approach_fixed": true,
+    "approach_speed_field_units_per_beat": 0.165,
+    "outward_notes_supported": false,
+    "miss_trail": "missed notes keep converging past the ring to expire at radius 0.012 (~0.715 beats after target); mechanic detaches at +0.6 beats which truncates the fade (cosmetic)",
+    "d06_first_note_note": "D06 spawn lead (library telegraph 1 beat) < approach 2 beats: its first note appears mid-arm at radius ~0.295 instead of at the rim"
+  },
+  "notes": [
+    {
+      "id": "D01",
+      "name": "Single",
+      "available": true,
+      "category": "direction_tap",
+      "source_files": ["src/mechanics/radial/DirectionNoteMechanic.ts", "src/mechanics/radial/index.ts", "src/modes/radial/RadialMode.ts"],
+      "registry_key": "D01 -> DirectionNoteMechanic (src/mechanics/radial/index.ts:8)",
+      "parameters": {
+        "direction": { "json_name": "direction", "default": "UP", "accepted": "8 direction names + legacy aliases (UP/NORTH, RIGHT/EAST, DOWN/SOUTH, LEFT/WEST, UP_RIGHT/NORTH_EAST, DOWN_RIGHT/SOUTH_EAST, DOWN_LEFT/SOUTH_WEST, UP_LEFT/NORTH_WEST), case-insensitive", "unit": "n/a", "clamp": "invalid values silently dropped; all-invalid falls back to 'N'" }
+      },
+      "units": "beat-based timing; field-normalized screen units (0..1)",
+      "collision": "none - dangerShapes() returns []; notes never damage on contact; the only damage source is MISS (-8 HP, bypasses invulnerability)",
+      "judgement": { "windows_beats": { "PERFECT": 0.09, "NICE": 0.16, "GOOD": 0.25 }, "miss": "offset > 0.25 -> MISS (-8 HP, combo reset)" },
+      "timing": { "activation": "pattern event at {bar, beat, offsetBeats}", "spawn_lead_beats": 2, "approach_beats": 2, "isFinished": "activationBeat + 0.6" },
+      "simultaneous": false,
+      "movement": "inward straight line",
+      "safe_to_autogenerate": { "verdict": true, "constraints": "any of the 8 directions; keep >= 0.5 beat between notes; do not place an adjacent-cardinal pair on the same beat" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "D01", "params": { "direction": "N" } },
+      "advanced_example": { "at": { "bar": 2, "beat": 1, "offsetBeats": 0.5 }, "mechanicId": "D01", "params": { "direction": "UP_RIGHT" } }
+    },
+    {
+      "id": "D02",
+      "name": "Opposite Double (legacy name: accepts ANY direction chord)",
+      "available": true,
+      "category": "direction_tap_chord",
+      "source_files": ["src/mechanics/radial/DirectionNoteMechanic.ts", "src/mechanics/radial/index.ts", "src/modes/radial/RadialMode.ts"],
+      "registry_key": "D02 -> DirectionNoteMechanic (src/mechanics/radial/index.ts:10, same class as D01)",
+      "parameters": {
+        "directions": { "json_name": "directions", "default": ["UP", "DOWN"], "accepted": "any list of the 8 names + legacy aliases", "unit": "n/a", "clamp": "Set-dedup within the event (duplicates collapse to one target); invalid entries dropped; all-invalid falls back to ['N']" },
+        "direction": { "json_name": "direction", "default": "N (only when 'directions' absent)", "accepted": "single-direction form, equivalent to D01", "unit": "n/a", "clamp": "same fallback rules" }
+      },
+      "units": "beat-based timing; field-normalized screen units (0..1)",
+      "collision": "none - dangerShapes() returns []; only MISS damages health (-8 HP)",
+      "judgement": { "windows_beats": { "PERFECT": 0.09, "NICE": 0.16, "GOOD": 0.25 }, "per_target": "each direction judged independently; opposite pairs = two independent hits; same-beat adjacent cardinals cannot both score (diagonal aliasing)" },
+      "timing": { "activation": "all targets share the event's activationBeat", "spawn_lead_beats": 2, "approach_beats": 2, "isFinished": "activationBeat + 0.6" },
+      "simultaneous": true,
+      "movement": "inward straight line",
+      "safe_to_autogenerate": { "verdict": true, "constraints": "recommended chord size <= 2; safe pairs = opposite cardinals (N+S, E+W) or diagonal opposites (NE+SW, NW+SE, requires a 4-key chord); NEVER place adjacent cardinals (N+E, E+S, S+W, W+N) on the same beat" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "D02", "params": { "directions": ["UP", "DOWN"] } },
+      "advanced_example": { "at": { "bar": 5, "beat": 3.5 }, "mechanicId": "D02", "params": { "directions": ["NE", "SW"] } }
+    },
+    {
+      "id": "D06",
+      "name": "Clockwise (legacy name: sequence is fully data-driven, any order)",
+      "available": true,
+      "category": "direction_tap_sequence",
+      "source_files": ["src/mechanics/radial/ClockwiseMechanic.ts", "src/mechanics/radial/index.ts", "src/modes/radial/RadialMode.ts"],
+      "registry_key": "D06 -> ClockwiseMechanic (src/mechanics/radial/index.ts:11)",
+      "parameters": {
+        "sequence": { "json_name": "sequence", "default": ["UP", "RIGHT", "DOWN", "LEFT"], "accepted": "ordered list of the 8 names + legacy aliases; repeats allowed (no dedup)", "unit": "n/a", "clamp": "invalid entries dropped; empty/all-invalid falls back to full 8-step clockwise [...DIRECTION8]" },
+        "stepBeats": { "json_name": "stepBeats", "default": 1, "accepted": "any finite number > 0, fractional allowed (library uses 0.5)", "unit": "beats", "clamp": "non-numeric or <= 0 falls back to 1; no upper bound; sequence may extend past the pattern's lengthBars" }
+      },
+      "units": "beats (stepBeats); field-normalized screen units (0..1)",
+      "collision": "none - dangerShapes() returns []; only MISS damages health (-8 HP)",
+      "judgement": { "windows_beats": { "PERFECT": 0.09, "NICE": 0.16, "GOOD": 0.25 }, "per_note": "each NoteTarget carries its own beat = activationBeat + i * stepBeats; judged independently" },
+      "timing": { "activation": "first target at the event's activationBeat; target i at activationBeat + i*stepBeats", "spawn_lead_beats": 1, "approach_beats": 2, "isFinished": "last target beat + 0.6", "first_note_warning": "spawn lead (1) < approach (2): the first note pops in mid-arm instead of entering at the rim" },
+      "simultaneous": false,
+      "movement": "inward straight line",
+      "safe_to_autogenerate": { "verdict": true, "constraints": "any ordering (CW/CCW/star/spiral are data); stepBeats >= 0.5 recommended (library densest); avoid stepBeats < 0.25 (windows overlap, one press double-scores)" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "D06", "params": { "sequence": ["UP", "RIGHT", "DOWN", "LEFT"], "stepBeats": 1 } },
+      "advanced_example": { "at": { "bar": 9, "beat": 1 }, "mechanicId": "D06", "params": { "sequence": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"], "stepBeats": 0.5 } }
+    }
+  ],
+  "not_supported": {
+    "hold_notes": "NOT SUPPORTED: both radial mechanics hardcode holdBeats: 0; the shared NoteMode hold machinery (judgeHold) and RadialMode.isHeld are runtime-present but unreachable from RADIAL JSON",
+    "drift_or_path": "NOT SUPPORTED: path/lane checkpoints are VERTICAL-only semantics",
+    "outward_or_center_notes": "NOT SUPPORTED: travel direction is hardcoded inward",
+    "approach_speed_or_window_scaling": "NOT SUPPORTED: approachBeats, hit windows and diagonal tolerance are fixed TUNING.radial constants with no JSON or difficulty consumers",
+    "randomization": "NOT SUPPORTED: radial mechanics do not consume the deterministic seed",
+    "dedicated_double_tap_or_call_response": "NOT SUPPORTED as mechanics; expressible only as data arrangements"
+  },
+  "patterns": [
+    { "id": "DP01", "name": "Cardinal", "directions_used": ["N", "S", "W", "E"], "timing": "1 per beat, 1 bar", "note_types": ["D01"], "difficulty": 1, "function": "TEACH" },
+    { "id": "DP02", "name": "Clockwise", "directions_used": ["N", "E", "S", "W"], "timing": "D06 step 1", "note_types": ["D06"], "difficulty": 2, "function": "PRACTICE" },
+    { "id": "DP03", "name": "Diagonal Cycle", "directions_used": ["NE", "SE", "SW", "NW"], "timing": "1 per beat, 1 bar", "note_types": ["D01"], "difficulty": 2, "function": "TEACH" },
+    { "id": "DP04", "name": "Clockwise 8", "directions_used": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"], "timing": "D06 step 1, 2 bars", "note_types": ["D06"], "difficulty": 3, "function": "PRACTICE" },
+    { "id": "DP05", "name": "Counterclockwise 8", "directions_used": ["N", "NW", "W", "SW", "S", "SE", "E", "NE"], "timing": "D06 step 1", "note_types": ["D06"], "difficulty": 3, "function": "PRACTICE" },
+    { "id": "DP06", "name": "Cross Double", "directions_used": ["N+S", "W+E"], "timing": "beat 1 and beat 3", "note_types": ["D02"], "difficulty": 3, "function": "CLIMAX" },
+    { "id": "DP07", "name": "Cardinal Diagonal Alternation", "directions_used": ["N", "SE", "W", "NE"], "timing": "1 per beat", "note_types": ["D01"], "difficulty": 4, "function": "VARIATION" },
+    { "id": "DP08", "name": "Diagonal Opposite Pairs", "directions_used": ["NE+SW", "NW+SE"], "timing": "beat 1 and beat 3", "note_types": ["D02"], "difficulty": 4, "function": "COMBINE" },
+    { "id": "DP09", "name": "Spiral 8", "directions_used": ["N", "E", "S", "W", "NE", "SE", "SW", "NW"], "timing": "D06 step 0.5", "note_types": ["D06"], "difficulty": 4, "function": "VARIATION" },
+    { "id": "DP10", "name": "Star", "directions_used": ["N", "SE", "W", "NE", "S", "NW", "E", "SW"], "timing": "D06 step 1", "note_types": ["D06"], "difficulty": 4, "function": "VARIATION" },
+    { "id": "DP11", "name": "Radial Climax", "directions_used": ["N+S", "E+W", "NE+SW", "NW+SE", "8-step CW at step 0.5"], "timing": "2 bars", "note_types": ["D02", "D06"], "difficulty": 5, "function": "CLIMAX" }
+  ],
+  "sequencing": {
+    "timing_resolution": "arbitrary fractional beats: at.bar / at.beat (1-based) + offsetBeats + fractional stepBeats; no quantization",
+    "pattern_placement": "repeat (>=1) at startBar, laid end to end; placement intensity 0..1 default 0.5 (out-of-range is a load error)",
+    "mode_transition": "breather truncates events with activationBeat >= breatherFromBeat; pending-spawn buffer capped at 64 per mode (oldest dropped)",
+    "supported_semantics": ["clockwise", "counterclockwise", "opposite", "cross", "diagonal cross", "spiral ordering", "skip/star ordering", "burst/chord (data)", "stream"],
+    "unsupported_semantics": ["random/permuted (no seed consumer)", "dedicated ping-pong pattern (expressible manually via D06 sequence)", "dedicated call-response pattern (expressible manually)"]
+  },
+  "difficulty": {
+    "section_difficulty_1_5": "metadata-only for RADIAL gameplay: picks a readability tier that radial mechanics never read; real effects are ambient energy (sectionEnergy) and the section lead-in cap",
+    "placement_intensity": "metadata-only for RADIAL gameplay: feeds telegraph scaling whose result radial mechanics ignore; spawn lead uses the RAW library telegraph (unscaled); real effect is ambient energy only",
+    "approach_windows_tolerance": "fixed constants in TUNING.radial (approachBeats 2, windows 0.09/0.16/0.25, diagonalToleranceSeconds 0.09); no scaling consumers",
+    "true_difficulty_source": "pattern design only (direction mix, step length, density, chords)",
+    "nonexistent_parameters": ["approachSpeed", "noteDensity", "windowScale", "directionComplexity"]
+  },
+  "safety": {
+    "overlap_prevention": false,
+    "duplicate_direction_check": "within one mechanic event only (Set dedupe); across events/mechanics duplicates are legal and one press scores all",
+    "min_spacing_guard": false,
+    "chord_cap": "no runtime cap (distinct directions capped at 8 by dedupe; single-instant scoreable targets capped at 4 by the 4-key physical model and diagonal aliasing)",
+    "active_note_cap": false,
+    "transition_cleanup": true,
+    "death_cleanup": "clock.clearSchedule + modes.clearHazards on FAILED",
+    "feasibility_tools": "none for RADIAL (fairness-check is ARENA-only; runner-check is RUNNER-only; sync-test verifies scheduling activation times headlessly, not playability; level-report has no radial checks)",
+    "fairness_system_scope": "src/core/fairness.ts is consumed exclusively by ARENA mechanics; the RADIAL mode has no fairness floor",
+    "guarantee_statement": "No runtime radial-chart feasibility guarantee detected."
+  },
+  "music_affinity": {
+    "kick_bass": "D02 opposite chords (library musicTags KICK/BASS - metadata; DP06/DP11 instances)",
+    "snare": "D01 single tap (musicTags SNARE - metadata)",
+    "hihat_subdivision": "D06 stepBeats 0.5 streams (DP09, DP11 tail)",
+    "melody_rising_falling": "D06 compass-ordered sequences (DP04 CW / DP05 CCW); contour comes from direction ORDER only - note travel is always straight inward",
+    "arpeggio": "D06 rotational/skip sequences (DP09 spiral, DP10 star)",
+    "vocal_syllable": "D01 single directional cue",
+    "call_response": "expressible manually; no dedicated pattern",
+    "phrase_boundary": "D02 chord burst (library max 2 directions; runtime accepts more but human scoreability caps at what the 4-key model allows)"
+  },
+  "safe_generation_bounds": {
+    "direction_count": 8,
+    "min_same_direction_interval_seconds": null,
+    "min_same_direction_interval_note": "no runtime guard; library-densest = 0.5 beats (DP09/DP11); intervals < 0.25 beats overlap judgement windows and double-score from one press",
+    "min_same_direction_interval_beats_recommended": 0.5,
+    "max_runtime_chord_size": null,
+    "max_runtime_chord_size_note": "targets per beat uncapped in code; one D02 event dedupes to <= 8 distinct directions; a single instant can score at most 4 targets (the diagonals)",
+    "max_scoreable_targets_single_instant": 4,
+    "recommended_max_chord_size": 2,
+    "approach_time": "2 beats (fixed; TUNING.radial.approachBeats); D06 first note effectively 1 beat",
+    "min_direction_change_interval": null,
+    "min_direction_change_interval_note": "no runtime guard; same-beat adjacent-cardinal pairs are effectively unplayable (diagonal aliasing); diagonal two-key window is 0.09s real time",
+    "min_direction_change_interval_beats_recommended": 0.5,
+    "hold_capable": false,
+    "judgement_window_beats": { "perfect": 0.09, "nice": 0.16, "good": 0.25 },
+    "authoring_resolution": "arbitrary fractional beat + offsetBeats + fractional stepBeats"
+  },
+  "library_consumers": {
+    "mechanic_definitions": 3,
+    "patterns": 11,
+    "patterns_all_reference_implemented_mechanics": true,
+    "levels_using_radial": [
+      "radial_test.level.json (D-T01 DP01 x8, D-T02 DP02 x8, D-T03 DP06 x4 + DP02 x4)",
+      "prototype_90s.level.json (S03 DP01+DP02, S07 DP06 x4)",
+      "test_song.level.json (S04 DP01, DP09 x4, DP03)",
+      "dance_fruits_musicsteve_void_-_toosie_slide_sped_up.level.json (S04 CLIMAX: DP01, DP06 x4, DP11, DP03)"
+    ],
+    "labs": ["radial-8dir-input (DP01/DP03/DP07 + one-shot D01 NE)", "radial-8dir-patterns (DP04/DP05/DP08/DP09/DP10)", "radial-combined (DP01..DP11 chain)"],
+    "editor_note": "editor/output/level.json S04 mirrors the dance_fruits RADIAL section; the editor is a separate toolchain and was not modified"
+  },
+  "unreachable_dead_and_metadata_only": {
+    "implemented_but_unreachable_from_radial_json": [
+      "hold/drift judging machinery (NoteMode.judgeHold + RadialMode.isHeld): no radial mechanic emits holdBeats > 0 or path (hardcoded 0)"
+    ],
+    "dead_exports": [
+      "direction8.rotate() / opposite(): zero src consumers",
+      "capabilities.RADIAL_DIRECTIONS const: never imported (the RadialDirection TYPE lives on via NoteTarget)",
+      "direction8.CARDINALS / DIAGONALS consts: never imported",
+      "AudioFX 'radial_climax' sfx: defined (AudioFX.ts) but never triggered by any gameplay code"
+    ],
+    "parser_accepts_runtime_ignores": [
+      "section 'scene' / 'scene.effects' present in editor-generated levels: not part of SectionDefinition, ignored by LevelLoader"
+    ],
+    "metadata_only_fields": [
+      "ResolvedTiming (telegraph/duration/recovery) computed for D01/D02/D06 but never read by the mechanics",
+      "placement intensity (gameplay no-op; ambient energy only)",
+      "section difficulty tier (ignored by radial mechanics; ambient + lead-in cap only)",
+      "pattern six-axis difficulty metadata (no src consumer)",
+      "constraints.maxSimultaneousThreats (no src consumer)",
+      "constraints.requiresMechanics (no src consumer)",
+      "constraints.minReactionBeats (only feeds telegraph scaling that RADIAL ignores)",
+      "mechanic library musicTags / playerSkills / compatibility / status / difficulty (no radial runtime consumer; compatibility references all resolve - no ghost ids)"
+    ],
+    "doc_drift": [
+      "levels.index.json blurb for radial_test says 'Four directions' while the runtime supports 8"
+    ]
+  },
+  "known_risks": [
+    "Adjacent cardinals pressed within 0.09s alias to a diagonal: a same-beat adjacent-cardinal chord can never score as two cardinal hits (both eventually MISS, -8 HP each)",
+    "N+E+S+W pressed together reads as the four DIAGONALS only; an 8-target same-beat chord can never be fully cleared (single-instant maximum is 4 scored targets)",
+    "Non-consuming presses: duplicate same-direction notes on one beat all score from one press (no validator forbids this)",
+    "D06 spawn lead (1 beat) is shorter than the approach (2 beats): its first note pops in mid-arm",
+    "MISSED note fade is truncated when the mechanic detaches (activation+0.6) before the expiry radius is reached (~+0.715 beats) - cosmetic",
+    "difficulty/intensity and pattern constraints (maxSimultaneousThreats, requiresMechanics, minReactionBeats) have no gameplay effect in RADIAL",
+    "No holds despite shared NoteMode support; hold tolerances live under TUNING.vertical",
+    "diagonalToleranceSeconds (0.09s) is real time, independent of BPM, so diagonal difficulty varies with tempo",
+    "No runtime feasibility/overlap guard: chart safety is entirely the author's responsibility",
+    "Invalid direction strings never error at load; they silently become 'N' (D01/D02) or the default 8-step sequence (D06)"
+  ],
+  "unknown_or_needs_runtime_verification": [
+    "Browser/hardware n-key rollover ceiling (environment dependent)",
+    "Playtest-feasible minimum intervals (0.09s diagonal tolerance feel; <0.25-beat same-direction streams) - analysis-derived, not machine-verified"
+  ]
+}

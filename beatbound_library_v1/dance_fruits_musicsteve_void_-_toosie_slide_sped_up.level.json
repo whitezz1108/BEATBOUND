@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "editor": {
-    "seed": 42,
+    "seed": 23123,
     "analysisSource": "f2d5e0b065da4978",
     "blueprintVersion": "1.0.0"
   },
@@ -25,7 +25,7 @@
       "difficulty": 1,
       "patterns": [
         {
-          "patternId": "AP06",
+          "patternId": "AP15",
           "repeat": 2,
           "intensity": 0.36
         },
@@ -44,17 +44,17 @@
       "scene": {
         "effects": [
           {
-            "effect": "paletteShift",
-            "params": {
-              "target": "modePalette"
-            },
-            "durationBeats": 4
-          },
-          {
             "effect": "lightFlash",
             "params": {
               "color": "#ffffff",
               "decay": 0.25
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "paletteShift",
+            "params": {
+              "target": "modePalette"
             },
             "durationBeats": 4
           }
@@ -70,13 +70,13 @@
       "difficulty": 3,
       "patterns": [
         {
-          "patternId": "RP09",
-          "repeat": 3,
+          "patternId": "RP08",
+          "repeat": 4,
           "intensity": 0.97
         },
         {
-          "patternId": "RP03",
-          "repeat": 1,
+          "patternId": "RP01",
+          "repeat": 3,
           "intensity": 0.97
         },
         {
@@ -89,16 +89,16 @@
       "scene": {
         "effects": [
           {
-            "effect": "cameraPan",
+            "effect": "bgChange",
             "params": {
-              "direction": "followMode"
+              "target": "modeBackdrop"
             },
             "durationBeats": 4
           },
           {
-            "effect": "particles",
+            "effect": "paletteShift",
             "params": {
-              "burst": "boundaryCrossing"
+              "target": "modePalette"
             },
             "durationBeats": 4
           }
@@ -119,7 +119,7 @@
           "intensity": 0.38
         },
         {
-          "patternId": "VP03",
+          "patternId": "VP04",
           "repeat": 4,
           "intensity": 0.55
         },
@@ -129,7 +129,7 @@
           "intensity": 0.55
         },
         {
-          "patternId": "VP03",
+          "patternId": "VP01",
           "repeat": 1,
           "intensity": 0.55
         },
@@ -166,13 +166,13 @@
           "intensity": 0.65
         },
         {
-          "patternId": "DP07",
+          "patternId": "DP06",
           "repeat": 4,
           "intensity": 0.93
         },
         {
-          "patternId": "DP01",
-          "repeat": 2,
+          "patternId": "DP11",
+          "repeat": 1,
           "intensity": 0.93
         },
         {
@@ -185,17 +185,17 @@
       "scene": {
         "effects": [
           {
-            "effect": "cameraZoom",
+            "effect": "particles",
             "params": {
-              "zoom": 1.15,
-              "ease": "easeOutBack"
+              "burst": "boundaryCrossing"
             },
             "durationBeats": 4
           },
           {
-            "effect": "paletteShift",
+            "effect": "lightFlash",
             "params": {
-              "target": "modePalette"
+              "color": "#ffffff",
+              "decay": 0.25
             },
             "durationBeats": 4
           }
@@ -211,13 +211,13 @@
       "difficulty": 2,
       "patterns": [
         {
-          "patternId": "AP11",
+          "patternId": "AP06",
           "repeat": 3,
           "intensity": 0.66
         },
         {
-          "patternId": "AP03",
-          "repeat": 2,
+          "patternId": "AP09",
+          "repeat": 1,
           "intensity": 0.66
         },
         {
@@ -230,16 +230,10 @@
       "scene": {
         "effects": [
           {
-            "effect": "wipe",
+            "effect": "lightFlash",
             "params": {
-              "direction": "radial"
-            },
-            "durationBeats": 4
-          },
-          {
-            "effect": "bgChange",
-            "params": {
-              "target": "modeBackdrop"
+              "color": "#ffffff",
+              "decay": 0.25
             },
             "durationBeats": 4
           }
@@ -260,13 +254,13 @@
           "intensity": 0.62
         },
         {
-          "patternId": "RP14",
-          "repeat": 3,
+          "patternId": "RP09",
+          "repeat": 4,
           "intensity": 0.88
         },
         {
-          "patternId": "RP02",
-          "repeat": 2,
+          "patternId": "RP22",
+          "repeat": 3,
           "intensity": 0.88
         }
       ],

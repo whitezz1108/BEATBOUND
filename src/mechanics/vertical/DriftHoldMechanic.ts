@@ -1,12 +1,15 @@
 /**
  * V04 -- Drift Hold (VERTICAL).
  *
- * A long note whose lane moves while it is held. The player presses the head,
- * keeps holding, and switches keys at each checkpoint without releasing the
- * note -- tracing a melody line across the board rather than pinning one key.
+ * RETIRED as authored content: playtesting showed switching keys mid-hold is
+ * not humanly keepable, so every path is flattened to its head lane and the
+ * note plays as a straight hold. Existing patterns keep their timing and
+ * note counts unchanged -- they simply demand one key, not a hand-swap.
+ * The engine still understands multi-checkpoint paths (NoteMode.judgeHold,
+ * VerticalMode.renderDrift); no pattern authors one any more.
  *
  * Params:
- *   path       [[beatOffset, lane], ...] checkpoints   default a 1 -> 4 ramp
+ *   path       [[beatOffset, lane], ...] -- only the first lane is used
  *   lane       head lane when no path is given         default 1
  *   holdBeats  total length of the hold                default the path's end
  */
@@ -33,7 +36,7 @@ export class DriftHoldMechanic extends BaseMechanic implements InputTargetMechan
       beat: this.activationBeat,
       holdBeats: Math.max(0.5, holdBeats),
       state: 'PENDING',
-      path,
+      // No `path`: a single-lane hold, never a lane-switching drift.
     }];
   }
 

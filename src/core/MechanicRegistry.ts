@@ -152,6 +152,58 @@ export class MechanicRegistry {
       recoveryBeats: numberParam(p.cooldownBeats, base.cooldownBeats ?? 0),
     };
   }
+
+  /**
+   * A spawn context for a mechanic that has no JSON definition.
+   *
+   * RUNNER courses are the reason this exists. A course is not a hazard at a
+   * beat, so it has no library entry, no telegraph and no intensity-scaled
+   * timing -- it *is* the level for the stretch it covers. But it still needs
+   * the same `feel` sink and readability tier every other mechanic gets, and
+   * those live here, so the context is assembled here rather than at the call
+   * site. The registry never learns what a course is: it just hands out the
+   * same shape of context it hands out for everything else.
+   */
+  syntheticContext(
+    id: string,
+    clock: BeatClock,
+    options: {
+      activationBeat: number;
+      mode: GameMode;
+      name?: string;
+      intensity?: number;
+      difficulty?: number;
+      durationBeats?: number;
+      params?: ParamBag;
+      role?: EventRole;
+      seed?: number;
+    },
+  ): MechanicSpawnContext {
+    const definition: MechanicDefinition = {
+      id,
+      name: options.name ?? id,
+      mode: options.mode,
+      status: 'MVP',
+      difficulty: options.difficulty ?? 2,
+      // No telegraph: a course is visible from the moment its first slab
+      // scrolls in, which is the same spatial warning every RUNNER obstacle
+      // uses. There is nothing to warn about earlier than that.
+      timing: { durationBeats: options.durationBeats ?? 1, telegraphBeats: 0 },
+      defaults: {},
+    };
+    return {
+      definition,
+      params: options.params ?? {},
+      timing: { telegraphBeats: 0, durationBeats: options.durationBeats ?? 1, recoveryBeats: 0 },
+      activationBeat: options.activationBeat,
+      intensity: options.intensity ?? 0.5,
+      role: options.role ?? 'SYSTEM',
+      seed: options.seed ?? 0,
+      clock,
+      feel: this.feel,
+      tier: tierForDifficulty(options.difficulty),
+    };
+  }
 }
 
 function numberParam(value: unknown, fallback: number): number {

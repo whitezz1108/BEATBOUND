@@ -1,0 +1,375 @@
+{
+  "version": "1.0",
+  "audit_date": "2026-09-20",
+  "read_only": true,
+  "code_modified": false,
+  "git_operations": false,
+  "companion_report": "TRANSITION_CAPABILITY_AUDIT.md",
+  "audit_spec": "prompt/audit prompt/BeatBound_TRANSITION_Capability_Audit_Prompt.md",
+
+  "modes": {
+    "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL", "DUO"],
+    "enum_source": "src/core/types.ts:11",
+    "implemented": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+    "factory_registration": "src/game/BeatBoundGame.ts:183-186",
+    "placeholder": ["DUO"],
+    "placeholder_behavior": "PlaceholderMode (src/modes/PlaceholderMode.ts): run continues, events counted as skipped, no gameplay",
+    "nonexistent_ids": ["NONE", "INTRO", "BREAK", "TRANSITION-as-mode"],
+    "note": "PATTERN_FUNCTIONS includes 'TRANSITION' but that is a pattern metadata label (RP10, RP22), unconsumed at runtime"
+  },
+
+  "switch_chain": {
+    "compile": {
+      "source": "src/core/LevelLoader.ts:326-384",
+      "mode_changes_test": "next section exists && next.mode !== current.mode (LevelLoader.ts:333)",
+      "lead_in_beats": {
+        "pattern_section": "min(max library telegraphBeats over the section's mechanics, beatsPerBar)",
+        "course_section": "max(SCROLL_LEAD_BEATS=4, beatsPerBar)",
+        "source": "LevelLoader.ts:369, 414-421"
+      },
+      "breather_from_beat": "(startBar-1+lengthBars)*beatsPerBar - max(6, round(3*bpm/60)) when mode changes, else null (LevelLoader.ts:375-378)"
+    },
+    "scheduling": {
+      "source": "src/game/BeatBoundGame.ts:210-234",
+      "switch_beat": "incomingSection.startBeat - incomingSection.leadInBeats (may be negative; fires during count-in)",
+      "transition_id_source": "PREVIOUS section's transitionOut (BeatBoundGame.ts:217-218); null => auto '{FROM}_TO_{TO}' (ModeManager.ts:105)",
+      "fixed_order": "scheduleSections before scheduleLevel before scheduleCourses (BeatBoundGame.ts:189-191); the mode switch fires before same-beat pattern/course spawns (BeatClock FIFO within a beat)",
+      "spawn_suppression": "PatternScheduler.ts:89 skips events whose activationBeat >= section.breatherFromBeat",
+      "course_spawn": "scheduleCourse: spawnBeat = course.startBeat - course.leadInBeats, synthetic 'R-COURSE' mechanic through the same sink (src/mechanics/runner/courseSchedule.ts:46-76)"
+    },
+    "set_mode": {
+      "source": "src/core/ModeManager.ts:95-111",
+      "same_mode": "early return: no deactivate/activate/reset/wipe/breather (ModeManager.ts:96)",
+      "cross_mode_order": [
+        "previous.deactivate(atBeat)  -- clears all mechanics of the outgoing mode",
+        "instanceFor(mode).activate(atBeat)  -- player reset + combo reset",
+        "flushPending(mode)  -- hands over early-spawned mechanics (MAX_PENDING=64, FIFO overflow drop)",
+        "transition = { id, from, to, startBeat, lengthBeats: sceneBeats=2 }"
+      ],
+      "routing": "ModeManager.route routes purely on mechanic definition.mode; pending queue holds spawns for modes not yet live (ModeManager.ts:117-137)"
+    }
+  },
+
+  "matrix": {
+    "axes": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+    "verdicts": {
+      "ARENA": { "ARENA": "SUPPORTED (same-mode no-op boundary)", "RUNNER": "SUPPORTED", "VERTICAL": "SUPPORTED", "RADIAL": "SUPPORTED" },
+      "RUNNER": { "ARENA": "SUPPORTED", "RUNNER": "SUPPORTED (same-mode continuous)", "VERTICAL": "SUPPORTED", "RADIAL": "SUPPORTED" },
+      "VERTICAL": { "ARENA": "SUPPORTED", "RUNNER": "SUPPORTED", "VERTICAL": "SUPPORTED (same-mode continuous)", "RADIAL": "SUPPORTED" },
+      "RADIAL": { "ARENA": "SUPPORTED", "RUNNER": "SUPPORTED", "VERTICAL": "SUPPORTED", "RADIAL": "SUPPORTED (same-mode continuous)" }
+    },
+    "unconditional": true,
+    "mode_agnostic": true,
+    "mode_id_branches_in_transition_path": 0,
+    "per_cross_cell": {
+      "player_reset": true,
+      "hazard_cleanup": true,
+      "camera_reset": false,
+      "input_map_switch": false,
+      "spawn_suppression": ">= max(6, round(bpm/20)) beats before section end",
+      "minimum_quiet_time": "6 beats floor (~3s nominal, 2.81s worst case at 128 BPM)",
+      "visual_wipe": "2 beats (TUNING.transition.sceneBeats), overlay only"
+    },
+    "cell_differences": [
+      "-> pattern-based RUNNER: first obstacle spawned 4 beats early goes through the pending queue and appears on screen already ~3/4 scrolled in (compressed warning, still beat-accurate)",
+      "-> VERTICAL/RADIAL: first note approach (2 beats x tier telegraphScale) fully visible from the switch beat (leadIn matched to telegraph)"
+    ],
+    "duo_cells": "structurally switchable, gameplay NOT SUPPORTED (PlaceholderMode)"
+  },
+
+  "breather": {
+    "exists": true,
+    "trigger": "adjacent sections with different modes only (LevelLoader.ts:332-334)",
+    "definition_source": "src/core/LevelLoader.ts:375-378",
+    "length_beats": "max(TUNING.transition.breatherBeats=6, beatsForSeconds(bpm, TUNING.transition.countdownSeconds=3))",
+    "beats_for_seconds": "max(1, round(seconds*bpm/60)) (src/tuning.ts:296-298)",
+    "tuning": { "breatherBeats": 6, "countdownSeconds": 3, "sceneBeats": 2, "source": "src/tuning.ts:77-92" },
+    "enforcement_layer": "PatternScheduler.schedulePlacement spawn suppression (src/core/PatternScheduler.ts:89)",
+    "behavior": {
+      "suppresses_spawn": true,
+      "ends_active_hazards_early": false,
+      "spawned_hazards_remain_lethal": true,
+      "spawned_hazards_cleared_at": "mode switch beat (deactivate)",
+      "warnings_of_suppressed_events": "never created (the mechanic object is never built)",
+      "notes_holds_crossing": "holds spawned before the breather may extend past the section end; cut without penalty at the switch beat",
+      "same_mode_boundary": "not triggered (breatherFromBeat = null)",
+      "json_configurable": false
+    },
+    "hud_overlay": {
+      "source": "src/game/BeatBoundGame.ts:499-516 (drawBreather)",
+      "shows": "NEXT: <mode>, incoming mode key hints (MODE_CONTROLS), 3-2-1 countdown mapped to countdownSeconds"
+    },
+    "bpm_table": [
+      { "bpm": 90, "beats": 6, "seconds": 4.0 },
+      { "bpm": 100, "beats": 6, "seconds": 3.6 },
+      { "bpm": 110, "beats": 6, "seconds": 3.27 },
+      { "bpm": 120, "beats": 6, "seconds": 3.0 },
+      { "bpm": 126, "beats": 6, "seconds": 2.86 },
+      { "bpm": 128, "beats": 6, "seconds": 2.81 },
+      { "bpm": 130, "beats": 7, "seconds": 3.23 },
+      { "bpm": 140, "beats": 7, "seconds": 3.0 },
+      { "bpm": 160, "beats": 8, "seconds": 3.0 },
+      { "bpm": 174, "beats": 9, "seconds": 3.1 },
+      { "bpm": 200, "beats": 10, "seconds": 3.0 }
+    ],
+    "guarantee": ">= 6 beats; ~3s nominal but Math.round can undershoot to ~2.81s (128 BPM region)"
+  },
+
+  "state_handoff": {
+    "health": "preserved (single HealthManager for the whole run, shared by all modes; reset only at run start) - src/core/RunStatus.ts, src/core/HealthManager.ts",
+    "score_hits_notes": "preserved (RunStatus.hits / notesHit / notesMissed accumulate across modes)",
+    "combo": "reset on incoming mode activate (NoteMode.activate, src/modes/rhythm/NoteMode.ts:82-87); preserved across same-mode boundaries; ARENA/RUNNER have no combo",
+    "multiplier": "NOT SUPPORTED (no such field exists)",
+    "invulnerability": "preserved (invulnerableUntil in song seconds, 0.8s window, TUNING.health.invulnerableSeconds; can span the switch)",
+    "position": "reset (new mode initializes: ArenaPlayer -> (0.5,0.5), RunnerPlayer -> GROUND_Y, NoteMode has no player)",
+    "velocity": "reset",
+    "gravity_state": "reset (RunnerMode.activate: gravityDirection=1, manualFlip=false)",
+    "held_keys": "preserved (global Input.down set is never cleared on mode change; window blur clears)",
+    "active_hold_notes": "dropped at deactivate without penalty (no MISS, no damage)",
+    "difficulty": "section-local, applied per spawn (PatternScheduler.ts:111 -> MechanicRegistry tier)",
+    "intensity": "placement-local (per pattern placement, default 0.5)"
+  },
+
+  "input_handoff": {
+    "model": "single global Input (src/core/Input.ts); modes read shared binding tables (src/core/controls.ts); no per-mode input map",
+    "held_keys_across_switch": "preserved and immediately re-interpreted by the incoming mode",
+    "keydown_state_cleared": false,
+    "cleared_only_on": "window blur (Input.ts:24); pressedThisFrame cleared by endFrame each frame",
+    "stuck_key_risk": "keyup handled globally; OS-level lost keyup: NEEDS RUNTIME VERIFICATION",
+    "both_modes_reading_same_frame": false,
+    "explanation": "the switch fires inside clock.update() before modes.update(); only the current mode updates each frame (ModeManager.ts:155)",
+    "key_overlaps": {
+      "runner_jump": ["w", "arrowup", " "],
+      "runner_slide": ["s", "arrowdown"],
+      "runner_flip": ["shift", "f"],
+      "vertical_lanes": [["a"], ["s"], ["d"], ["j"], ["k"], ["l"]],
+      "radial_cardinals": "arrows + wasd",
+      "arena_move": "wasd + arrows",
+      "conflicts": [
+        "holding s/arrowdown entering RUNNER -> immediate slide",
+        "holding a/s/d/arrows entering ARENA -> immediate movement (axis is isDown-based)",
+        "held keys do not auto-trigger note judgement (wasPressed needs a fresh keydown edge)"
+      ]
+    }
+  },
+
+  "camera_handoff": {
+    "model": "single shared CameraFX (zoom pulse + shake/kick) applied every frame via GameFeel.applyCamera (src/feel/GameFeel.ts:182-185)",
+    "reset_on_switch": false,
+    "animate_on_switch": false,
+    "hard_cut": false,
+    "residual_transform": "none (Renderer.resetCamera at frame start; all modes draw in the same normalized 0..1 field space)",
+    "rotation": "not supported by renderer",
+    "scroll_offset": "RUNNER track position is a pure function of absolute beat (trackX, src/mechanics/runner/runnerGeometry.ts:30-32); no camera offset state",
+    "transition_visual": "ModeManager.renderTransition (ModeManager.ts:172-191): 2-beat overlay wipe in the incoming mode colour + mode name + transitionOut label; purely decorative",
+    "particles_screen_fx": "global, persist across switches, visual-only"
+  },
+
+  "cleanup": {
+    "contract": "GameplayMode.deactivate 'should drop its mechanics' (src/modes/GameplayMode.ts:29-39)",
+    "ARENA": "deactivate: mechanics=[] -- bullets, chains, lasers, floor warnings, sweeps, fans all removed instantly",
+    "RUNNER": "deactivate: mechanics=[] -- half-scrolled obstacles and the whole course (R-COURSE) removed instantly",
+    "VERTICAL": "deactivate: mechanics=[] (NoteMode.ts:89-91) -- all notes incl. HOLDING removed; hold cut without penalty",
+    "RADIAL": "same as VERTICAL",
+    "pending_queues": "kept for modes not yet live; flushed only when that mode activates; cleared by clearHazards()",
+    "particles": "visual residue only, no collision",
+    "cross_mode_damage_window": "old-mode hazards remain lethal from breather start until the switch beat (breather does NOT end active hazards); impossible after the switch beat",
+    "death_path": "onDeath -> clock.clearSchedule() (cancels future mode switches too) + modes.clearHazards() (all instantiated modes + pending) (src/game/BeatBoundGame.ts:435-441)"
+  },
+
+  "beat_clock": {
+    "music_continuity": "uninterrupted; mode switch never touches the SongPlayer (AudioContext-clock anchored, src/core/AudioEngine.ts)",
+    "beat_reset_on_switch": false,
+    "absolute_beat": "recomputed from playbackTime every frame (src/core/BeatClock.ts:181)",
+    "section_alignment": "switch at (startBar-1)*beatsPerBar - leadInBeats, scheduled in musical time; negative switch beats legal (bar 1 is live during count-in)",
+    "latency": "single global anchor (startCtxTime); per-callback latency stats only; no per-mode differences",
+    "next_mode_first_event_alignment": "exact to the pattern's absolute beat; telegraph/approach visible from the switch beat",
+    "visual_freeze": "hit-stop freezes visualBeat only, never the schedule or audio"
+  },
+
+  "authoring_api": {
+    "transitionOut": {
+      "json": "section.transitionOut: string|null",
+      "parser": "accepted (types.ts:138, level.schema.json)",
+      "runtime_effect": "display-only: becomes the transition overlay label id (BeatBoundGame.ts:217-218 -> ModeManager.ts:188)",
+      "classification": "consumed-display-only (gameplay no-op)",
+      "default": null
+    },
+    "scene_effects": {
+      "json": "section.scene.effects[] (paletteShift/lightFlash/cameraPan/particles/envMovement, durationBeats)",
+      "parser": "tolerated (loader ignores unknown fields); NOT in SectionDefinition; violates level.schema.json additionalProperties:false",
+      "runtime_effect": "none",
+      "classification": "metadata-only (editor extension)",
+      "seen_in": ["beatbound_library_v1/test_song.level.json", "beatbound_library_v1/dance_fruits_musicsteve_void_-_toosie_slide_sped_up.level.json"]
+    },
+    "section_function": { "parser": "accepted", "runtime_effect": "none", "classification": "metadata-only" },
+    "pattern_function": { "parser": "accepted", "runtime_effect": "none (scheduling never branches on it)", "classification": "metadata-only", "transition_labelled_patterns": ["RP10", "RP22"] },
+    "transitionIn": { "parser": "not accepted", "classification": "NOT SUPPORTED" },
+    "breather_field": { "parser": "not accepted", "classification": "NOT SUPPORTED (runtime-derived, not JSON-configurable)" },
+    "leadIn_field": { "parser": "not accepted", "classification": "NOT SUPPORTED (compile-derived)" },
+    "modeSwitch": { "parser": "not accepted", "classification": "NOT SUPPORTED" },
+    "cameraTransition": { "parser": "not accepted", "classification": "NOT SUPPORTED" },
+    "duration_section_field": { "parser": "not accepted", "classification": "NOT SUPPORTED (length expressed via startBar+lengthBars)" },
+    "course": { "parser": "accepted", "runtime_effect": "full (planned at load, spawned 1 bar early)", "classification": "SUPPORTED" },
+    "course_generate": { "parser": "accepted", "runtime_effect": "full (expanded at load via composeCourse, LevelLoader.ts:402-413)", "classification": "SUPPORTED" },
+    "course_seed": { "parser": "accepted", "runtime_effect": "none (composeCourse consumes generate.seed; compiled course.seed never read)", "classification": "metadata-only (write-only)" },
+    "event_role": { "parser": "accepted", "runtime_effect": "carried but never branched on (all roles spawn identically)", "classification": "carried metadata (no-op)", "default": "SYSTEM" }
+  },
+
+  "transition_timing": {
+    "min_quiet_beats": "max(6, round(bpm/20))",
+    "min_quiet_seconds_nominal": 3.0,
+    "min_quiet_seconds_worst_case": 2.81,
+    "outgoing_deactivate_beat": "sectionEndBeat - leadInBeats",
+    "incoming_activate_beat": "same beat (synchronous in setMode)",
+    "first_incoming_telegraph": "from the switch beat (pattern sections)",
+    "first_incoming_lethal_event": "at its pattern activation beat (usually the section's first beat)",
+    "visual_wipe_beats": 2,
+    "run_count_in_beats": "max(4, beatsForSeconds(bpm, 3)) (negative song time)",
+    "mode_specific_spawn_leads": {
+      "RUNNER_pattern_obstacles": "4 beats (SCROLL_LEAD_BEATS, registration spawnLeadBeats, src/mechanics/runner/index.ts:18)",
+      "VERTICAL_RADIAL_notes": "2 beats (library telegraphBeats)",
+      "RADIAL_notes": "2 beats (library telegraphBeats)",
+      "ARENA": "0.5-1.5 beats (library telegraphBeats)",
+      "RUNNER_course": "max(4, beatsPerBar) (CompiledCourse.leadInBeats)"
+    }
+  },
+
+  "same_mode_boundary": {
+    "verdict": "SUPPORTED (no-op boundary)",
+    "mode_reset": false,
+    "player_reset": false,
+    "combo_continuous": true,
+    "active_mechanics_cross_boundary": true,
+    "breather_triggered": false,
+    "patterns_stack_end_to_end": true,
+    "transitionOut_effect": "none (setMode early-returns)",
+    "evidence": "ModeManager.ts:96 early return; real consumer: src/lab/labs.ts sequence() (99-135)",
+    "shipped_level_samples": 0,
+    "note": "behaviour derived from code and exercised by labs; no shipped level uses adjacent same-mode sections"
+  },
+
+  "difficulty_continuity": {
+    "scope": "section-local, per-spawn",
+    "tier_mapping": "1=EASY, 2=MEDIUM, 3=HARD, 4/5=INTENSE, unset=MEDIUM (src/mechanics/arena/arenaTiming.ts:18-25)",
+    "tiers": {
+      "EASY": { "travelScale": 1.35, "telegraphScale": 1.5, "gapScale": 1.35, "densityScale": 0.7 },
+      "MEDIUM": { "travelScale": 1.18, "telegraphScale": 1.25, "gapScale": 1.18, "densityScale": 0.85 },
+      "HARD": { "travelScale": 1.0, "telegraphScale": 1.05, "gapScale": 1.0, "densityScale": 1.0 },
+      "INTENSE": { "travelScale": 0.9, "telegraphScale": 0.9, "gapScale": 0.9, "densityScale": 1.15 }
+    },
+    "all_modes_effect": "library telegraph > 0 is multiplied by tier.telegraphScale at spawn (MechanicRegistry.ts:144-150); intensity only shortens, floored at 0.6 beats / constraints.minReactionBeats (src/core/Intensity.ts:17-27)",
+    "arena_only_effect": "travelScale/gapScale on projectiles/rings/spirals/sweeps; slowed() stretches duration by the same factor",
+    "runner_course_effect": "course intensity = (difficulty-1)/4 (courseSchedule.ts:88)",
+    "immediate": "yes - the change applies from the first spawn of the incoming section, no smoothing",
+    "example": "difficulty 4 ARENA -> difficulty 1 RUNNER: RUNNER/next spawns immediately use EASY telegraph budget"
+  },
+
+  "known_risks": [
+    {
+      "id": "R-1",
+      "scenario": "long-duration ARENA mechanic (A07/A08/A11, slowed() variants) active across the breather",
+      "severity": "HIGH RISK (compiler-avoidable)",
+      "detail": "breather suppresses new spawns only; an already-active hazard stays lethal until the switch beat. runtime offers no early end",
+      "mitigation": "compiler keeps last outgoing activation well before breatherFromBeat"
+    },
+    {
+      "id": "R-2",
+      "scenario": "non-RUNNER -> pattern-based RUNNER section",
+      "severity": "CONDITIONAL",
+      "detail": "first obstacle spawned 4 beats early waits in pending; visible only from the switch beat, already ~3/4 scrolled (compressed warning, beat-accurate)",
+      "mitigation": "use course-based RUNNER sections after a mode change, or keep the first RUNNER activation >= 4 beats into the section"
+    },
+    {
+      "id": "R-3",
+      "scenario": "held keys crossing the switch",
+      "severity": "CONDITIONAL",
+      "detail": "a/s/d/arrows held into ARENA cause immediate drift; s/arrowdown held into RUNNER causes immediate slide",
+      "mitigation": "compiler cannot control the player; telegraphs and breather reduce surprise"
+    },
+    {
+      "id": "R-4",
+      "scenario": "damage invulnerability active at the switch",
+      "severity": "CONDITIONAL (low)",
+      "detail": "0.8s window persists in song time; the incoming mode's first hit may be silently absorbed",
+      "mitigation": "none needed; cosmetic ambiguity only"
+    },
+    {
+      "id": "R-5",
+      "scenario": "pending queue overflow for one mode (>64)",
+      "severity": "CONDITIONAL (pathological levels)",
+      "detail": "oldest spawn silently dropped, droppedSpawns counter incremented (HUD-visible), no warning",
+      "mitigation": "compiler keeps per-mode buffered spawns <= 64"
+    },
+    {
+      "id": "R-6",
+      "scenario": "death during a transition window",
+      "severity": "SAFE (run terminal)",
+      "detail": "clock.clearSchedule() also cancels the scheduled mode switch; world frozen in the outgoing mode"
+    },
+    {
+      "id": "R-7",
+      "scenario": "section into DUO (or any unregistered mode)",
+      "severity": "NOT SUPPORTED (gameplay)",
+      "detail": "PlaceholderMode: no hazards, events counted as skipped, run continues"
+    },
+    {
+      "id": "R-8",
+      "scenario": "difficulty jump across a boundary",
+      "severity": "CONDITIONAL (readability)",
+      "detail": "tier telegraphScale/travelScale change immediately for the next spawn; e.g. INTENSE -> EASY lengthens warnings by 67%"
+    }
+  ],
+
+  "safe_generation_bounds": {
+    "transition_safety": {
+      "minimum_breathing_beats": 6,
+      "minimum_breathing_seconds_nominal": 3.0,
+      "minimum_breathing_seconds_worst_case": 2.81,
+      "breather_formula": "max(6, round(bpm/20)) beats, measured back from the outgoing section's end beat",
+      "clear_previous_hazards": true,
+      "clear_previous_hazards_at": "mode switch beat (outgoing sectionEndBeat - incoming leadInBeats), NOT at breather start",
+      "allow_active_hold_crossing": false,
+      "hold_cut_penalty": "none (no MISS, no damage; combo reset by incoming activate)",
+      "allowed_boundary_types": ["section_boundary"],
+      "section_boundary_definition": "bar line (incoming section startBar) minus leadInBeats (<= 1 bar; max(4, beatsPerBar) for courses)",
+      "phrase_boundary_enforced": false
+    },
+    "compiler_required": [
+      "last outgoing event activation strictly < breatherFromBeat (>= is suppressed); keep the active-window tail clear of the switch beat",
+      "avoid long-duration mechanics (A07/A08/A11, slowed() variants) in the final bars before a mode change",
+      "same-mode section boundaries get NO runtime breather - manage density manually",
+      "incoming first event should activate at or after its startBar (earlier is possible via pending but visually compressed)",
+      "single-mode buffered spawns <= 64 (MAX_PENDING) to avoid silent drops",
+      "expect held-key carryover across the switch (input is global state)",
+      "fill section gaps explicitly (empty bars keep the outgoing mode running with a load warning)"
+    ]
+  },
+
+  "counts": {
+    "runtime_usable_modes": 4,
+    "declared_without_runtime": 1,
+    "supported_mode_pairs_matrix_cells": 16,
+    "cross_mode_cells": 12,
+    "same_mode_cells": 4,
+    "library_pattern_count": 71,
+    "transition_labelled_patterns": 2,
+    "mechanics_registered": 24,
+    "mechanics_in_library": 24,
+    "unreachable_or_dead_implementations": 2,
+    "unreachable_or_dead_detail": [
+      "DUO runtime path (PlaceholderMode) - implemented fallback, unreachable from shipped content",
+      "ModeManager.pending long-term buffering for a never-activating mode - reachable only in pathological levels (overflow silently drops at 64)"
+    ],
+    "metadata_only_or_noop_fields": 6,
+    "metadata_only_detail": [
+      "section.scene.effects (editor extension, runtime-ignored, schema-violating)",
+      "section.function",
+      "pattern.function (incl. 'TRANSITION')",
+      "section.transitionOut (display-only label)",
+      "course.seed (write-only)",
+      "event.role (carried, never branched)"
+    ],
+    "not_supported_authoring_fields": ["transitionIn", "breather", "leadIn", "modeSwitch", "cameraTransition", "duration"]
+  }
+}

@@ -9,6 +9,11 @@
  * circular guide ring, radial spokes and a centre marker, because most of the
  * pattern families are radial and the player has to be able to see CENTRE,
  * RADIUS and the current SAFE ARC at a glance.
+ *
+ * The *look* of all that now lives in ArenaStage (environment, board, rim) and
+ * Avatar (the player sprite). The mode keeps only what is actually gameplay:
+ * collision, the hit/perfect bookkeeping, and the two decaying pulses those
+ * produce, which the stage turns into rim colour and the avatar into a blink.
  */
 
 import { circleIntersectsShape } from '../../core/geometry';
@@ -17,16 +22,18 @@ import type { Renderer } from '../../core/Renderer';
 import type { SpawnedMechanicInfo } from '../../core/PatternScheduler';
 import type { GameMode } from '../../core/types';
 import { TUNING } from '../../tuning';
-import { ARENA_CENTRE, polarToField } from '../../mechanics/arena/polar';
 import type { GameplayMode, ModeContext } from '../GameplayMode';
 import { ArenaPlayer } from './ArenaPlayer';
+import { ArenaStage } from './ArenaStage';
 
-/** Radii of the composition guide rings. */
-const GUIDE_RINGS = [0.18, 0.34, 0.5];
+/** How long the hit and perfect-dodge pulses take to fade, in beats. */
+const HIT_PULSE_BEATS = 0.5;
+const PERFECT_PULSE_BEATS = 0.7;
 
 export class ArenaMode implements GameplayMode {
   readonly mode: GameMode = 'ARENA';
   readonly player = new ArenaPlayer();
+  private readonly stage = new ArenaStage();
   private mechanics: RuntimeMechanic[] = [];
   private lastHitBeat = -Infinity;
   /** Debug label for the HUD: what pattern most recently fed this mode. */
@@ -44,6 +51,8 @@ export class ArenaMode implements GameplayMode {
     this.player.reset();
     this.mechanics = [];
     this.grazing = false;
+    this.lastHitBeat = -Infinity;
+    this.lastPerfectBeat = -Infinity;
   }
 
   deactivate(_atBeat: number): void {
@@ -119,7 +128,15 @@ export class ArenaMode implements GameplayMode {
 
   render(r: Renderer): void {
     const beat = this.ctx.clock.visualBeat;
-    this.renderField(r, beat);
+    // The stage is deliberately *not* clipped to the field: the environment is
+    // the letterbox, and clipping it would leave the arena floating on whatever
+    // the previous layer painted.
+    this.stage.render(r, {
+      beat,
+      beatsPerBar: this.ctx.clock.beatsPerBar,
+      hitPulse: decay(beat - this.lastHitBeat, HIT_PULSE_BEATS),
+      perfectPulse: decay(beat - this.lastPerfectBeat, PERFECT_PULSE_BEATS),
+    });
     r.withFieldClip(() => {
       for (const m of this.mechanics) m.render(r);
       this.player.render(r, this.ctx.status.isInvulnerable(this.ctx.clock.songTime), beat);
@@ -128,48 +145,16 @@ export class ArenaMode implements GameplayMode {
     });
   }
 
-  private renderField(r: Renderer, beat: number): void {
-    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#0b0f18');
-
-    const beatsPerBar = this.ctx.clock.beatsPerBar;
-    const intoBar = ((beat % beatsPerBar) + beatsPerBar) % beatsPerBar;
-    const pulse = Math.max(0, 1 - intoBar); // 1 on the downbeat, fading over a beat
-    const intoBeat = ((beat % 1) + 1) % 1;
-    const beatPulse = Math.max(0, 1 - intoBeat);
-
-    // Faint 4x4 guide so tile layouts stay spatially readable.
-    for (let i = 1; i < 4; i++) {
-      r.line(i / 4, 0, i / 4, 1, '#161d2c', 1);
-      r.line(0, i / 4, 1, i / 4, '#161d2c', 1);
-    }
-
-    // Radial composition: concentric guides and eight spokes. These say where
-    // the centre is and how far out an attack currently reaches.
-    for (const radius of GUIDE_RINGS) {
-      r.strokeCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, radius, '#1b2740', 1, 0.5 + 0.25 * beatPulse);
-    }
-    for (let i = 0; i < 8; i++) {
-      const angle = (i * Math.PI) / 4;
-      const from = polarToField(angle, GUIDE_RINGS[0]);
-      const to = polarToField(angle, 0.78);
-      r.line(from.x, from.y, to.x, to.y, '#161f33', 1, 0.45);
-    }
-    r.strokeCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, 0.012, '#2b3750', 1, 0.6);
-
-    // Border pulses on the downbeat -- a constant rhythmic reference point.
-    r.strokeRect({ x: 0, y: 0, w: 1, h: 1 }, '#2b3750', 2, 0.35 + pulse * 0.5);
-  }
-
   private renderHitFlash(r: Renderer, beat: number): void {
     const since = beat - this.lastHitBeat;
-    if (since < 0 || since > 0.5) return;
-    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#ff3355', 0.25 * (1 - since / 0.5));
+    if (since < 0 || since > HIT_PULSE_BEATS) return;
+    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#ff3355', 0.25 * (1 - since / HIT_PULSE_BEATS));
   }
 
   private renderPerfectLabel(r: Renderer, beat: number): void {
     const since = beat - this.lastPerfectBeat;
-    if (since < 0 || since > 0.7) return;
-    const alpha = 1 - since / 0.7;
+    if (since < 0 || since > PERFECT_PULSE_BEATS) return;
+    const alpha = 1 - since / PERFECT_PULSE_BEATS;
     r.text('PERFECT', this.player.x, this.player.y - 0.075, '#9ffcff', 13, 'center', alpha);
   }
 
@@ -180,4 +165,10 @@ export class ArenaMode implements GameplayMode {
   get statusLine(): string {
     return `ARENA  mechanics:${this.mechanics.length}  perfect:${this.perfects}  last pattern:${this.lastPatternId}`;
   }
+}
+
+/** 1 immediately after an event, falling to 0 over `window` beats. */
+function decay(since: number, window: number): number {
+  if (since < 0 || since > window) return 0;
+  return 1 - since / window;
 }

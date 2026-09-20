@@ -1,0 +1,71 @@
+# BeatBound audio understanding V2 -- optional heavy dependencies
+#
+# The V2 analyzer (analyze_music_v2.py) is layered so that these are OPTIONAL.
+# Without them the pipeline still runs: stems and melody report
+# available: false, analysisMeta.backends records why, and --fast skips them
+# entirely. Nothing below is required for the editor to open a song.
+#
+# Install the core (needed by both analyze_music.py and analyze_music_v2.py):
+#
+#     pip install -r requirements.txt
+#
+# Then, to enable the full pipeline:
+#
+#     pip install -r requirements-audio.txt
+#
+# ---------------------------------------------------------------------------
+# Verified working combination
+# ---------------------------------------------------------------------------
+# Python 3.12 on Windows 11, as installed and exercised end to end:
+#
+#     librosa==1.0.0  numpy==2.5.3  scipy==1.18.1  soundfile==0.14.0
+#     torch==2.14.0   demucs==4.1.0
+#     onnxruntime==1.30.0  basic-pitch==0.4.0  resampy==0.4.3
+#
+# Two Windows-specific traps, both worked around below:
+#
+# 1. `pip install basic-pitch` fails on Python 3.12 with
+#       BackendUnavailable: Cannot import 'setuptools.build_meta'
+#    because its `tensorflow<2.15.1` marker has no py3.12 wheel, so pip falls
+#    back to building `numpy<1.24` from source. Installing with --no-deps and
+#    adding the pure-python runtime dependencies by hand avoids the whole chain.
+#    The ONNX backend is then selected automatically, since TensorFlow, CoreML
+#    and TFLite are all absent.
+#
+# 2. basic-pitch pins `resampy<0.4.3`, but resampy 0.4.2 imports `pkg_resources`,
+#    which setuptools 84 removed. resampy 0.4.3 is the fix; it is API-compatible
+#    for the one call basic-pitch makes (resample(y, 22050, 44100)).
+#
+# ---------------------------------------------------------------------------
+
+# --- core analysis ---------------------------------------------------------
+librosa>=1.0.2
+numpy>=1.26
+scipy>=1.11
+soundfile>=0.12
+
+# --- stem separation (Demucs HTDemucs) -------------------------------------
+# CPU-only is fine: the analyzer passes device="cpu" explicitly. Swap for the
+# CUDA wheel if you want stem separation to run on a GPU.
+torch>=2.1
+demucs>=4.0.1
+
+# --- pitch tracking (Basic Pitch, ICASSP 2022) ------------------------------
+# Installed with --no-deps; see the notes above. On Linux/macOS the plain
+# `pip install basic-pitch` usually works and these lines can be replaced by it.
+onnxruntime>=1.16
+basic-pitch==0.4.0
+resampy==0.4.3
+
+# basic-pitch's own pure-python runtime dependencies, normally pulled in by its
+# metadata (which we bypass with --no-deps):
+mir_eval>=0.7
+pretty_midi>=0.2.10
+libfmp>=1.2.2
+soxr>=0.3.7
+pydub>=0.25.1
+
+# --- tests -----------------------------------------------------------------
+# Required only for editor/music-analysis/tests (schema validation + runner).
+pytest>=8.0
+jsonschema>=4.20

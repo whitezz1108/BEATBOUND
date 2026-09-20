@@ -2,6 +2,72 @@
   "version": "1.0.0",
   "levels": [
     {
+      "id": "RUNNER_TEST_01_BASIC_CHAIN",
+      "file": "runner_test_01_basic_chain.level.json",
+      "title": "Runner Test 01 — Basic Chain",
+      "blurb": "The floor of the language: jump, run, jump. Everything else is a variation on this."
+    },
+    {
+      "id": "RUNNER_TEST_02_SHORT_SHORT_LONG",
+      "file": "runner_test_02_short_short_long.level.json",
+      "title": "Runner Test 02 — Short Short Long",
+      "blurb": "Two taps and a full hold. The phrase rhythm has to read as one gesture, not three jumps."
+    },
+    {
+      "id": "RUNNER_TEST_03_STAIRCASE",
+      "file": "runner_test_03_staircase.level.json",
+      "title": "Runner Test 03 — Staircase",
+      "blurb": "Four risers up, four back down. Every tread has to be landable and re-launchable."
+    },
+    {
+      "id": "RUNNER_TEST_04_HIGH_LOW",
+      "file": "runner_test_04_high_low.level.json",
+      "title": "Runner Test 04 — High Low",
+      "blurb": "Land high, land low, four times. The vertical read is the whole phrase."
+    },
+    {
+      "id": "RUNNER_TEST_05_GAP_CHAIN",
+      "file": "runner_test_05_gap_chain.level.json",
+      "title": "Runner Test 05 — Gap Chain",
+      "blurb": "Holes in the track, back to back. Each one near the limit of what the arc carries."
+    },
+    {
+      "id": "RUNNER_TEST_06_DROP_AND_JUMP",
+      "file": "runner_test_06_drop_and_jump.level.json",
+      "title": "Runner Test 06 — Drop And Jump",
+      "blurb": "Climb, walk off the ledge, and leave again the moment you land."
+    },
+    {
+      "id": "RUNNER_TEST_07_GRAVITY_FLIP",
+      "file": "runner_test_07_gravity_flip.level.json",
+      "title": "Runner Test 07 — Gravity Flip",
+      "blurb": "The world turns over and back. The flip is a snap, not a flight."
+    },
+    {
+      "id": "RUNNER_TEST_08_INVERTED_CHAIN",
+      "file": "runner_test_08_inverted_chain.level.json",
+      "title": "Runner Test 08 — Inverted Chain",
+      "blurb": "A whole phrase spent on the ceiling, with slabs hanging into the route."
+    },
+    {
+      "id": "RUNNER_TEST_09_VERTICAL_CORRIDOR",
+      "file": "runner_test_09_vertical_corridor.level.json",
+      "title": "Runner Test 09 — Vertical Corridor",
+      "blurb": "A walkway with a roof over it. The jump inside has to fit the headroom."
+    },
+    {
+      "id": "RUNNER_TEST_10_DENSE_PHRASE",
+      "file": "runner_test_10_dense_phrase.level.json",
+      "title": "Runner Test 10 — Dense Phrase",
+      "blurb": "Hops on the half-beat. The densest thing the mode can ask for without becoming noise."
+    },
+    {
+      "id": "RUNNER_TEST_11_MIXED_SHOWCASE",
+      "file": "runner_test_11_mixed_showcase.level.json",
+      "title": "Runner Test 11 — Mixed Showcase",
+      "blurb": "One phrase from every family, back to back. The integration smoke test."
+    },
+    {
       "id": "arena_test",
       "file": "arena_test.level.json",
       "title": "Arena Practice",
@@ -12,6 +78,12 @@
       "file": "runner_test.level.json",
       "title": "Runner Practice",
       "blurb": "Jump and slide. Spikes, low walls and bounce pads."
+    },
+    {
+      "id": "runner_showcase",
+      "file": "runner_showcase.level.json",
+      "title": "Runner Showcase",
+      "blurb": "A 60s handcrafted course: chains, staircases, gaps, a gravity flip, a corridor and a climax."
     },
     {
       "id": "vertical_test",
@@ -48,6 +120,24 @@
       "file": "dance_fruits_musicsteve_void_-_toosie_slide_sped_up.level.json",
       "title": "Dance Fruits Music,Steve Void - Toosie Slide (Sped Up)",
       "blurb": "Generated in the BeatBound Level Editor."
+    },
+    {
+      "id": "runner_procedural",
+      "file": "runner_procedural.level.json",
+      "title": "Runner Procedural — Seed 7",
+      "blurb": "Procedurally composed RUNNER course (spec §44–§48): the loader expands course.generate through composeCourse, then plans it like any authored level."
+    },
+    {
+      "id": "runner_test_12_double_jump",
+      "file": "runner_test_12_double_jump.level.json",
+      "title": "Runner Test 12 — Double Jump",
+      "blurb": "Isolates DOUBLE_JUMP_MOUNT: a block above single-jump reach, mounted by jumping again at the mid-air ring."
+    },
+    {
+      "id": "runner_test_13_sky_steps",
+      "file": "runner_test_13_sky_steps.level.json",
+      "title": "Runner Test 13 — Sky Steps",
+      "blurb": "Isolates SKY_STEPS: floating blocks over holes, one full jump apart -- miss the beat, take the fall."
     }
   ]
 }

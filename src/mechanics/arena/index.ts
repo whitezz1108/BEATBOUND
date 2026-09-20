@@ -17,6 +17,7 @@ import { RotatingFanMechanic } from './RotatingFanMechanic';
 import { SpiralMechanic } from './SpiralMechanic';
 import { WaveSweepMechanic } from './WaveSweepMechanic';
 import { RingMechanic } from './RingMechanic';
+import { SectorSweepMechanic } from './SectorSweepMechanic';
 
 export function registerArenaMechanics(registry: MechanicRegistry): void {
   registry.register('A01', (ctx) => new FloorWarningMechanic(ctx));
@@ -29,4 +30,5 @@ export function registerArenaMechanics(registry: MechanicRegistry): void {
   registry.register('A08', (ctx) => new SpiralMechanic(ctx));
   registry.register('A09', (ctx) => new WaveSweepMechanic(ctx));
   registry.register('A10', (ctx) => new RingMechanic(ctx));
+  registry.register('A11', (ctx) => new SectorSweepMechanic(ctx));
 }

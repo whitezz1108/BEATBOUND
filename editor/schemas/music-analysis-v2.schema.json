@@ -1,0 +1,745 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/editor/music-analysis-v2.schema.json",
+  "title": "BeatBound Music Analysis V2",
+  "description": "Output of editor/music-analysis/analyze_music_v2.py. Audio understanding only: it describes music and stops here. Every field that could not be estimated is null rather than a plausible substitute, and no field carries a semantic section label such as \"chorus\". Musical positions are on a constant-tempo grid anchored at audio time 0, so bars here are the same bars the runtime's ConstantTempoMap produces.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "source",
+    "global",
+    "timeline",
+    "sections",
+    "events",
+    "analysisMeta"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+
+    "source": {
+      "type": "object",
+      "required": ["path", "file", "songId", "title", "durationSec", "sampleRate", "sourceHash", "audioHash"],
+      "properties": {
+        "path": { "type": "string" },
+        "file": { "type": "string" },
+        "songId": { "type": "string" },
+        "title": { "type": "string" },
+        "durationSec": { "type": ["number", "null"], "minimum": 0 },
+        "sampleRate": { "type": "integer", "minimum": 1 },
+        "nativeSampleRate": { "type": "integer", "minimum": 1 },
+        "channels": { "type": "integer", "minimum": 1 },
+        "sourceHash": { "type": "string", "description": "16 hex chars. Byte-stable across the V2 upgrade so level.json's editor.analysisSource stays comparable." },
+        "audioHash": { "type": "string", "description": "Full SHA-256. The audio cache key." }
+      },
+      "additionalProperties": false
+    },
+
+    "global": {
+      "type": "object",
+      "description": "Song-level summary. Null means \"not reliably estimated\" -- never a fabricated value.",
+      "required": [
+        "bpm",
+        "tempoConfidence",
+        "key",
+        "scale",
+        "overallEnergy",
+        "dynamicRange",
+        "brightness",
+        "rhythmicDensity",
+        "melodicDensity"
+      ],
+      "properties": {
+        "bpm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "tempoConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "key": {
+          "type": ["string", "null"],
+          "enum": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", null]
+        },
+        "scale": { "type": ["string", "null"], "enum": ["major", "minor", null] },
+        "keyConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "overallEnergy": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "dynamicRange": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "brightness": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "rhythmicDensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "melodicDensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "meterConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "silent": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+
+    "timeline": {
+      "type": "object",
+      "description": "The unified fixed-rate window timeline plus the drawable curves. Every window field is 0..1 and safe to compare across songs; raw units stay in `layers`.",
+      "required": ["windowSec", "hopSec", "windows", "waveformEnvelope", "rmsCurve"],
+      "properties": {
+        "windowSec": { "type": "number", "exclusiveMinimum": 0 },
+        "hopSec": { "type": "number", "exclusiveMinimum": 0 },
+        "windows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["time"],
+            "properties": {
+              "time": { "type": ["number", "null"], "minimum": 0 },
+              "energy": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "drumActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "bassActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "vocalActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "melodicActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "pitchNormalized": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "brightness": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "energyCurve": { "$ref": "#/$defs/curve" },
+        "rmsCurve": { "$ref": "#/$defs/curve" },
+        "waveformEnvelope": { "$ref": "#/$defs/curve" },
+        "chroma": {
+          "type": "object",
+          "required": ["times", "values"],
+          "properties": {
+            "times": { "type": "array", "items": { "type": ["number", "null"] } },
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": ["number", "null"] },
+                "minItems": 12,
+                "maxItems": 12
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pitchCurve": { "$ref": "#/$defs/curve" },
+        "stemActivity": {
+          "type": "object",
+          "description": "Per-stem activity curves on one shared scale (relative to the loudest stem), so the four are comparable.",
+          "required": ["times"],
+          "properties": {
+            "times": { "type": "array", "items": { "type": ["number", "null"] } },
+            "drums": { "type": "array", "items": { "type": ["number", "null"] } },
+            "bass": { "type": "array", "items": { "type": ["number", "null"] } },
+            "vocals": { "type": "array", "items": { "type": ["number", "null"] } },
+            "other": { "type": "array", "items": { "type": ["number", "null"] } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "sections": {
+      "type": "array",
+      "description": "Structural segments from novelty-based boundary detection, snapped to the bar grid. `label` is descriptive only and may be null; it is never a semantic label such as \"chorus\".",
+      "items": {
+        "type": "object",
+        "required": ["id", "start", "end"],
+        "properties": {
+          "id": { "type": "string" },
+          "start": { "type": ["number", "null"], "minimum": 0 },
+          "end": { "type": ["number", "null"], "minimum": 0 },
+          "durationSec": { "type": ["number", "null"], "minimum": 0 },
+          "label": {
+            "type": ["string", "null"],
+            "enum": ["high_energy_section", "low_energy_section", null]
+          },
+          "startBar": { "type": ["integer", "null"], "minimum": 1 },
+          "endBar": { "type": ["integer", "null"], "minimum": 1 },
+          "energy": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "drumActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "bassActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "vocalActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "melodicActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "events": {
+      "type": "array",
+      "description": "The unified musical event layer. Strictly musical vocabulary -- there are deliberately no gameplay events (no spawn_ring, jump or change_mode) in this document.",
+      "items": {
+        "type": "object",
+        "required": ["time", "type", "strength", "source"],
+        "properties": {
+          "time": { "type": ["number", "null"], "minimum": 0 },
+          "type": {
+            "type": "string",
+            "enum": [
+              "beat",
+              "strong_beat",
+              "strong_onset",
+              "energy_rise",
+              "energy_drop",
+              "energy_peak",
+              "melody_rise",
+              "melody_fall",
+              "melody_peak",
+              "large_pitch_jump",
+              "vocal_entry",
+              "vocal_exit",
+              "bass_entry",
+              "drum_density_rise",
+              "section_boundary"
+            ]
+          },
+          "strength": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "source": {
+            "type": "string",
+            "enum": ["rhythm", "mix", "global", "melody", "vocals", "bass", "drums", "structure"]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+
+    "layers": {
+      "type": "object",
+      "description": "Per-layer detail in native units (Hz, MIDI, seconds, BPM), for musicology and debugging. `global` and `timeline` hold the normalised view.",
+      "required": ["rhythm", "energy", "tonal", "stems", "melody", "structure"],
+      "properties": {
+        "rhythm": {
+          "type": "object",
+          "required": ["bpm", "timeSignature", "beatCount", "barCount", "beats", "onsets"],
+          "properties": {
+            "bpm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "tempoConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "timeSignature": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "integer", "enum": [2, 4, 8, 16] }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "meterConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "beatLengthSec": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "beatCount": { "type": "integer", "minimum": 0 },
+            "barCount": { "type": "integer", "minimum": 0 },
+            "gridAnchoredAtSec": { "type": "number" },
+            "beats": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["time", "index", "bar", "beat", "strength"],
+                "properties": {
+                  "time": { "type": ["number", "null"], "minimum": 0 },
+                  "index": { "type": "integer", "minimum": 0 },
+                  "bar": { "type": "integer", "minimum": 1 },
+                  "beat": { "type": "integer", "minimum": 1 },
+                  "beatInBar": { "type": "integer", "minimum": 1 },
+                  "isDownbeat": { "type": "boolean" },
+                  "strength": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "onsets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["time", "strength"],
+                "properties": {
+                  "time": { "type": ["number", "null"], "minimum": 0 },
+                  "strength": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "energy": {
+          "type": "object",
+          "required": ["overallEnergy", "dynamicRange", "timeline"],
+          "properties": {
+            "overallEnergy": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "dynamicRange": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "loudnessRangeDb": { "type": ["number", "null"], "minimum": 0 },
+            "timeline": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["time", "value"],
+                "properties": {
+                  "time": { "type": ["number", "null"] },
+                  "value": { "type": ["number", "null"] }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "tonal": {
+          "type": "object",
+          "required": ["available", "key", "scale"],
+          "properties": {
+            "available": { "type": "boolean" },
+            "key": {
+              "type": ["string", "null"],
+              "enum": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", null]
+            },
+            "scale": { "type": ["string", "null"], "enum": ["major", "minor", null] },
+            "keyConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "chromaMean": { "type": "array", "items": { "type": ["number", "null"] } },
+            "spectralCentroidHz": { "type": ["number", "null"], "minimum": 0 },
+            "brightness": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "bandBalance": {
+              "type": "object",
+              "properties": {
+                "low": { "type": ["number", "null"] },
+                "mid": { "type": ["number", "null"] },
+                "high": { "type": ["number", "null"] }
+              },
+              "additionalProperties": false
+            },
+            "spectralContrastMean": { "type": "array", "items": { "type": ["number", "null"] } }
+          },
+          "additionalProperties": false
+        },
+        "stems": {
+          "type": "object",
+          "required": ["available"],
+          "properties": {
+            "available": { "type": "boolean" },
+            "backend": { "type": ["string", "null"] },
+            "reason": { "type": "string" },
+            "activity": {
+              "type": "object",
+              "properties": {
+                "drums": { "type": ["number", "null"] },
+                "bass": { "type": ["number", "null"] },
+                "vocals": { "type": ["number", "null"] },
+                "other": { "type": ["number", "null"] }
+              },
+              "additionalProperties": false
+            },
+            "drums": { "$ref": "#/$defs/stemBlock" },
+            "bass": { "$ref": "#/$defs/stemBlock" },
+            "vocals": { "$ref": "#/$defs/stemBlock" },
+            "other": { "$ref": "#/$defs/stemBlock" }
+          },
+          "additionalProperties": false
+        },
+        "melody": {
+          "type": "object",
+          "required": ["available", "notes", "phrases"],
+          "properties": {
+            "available": { "type": "boolean" },
+            "backend": { "type": ["string", "null"] },
+            "reason": { "type": "string" },
+            "inputSource": { "type": ["string", "null"], "enum": ["other", "vocals", "mix", "none", null] },
+            "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "noteCount": { "type": "integer", "minimum": 0 },
+            "phraseCount": { "type": "integer", "minimum": 0 },
+            "noteDensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "pitchRangeSemitones": { "type": ["integer", "null"], "minimum": 0 },
+            "notes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["start", "end", "pitchMidi", "confidence"],
+                "properties": {
+                  "start": { "type": ["number", "null"], "minimum": 0 },
+                  "end": { "type": ["number", "null"], "minimum": 0 },
+                  "pitchMidi": { "type": "integer", "minimum": 0, "maximum": 127 },
+                  "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "phrases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["start", "end", "direction"],
+                "properties": {
+                  "start": { "type": ["number", "null"], "minimum": 0 },
+                  "end": { "type": ["number", "null"], "minimum": 0 },
+                  "durationSec": { "type": ["number", "null"], "minimum": 0 },
+                  "direction": {
+                    "type": "string",
+                    "enum": ["rising", "falling", "stable", "mixed", "unknown"]
+                  },
+                  "pitchRangeSemitones": { "type": ["number", "null"], "minimum": 0 },
+                  "noteDensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "largestJumpSemitones": { "type": ["number", "null"], "minimum": 0 },
+                  "meanPitchMidi": { "type": ["number", "null"] },
+                  "noteCount": { "type": "integer", "minimum": 0 },
+                  "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "structure": {
+          "type": "object",
+          "required": ["method", "boundaries", "sections"],
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["beat-sync-checkerboard", "fixed-grid-checkerboard", "none"]
+            },
+            "boundaryCount": { "type": "integer", "minimum": 0 },
+            "boundaries": { "type": "array", "items": { "type": ["number", "null"] } },
+            "sections": { "type": "array", "items": { "type": "object" } }
+          },
+          "additionalProperties": false
+        },
+        "barPhase": {
+          "type": "object",
+          "description": "V2.1. Where inside the grid bar the perceived downbeat sits. The constant grid itself never moves; offsetBeats=0 means the grid bars are true bars. null means honestly not estimable -- never a guess.",
+          "required": ["method", "offsetBeats", "confidence", "downbeats"],
+          "properties": {
+            "method": { "type": "string", "enum": ["beat-strength-contrast", "none"] },
+            "offsetBeats": { "type": ["integer", "null"], "minimum": 0 },
+            "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "downbeatCount": { "type": "integer", "minimum": 0 },
+            "downbeats": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["bar", "time", "confidence"],
+                "properties": {
+                  "bar": { "type": "integer", "minimum": 1 },
+                  "time": { "type": ["number", "null"], "minimum": 0 },
+                  "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "repetition": {
+          "type": "object",
+          "description": "V2.1. Which sections are the same musical theme repeating, and how the arrangement differs between occurrences. Grouping is conservative by design: a missed repeat is cheap, a false one poisons pattern evolution. Deltas are occurrence B minus occurrence A in normalised units (positive = stronger/denser/brighter).",
+          "required": ["method", "threshold", "groups", "comparisons"],
+          "properties": {
+            "method": { "type": "string", "enum": ["fingerprint-cosine", "none"] },
+            "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+            "groupCount": { "type": "integer", "minimum": 0 },
+            "comparisonCount": { "type": "integer", "minimum": 0 },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["group_id", "confidence", "occurrences"],
+                "properties": {
+                  "group_id": { "type": "string" },
+                  "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "semantic_role": {
+                    "type": ["string", "null"],
+                    "enum": ["chorus", "verse", "bridge", null],
+                    "description": "Deliberately null this round: no semantic naming is attempted."
+                  },
+                  "semantic_role_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "occurrences": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                      "type": "object",
+                      "required": ["section_id", "occurrence_index", "start", "end"],
+                      "properties": {
+                        "section_id": { "type": "string" },
+                        "occurrence_index": { "type": "integer", "minimum": 1 },
+                        "start": { "type": ["number", "null"], "minimum": 0 },
+                        "end": { "type": ["number", "null"], "minimum": 0 },
+                        "similarity_to_group": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "comparisons": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["group_id", "occurrence", "compared_to_occurrence"],
+                "properties": {
+                  "group_id": { "type": "string" },
+                  "occurrence": { "type": "integer", "minimum": 2 },
+                  "compared_to_occurrence": { "type": "integer", "minimum": 1 },
+                  "base_section_id": { "type": "string" },
+                  "section_id": { "type": "string" },
+                  "energy_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "drum_activity_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "drum_density_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "bass_activity_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "vocal_activity_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "other_activity_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "onset_density_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "brightness_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "melody_density_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+                  "arrangement_intensity_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "sectionStats": {
+              "type": "object",
+              "description": "Per-section normalised metrics the deltas are computed from. A missing layer yields null entries, never fabricated values.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": { "type": ["number", "null"] }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "phrasing": {
+          "type": "object",
+          "description": "V2.1. Bar-aligned phrases inside sections: the beat -> bar -> phrase -> section hierarchy. Boundaries sit on the bar grid by construction.",
+          "required": ["method", "phrases"],
+          "properties": {
+            "method": { "type": "string", "enum": ["bar-grid-dp", "none"] },
+            "phraseCount": { "type": "integer", "minimum": 0 },
+            "phrases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["phrase_id", "section_id", "start_bar", "end_bar", "bar_count", "start", "end", "confidence"],
+                "properties": {
+                  "phrase_id": { "type": "string" },
+                  "section_id": { "type": "string" },
+                  "start_bar": { "type": "integer", "minimum": 1 },
+                  "end_bar": { "type": "integer", "minimum": 1 },
+                  "bar_count": { "type": "integer", "minimum": 1 },
+                  "start": { "type": ["number", "null"], "minimum": 0 },
+                  "end": { "type": ["number", "null"], "minimum": 0 },
+                  "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "position_in_section": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "position_label": {
+                    "type": ["string", "null"],
+                    "enum": ["opening", "development", "peak", null]
+                  },
+                  "energy_mean": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "energy_trend": {
+                    "type": ["string", "null"],
+                    "enum": ["rising", "falling", "stable", null]
+                  },
+                  "dominant_layers": {
+                    "type": "array",
+                    "items": { "type": "string", "enum": ["drums", "bass", "vocals", "other"] }
+                  },
+                  "melody_contour": {
+                    "type": ["string", "null"],
+                    "enum": ["rising", "falling", "stable", "mixed", "unknown", null]
+                  },
+                  "important_event_times": {
+                    "type": "array",
+                    "items": { "type": ["number", "null"], "minimum": 0 }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "eventCounts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "lyrics": {
+      "type": "object",
+      "description": "Reserved slot for word-level lyrics (V2.1 schema support only). Transcription is not wired up, so this is always available:false with empty words -- lyrics must never become a blocking dependency of the core analysis.",
+      "required": ["available", "words"],
+      "properties": {
+        "available": { "type": "boolean", "const": false },
+        "provider": { "type": ["string", "null"] },
+        "language": { "type": ["string", "null"] },
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["word", "start", "end"],
+            "properties": {
+              "word": { "type": "string" },
+              "start": { "type": ["number", "null"], "minimum": 0 },
+              "end": { "type": ["number", "null"], "minimum": 0 },
+              "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "analysisMeta": {
+      "type": "object",
+      "description": "What actually ran, as measured. A backend that is missing reports available: false with the import error that stopped it -- never a claim that an uninstalled component worked. Deliberately carries no wall-clock timestamp and no cache hit/miss state: both describe the run rather than the song, and either would make the document depend on when and where it was produced.",
+      "required": ["analyzer", "analyzerVersion", "schemaVersion", "settings", "backends", "models"],
+      "properties": {
+        "analyzer": { "type": "string" },
+        "analyzerVersion": { "type": "string" },
+        "schemaVersion": { "type": "integer" },
+        "legacySchemaVersion": { "type": "string" },
+        "settingsSignature": { "type": "string" },
+        "settings": { "type": "object", "additionalProperties": true },
+        "flags": { "type": "object", "additionalProperties": true },
+        "backends": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["available"],
+            "properties": {
+              "name": { "type": "string" },
+              "available": { "type": "boolean" },
+              "detail": { "type": ["string", "null"] },
+              "enabled": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "models": {
+          "type": "object",
+          "properties": {
+            "stems": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "version": { "type": "string" },
+                "used": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "melody": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "version": { "type": "string" },
+                "used": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "structureMethod": { "type": "string" },
+        "audioHash": { "type": ["string", "null"] },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "sourceSilent": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "curve": {
+      "type": "object",
+      "required": ["times", "values"],
+      "properties": {
+        "times": { "type": "array", "items": { "type": ["number", "null"] } },
+        "values": { "type": "array", "items": { "type": ["number", "null"] } }
+      },
+      "additionalProperties": false
+    },
+    "stemBlock": {
+      "type": "object",
+      "description": "Per-stem descriptors. When the stem is unavailable this is exactly {\"available\": false}. Drum piece names are suffixed `Like` and carry confidence: \"low\" because the split is a spectral heuristic, not drum transcription.",
+      "required": ["available"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "onsetCount": { "type": "integer", "minimum": 0 },
+        "activity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "density": { "type": ["number", "null"], "minimum": 0 },
+        "densityPeak": { "type": ["number", "null"], "minimum": 0 },
+        "lowFrequencyIntensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "harmonicActivity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "activeRatio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "phraseCount": { "type": "integer", "minimum": 0 },
+        "lyrics": { "type": ["string", "null"] },
+        "onsets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "type": ["number", "null"], "minimum": 0 },
+              "strength": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "phrases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start": { "type": ["number", "null"] },
+              "end": { "type": ["number", "null"] },
+              "durationSec": { "type": ["number", "null"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "silenceGaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start": { "type": ["number", "null"] },
+              "end": { "type": ["number", "null"] },
+              "durationSec": { "type": ["number", "null"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "time": { "type": ["number", "null"] } },
+            "additionalProperties": false
+          }
+        },
+        "exits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "time": { "type": ["number", "null"] } },
+            "additionalProperties": false
+          }
+        },
+        "pieces": {
+          "type": "object",
+          "required": ["confidence", "method"],
+          "properties": {
+            "kickLike": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "snareLike": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "highPercussionLike": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "counts": {
+              "type": "object",
+              "properties": {
+                "kickLike": { "type": "integer", "minimum": 0 },
+                "snareLike": { "type": "integer", "minimum": 0 },
+                "highPercussionLike": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
+            "confidence": { "type": "string", "enum": ["low"] },
+            "method": { "type": "string", "enum": ["spectral-band-heuristic"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

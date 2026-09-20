@@ -244,28 +244,29 @@
     },
     {
       "id": "AP04",
-      "name": "Cross Laser",
+      "name": "Diagonal Whip",
       "mode": "ARENA",
-      "function": "COMBINE",
+      "function": "PRACTICE",
       "difficulty": {
-        "overall": 3,
+        "overall": 2,
         "reaction": 3,
-        "rhythmComplexity": 2,
-        "spatialComplexity": 3,
-        "inputComplexity": 1,
-        "informationLoad": 3
+        "rhythmComplexity": 1,
+        "spatialComplexity": 2,
+        "inputComplexity": 2,
+        "informationLoad": 2
       },
       "lengthBars": 2,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "quarter",
+          "steady"
         ],
         "sections": [
-          "BUILD",
-          "CHORUS"
+          "verse",
+          "build"
         ],
         "energy": [
-          "HIGH"
+          "MID"
         ]
       },
       "events": [
@@ -274,21 +275,19 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A06",
+          "mechanicId": "A05",
           "params": {
-            "orientation": "HORIZONTAL",
-            "position": 0.35
+            "layout": "SLASH"
           }
         },
         {
           "at": {
             "bar": 1,
-            "beat": 1
+            "beat": 3
           },
-          "mechanicId": "A06",
+          "mechanicId": "A05",
           "params": {
-            "orientation": "VERTICAL",
-            "position": 0.65
+            "layout": "BACKSLASH"
           }
         },
         {
@@ -296,21 +295,19 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A06",
+          "mechanicId": "A05",
           "params": {
-            "orientation": "HORIZONTAL",
-            "position": 0.65
+            "layout": "BACKSLASH"
           }
         },
         {
           "at": {
             "bar": 2,
-            "beat": 1
+            "beat": 3
           },
-          "mechanicId": "A06",
+          "mechanicId": "A05",
           "params": {
-            "orientation": "VERTICAL",
-            "position": 0.35
+            "layout": "SLASH"
           }
         }
       ],
@@ -320,7 +317,8 @@
         "requiresMechanics": [
           "A06"
         ]
-      }
+      },
+      "notes": "A thin chain whips corner to corner: the line is the danger, so the dodge is standing off it, not leaving a band. Two diagonals per bar so the second is read from the first."
     },
     {
       "id": "AP05",
@@ -328,25 +326,25 @@
       "mode": "ARENA",
       "function": "TEACH",
       "difficulty": {
-        "overall": 2,
+        "overall": 1,
         "reaction": 2,
         "rhythmComplexity": 1,
-        "spatialComplexity": 3,
+        "spatialComplexity": 1,
         "inputComplexity": 1,
-        "informationLoad": 2
+        "informationLoad": 1
       },
       "lengthBars": 2,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "half",
+          "steady"
         ],
         "sections": [
-          "BREAKDOWN",
-          "VERSE"
+          "intro",
+          "outro"
         ],
         "energy": [
-          "LOW",
-          "MID"
+          "LOW"
         ]
       },
       "events": [
@@ -378,29 +376,30 @@
           "A02"
         ]
       },
-      "notes": "Teaches reading a safe area instead of a danger area. Uses A02 Safe Tile."
+      "notes": "The floor arms and one patch stays safe. The telegraph draws the refuge positively, so the read is \"get to the green square\", not \"leave the red one\" -- the two halves of the same lesson AP01 teaches."
     },
     {
       "id": "AP06",
-      "name": "Radial Gap Rotation",
+      "name": "Chain Corridor",
       "mode": "ARENA",
       "function": "PRACTICE",
       "difficulty": {
         "overall": 3,
         "reaction": 3,
         "rhythmComplexity": 2,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
+        "spatialComplexity": 3,
+        "inputComplexity": 3,
         "informationLoad": 3
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "quarter",
+          "steady"
         ],
         "sections": [
-          "VERSE",
-          "BUILD"
+          "verse",
+          "chorus"
         ],
         "energy": [
           "MID"
@@ -412,9 +411,11 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A05",
           "params": {
-            "gapAngleDeg": -90
+            "axis": "VERTICAL",
+            "gap": 0.25,
+            "layout": "CORRIDOR"
           }
         },
         {
@@ -422,9 +423,11 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A05",
           "params": {
-            "gapAngleDeg": 0
+            "axis": "VERTICAL",
+            "gap": 0.5,
+            "layout": "CORRIDOR"
           }
         },
         {
@@ -432,9 +435,11 @@
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A05",
           "params": {
-            "gapAngleDeg": 90
+            "axis": "VERTICAL",
+            "gap": 0.75,
+            "layout": "CORRIDOR"
           }
         },
         {
@@ -442,9 +447,11 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A05",
           "params": {
-            "gapAngleDeg": 180
+            "axis": "HORIZONTAL",
+            "gap": 0.5,
+            "layout": "CORRIDOR"
           }
         }
       ],
@@ -455,33 +462,33 @@
           "A04"
         ]
       },
-      "notes": "One ring per bar with the safe arc walking N -> E -> S -> W. The player reads the opening and follows it round the arena."
+      "notes": "Two parallel chains wall off a safe channel that slides across the arena between bars. The channel is floored by the fairness minimum, so it is always wide enough to stand in -- the play is reaching it in time."
     },
     {
       "id": "AP07",
-      "name": "Rotating Fan",
+      "name": "Serpent Chain",
       "mode": "ARENA",
-      "function": "PRACTICE",
+      "function": "VARIATION",
       "difficulty": {
         "overall": 3,
         "reaction": 3,
         "rhythmComplexity": 2,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
         "informationLoad": 3
       },
       "lengthBars": 2,
       "musicTags": {
         "rhythm": [
-          "BEAT"
+          "quarter",
+          "flowing"
         ],
         "sections": [
-          "BUILD",
-          "CHORUS"
+          "verse",
+          "chorus"
         ],
         "energy": [
-          "MID",
-          "HIGH"
+          "MID"
         ]
       },
       "events": [
@@ -490,11 +497,45 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A07",
+          "mechanicId": "A05",
           "params": {
-            "arms": 3,
-            "rotationPerBeatDeg": 45,
-            "direction": "CW"
+            "amplitude": 0.24,
+            "layout": "SNAKE"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A05",
+          "params": {
+            "layout": "CURVE_S",
+            "chains": 2,
+            "complexity": 0.35
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A05",
+          "params": {
+            "amplitude": 0.32,
+            "layout": "SNAKE"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A05",
+          "params": {
+            "layout": "X_CROSS",
+            "chains": 4,
+            "complexity": 0.8
           }
         }
       ],
@@ -505,7 +546,7 @@
           "A07"
         ]
       },
-      "notes": "Three arms sweeping clockwise, a beat per 45 degrees. Teaches reading a moving safe wedge."
+      "notes": "A snake of chain with a slowly drifting midline, then a zig-zag that cuts across it. The sine drift is small enough to follow at a walk."
     },
     {
       "id": "AP08",
@@ -513,24 +554,25 @@
       "mode": "ARENA",
       "function": "VARIATION",
       "difficulty": {
-        "overall": 4,
-        "reaction": 4,
-        "rhythmComplexity": 3,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
-        "informationLoad": 4
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 3
       },
       "lengthBars": 2,
       "musicTags": {
         "rhythm": [
-          "SUBDIVISION"
+          "eighth",
+          "flowing"
         ],
         "sections": [
-          "BUILD",
-          "CHORUS"
+          "build",
+          "chorus"
         ],
         "energy": [
-          "HIGH"
+          "MID"
         ]
       },
       "events": [
@@ -543,7 +585,23 @@
           "params": {
             "direction": "CW",
             "stepDeg": 26,
-            "subdivision": 0.25
+            "subdivision": 0.25,
+            "pattern": "DOUBLE_SPIRAL"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A08",
+          "params": {
+            "direction": "CCW",
+            "stepDeg": 22,
+            "subdivision": 0.25,
+            "pattern": "FLOWER",
+            "petalArms": 4,
+            "petals": 5
           }
         }
       ],
@@ -554,110 +612,30 @@
           "A08"
         ]
       },
-      "notes": "Continuous spiral on sixteenths. Dense but completely predictable once the arm direction reads."
+      "notes": "A spiral of projectiles unwinds from the centre. The arm rotates as it fires, so the player is walking against a curve rather than sidestepping a line."
     },
     {
       "id": "AP09",
-      "name": "Cross Sweep",
+      "name": "Rhythm Window",
       "mode": "ARENA",
       "function": "COMBINE",
       "difficulty": {
         "overall": 3,
         "reaction": 3,
-        "rhythmComplexity": 2,
+        "rhythmComplexity": 4,
         "spatialComplexity": 3,
-        "inputComplexity": 1,
+        "inputComplexity": 3,
         "informationLoad": 3
       },
       "lengthBars": 2,
       "musicTags": {
         "rhythm": [
-          "BEAT"
+          "quarter",
+          "syncopated"
         ],
         "sections": [
-          "VERSE",
-          "BUILD"
-        ],
-        "energy": [
-          "MID"
-        ]
-      },
-      "events": [
-        {
-          "at": {
-            "bar": 1,
-            "beat": 1
-          },
-          "mechanicId": "A09",
-          "params": {
-            "axis": "HORIZONTAL",
-            "direction": "FORWARD"
-          }
-        },
-        {
-          "at": {
-            "bar": 1,
-            "beat": 3
-          },
-          "mechanicId": "A09",
-          "params": {
-            "axis": "VERTICAL",
-            "direction": "FORWARD"
-          }
-        },
-        {
-          "at": {
-            "bar": 2,
-            "beat": 1
-          },
-          "mechanicId": "A09",
-          "params": {
-            "axis": "HORIZONTAL",
-            "direction": "BACKWARD"
-          }
-        },
-        {
-          "at": {
-            "bar": 2,
-            "beat": 3
-          },
-          "mechanicId": "A09",
-          "params": {
-            "axis": "VERTICAL",
-            "direction": "BACKWARD"
-          }
-        }
-      ],
-      "constraints": {
-        "minReactionBeats": 1,
-        "maxSimultaneousThreats": 2,
-        "requiresMechanics": [
-          "A09"
-        ]
-      },
-      "notes": "Alternating horizontal and vertical sweeps, each with one gap. Call and response across axes."
-    },
-    {
-      "id": "AP10",
-      "name": "Ring Collapse",
-      "mode": "ARENA",
-      "function": "CLIMAX",
-      "difficulty": {
-        "overall": 4,
-        "reaction": 4,
-        "rhythmComplexity": 2,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
-        "informationLoad": 4
-      },
-      "lengthBars": 2,
-      "musicTags": {
-        "rhythm": [
-          "DOWNBEAT"
-        ],
-        "sections": [
-          "CHORUS",
-          "DROP"
+          "chorus",
+          "build"
         ],
         "energy": [
           "HIGH"
@@ -669,10 +647,33 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A10",
+          "mechanicId": "A09",
           "params": {
-            "mode": "COLLAPSE",
-            "gapAngleDeg": -90
+            "axis": "HORIZONTAL",
+            "gapPath": [
+              0.25,
+              0.4,
+              0.6,
+              0.75
+            ],
+            "mode": "RHYTHM"
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A09",
+          "params": {
+            "axis": "VERTICAL",
+            "gapPath": [
+              0.75,
+              0.55,
+              0.4,
+              0.25
+            ],
+            "mode": "RHYTHM"
           }
         },
         {
@@ -680,10 +681,102 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A10",
+          "mechanicId": "A09",
           "params": {
-            "mode": "EXPAND",
-            "gapAngleDeg": 90
+            "axis": "HORIZONTAL",
+            "direction": "BACKWARD",
+            "gapPath": [
+              0.5,
+              0.65,
+              0.5,
+              0.35
+            ],
+            "mode": "RHYTHM"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A09",
+          "params": {
+            "axis": "VERTICAL",
+            "direction": "BACKWARD",
+            "gapPath": [
+              0.35,
+              0.5,
+              0.65,
+              0.5
+            ],
+            "mode": "RHYTHM"
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A09"
+        ]
+      },
+      "notes": "The sweep window stops being static: its centre steps once per beat along gapPath, so the wall has a choreography and the player reads the next position on the pulse."
+    },
+    {
+      "id": "AP10",
+      "name": "Spray And Pendulum",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 4
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "steady"
+        ],
+        "sections": [
+          "chorus",
+          "build"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "startAngleDeg": -90,
+            "stepDeg": 40,
+            "subdivision": 1,
+            "emitter": "FIGURE_EIGHT",
+            "emitterRadius": 0.18,
+            "emitterSpeed": 0.4
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A07",
+          "params": {
+            "armArcDeg": 50,
+            "arms": 2,
+            "reversalBeats": 2,
+            "rotationPerBeatDeg": 50
           }
         }
       ],
@@ -694,29 +787,30 @@
           "A10"
         ]
       },
-      "notes": "A ring closes to the centre, then one pushes back out. Heavy downbeat punctuation."
+      "notes": "A rotating spray walks its bursts around the arena while a pendulum arm swings back across the path. Both threats advertise their direction before they move."
     },
     {
       "id": "AP11",
-      "name": "Call and Response",
+      "name": "Spray Rotation",
       "mode": "ARENA",
-      "function": "VARIATION",
+      "function": "PRACTICE",
       "difficulty": {
-        "overall": 3,
+        "overall": 2,
         "reaction": 3,
-        "rhythmComplexity": 3,
-        "spatialComplexity": 3,
-        "inputComplexity": 1,
-        "informationLoad": 3
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 2,
+        "informationLoad": 2
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "quarter",
+          "steady"
         ],
         "sections": [
-          "VERSE",
-          "BUILD"
+          "verse",
+          "build"
         ],
         "energy": [
           "MID"
@@ -728,12 +822,15 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A07",
+          "mechanicId": "A04",
           "params": {
-            "arms": 2,
-            "startAngleDeg": 180,
-            "rotationPerBeatDeg": 0,
-            "armArcDeg": 60
+            "direction": "CW",
+            "startAngleDeg": -90,
+            "stepDeg": 45,
+            "subdivision": 1,
+            "emitter": "CIRCLE",
+            "emitterRadius": 0.16,
+            "emitterSpeed": 0.45
           }
         },
         {
@@ -741,12 +838,12 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A07",
+          "mechanicId": "A04",
           "params": {
-            "arms": 2,
-            "startAngleDeg": 0,
-            "rotationPerBeatDeg": 0,
-            "armArcDeg": 60
+            "direction": "CCW",
+            "startAngleDeg": 90,
+            "stepDeg": 45,
+            "subdivision": 1
           }
         },
         {
@@ -754,10 +851,12 @@
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "A09",
+          "mechanicId": "A04",
           "params": {
-            "axis": "VERTICAL",
-            "direction": "FORWARD"
+            "direction": "CW",
+            "startAngleDeg": -90,
+            "stepDeg": 60,
+            "subdivision": 1
           }
         },
         {
@@ -765,10 +864,12 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "A09",
+          "mechanicId": "A04",
           "params": {
-            "axis": "VERTICAL",
-            "direction": "BACKWARD"
+            "direction": "CCW",
+            "startAngleDeg": 90,
+            "stepDeg": 30,
+            "subdivision": 1
           }
         }
       ],
@@ -780,29 +881,30 @@
           "A09"
         ]
       },
-      "notes": "Question on the left, answer on the right, then the same conversation vertically."
+      "notes": "One spray, one direction, one step per beat: the first two bursts are the lesson and the rest are the test. Swap CW for CCW on the repeat so the read is not memorised."
     },
     {
       "id": "AP12",
-      "name": "Layered Pulse Grid",
+      "name": "Alternating Spray",
       "mode": "ARENA",
-      "function": "COMBINE",
+      "function": "VARIATION",
       "difficulty": {
-        "overall": 4,
-        "reaction": 3,
+        "overall": 3,
+        "reaction": 4,
         "rhythmComplexity": 3,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
         "informationLoad": 4
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "BEAT"
+          "eighth",
+          "syncopated"
         ],
         "sections": [
-          "BUILD",
-          "CHORUS"
+          "chorus",
+          "climax"
         ],
         "energy": [
           "HIGH"
@@ -816,18 +918,12 @@
           },
           "mechanicId": "A04",
           "params": {
-            "gapAngleDeg": -90,
-            "count": 14
-          }
-        },
-        {
-          "at": {
-            "bar": 1,
-            "beat": 3
-          },
-          "mechanicId": "A01",
-          "params": {
-            "layout": "checker_A"
+            "arms": 2,
+            "bulletsPerBurst": 2,
+            "direction": "ALTERNATE",
+            "startAngleDeg": -90,
+            "stepDeg": 35,
+            "subdivision": 0.5
           }
         },
         {
@@ -835,19 +931,12 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A05",
+          "mechanicId": "A07",
           "params": {
-            "direction": "LEFT_TO_RIGHT"
-          }
-        },
-        {
-          "at": {
-            "bar": 2,
-            "beat": 3
-          },
-          "mechanicId": "A01",
-          "params": {
-            "layout": "checker_B"
+            "armArcDeg": 45,
+            "arms": 2,
+            "reversalBeats": 3,
+            "rotationPerBeatDeg": 60
           }
         },
         {
@@ -857,18 +946,12 @@
           },
           "mechanicId": "A04",
           "params": {
-            "gapAngleDeg": 90,
-            "count": 14
-          }
-        },
-        {
-          "at": {
-            "bar": 3,
-            "beat": 3
-          },
-          "mechanicId": "A01",
-          "params": {
-            "layout": "checker_A"
+            "arms": 2,
+            "bulletsPerBurst": 2,
+            "direction": "ALTERNATE",
+            "startAngleDeg": 90,
+            "stepDeg": 30,
+            "subdivision": 0.5
           }
         },
         {
@@ -876,19 +959,12 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "A05",
+          "mechanicId": "A07",
           "params": {
-            "direction": "TOP_TO_BOTTOM"
-          }
-        },
-        {
-          "at": {
-            "bar": 4,
-            "beat": 3
-          },
-          "mechanicId": "A01",
-          "params": {
-            "layout": "checker_B"
+            "armArcDeg": 40,
+            "arms": 3,
+            "reversalBeats": 4,
+            "rotationPerBeatDeg": 60
           }
         }
       ],
@@ -901,32 +977,32 @@
           "A05"
         ]
       },
-      "notes": "Three simple layers running at once: a radial ring on odd downbeats, a checkerboard on every third beat, a chain on even downbeats. Complexity from structure, not chaos."
+      "notes": "ALTERNATE spray: the stream walks out and then back, so the gap the player used is the gap that closes next. Two arms with a pendulum fan underneath."
     },
     {
       "id": "AP13",
-      "name": "Arena Climax",
+      "name": "Ring Collapse",
       "mode": "ARENA",
       "function": "CLIMAX",
       "difficulty": {
-        "overall": 5,
+        "overall": 4,
         "reaction": 4,
-        "rhythmComplexity": 4,
-        "spatialComplexity": 5,
-        "inputComplexity": 1,
-        "informationLoad": 5
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 3,
+        "informationLoad": 4
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "quarter",
+          "syncopated"
         ],
         "sections": [
-          "DROP",
-          "CHORUS"
+          "climax"
         ],
         "energy": [
-          "HIGH"
+          "PEAK"
         ]
       },
       "events": [
@@ -935,10 +1011,12 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A08",
+          "mechanicId": "A10",
           "params": {
-            "direction": "CW",
-            "subdivision": 0.5
+            "gapAngleDeg": -90,
+            "mode": "COLLAPSE",
+            "variant": "ROTATING_GAP",
+            "rotationPerRingDeg": 38
           }
         },
         {
@@ -946,10 +1024,13 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A07",
+          "mechanicId": "A10",
           "params": {
-            "arms": 2,
-            "rotationPerBeatDeg": 90
+            "gapAngleDeg": 90,
+            "mode": "EXPAND",
+            "variant": "NARROWING_GAP",
+            "narrowingPerRing": 0.86,
+            "ringCount": 2
           }
         },
         {
@@ -957,21 +1038,10 @@
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A10",
           "params": {
-            "gapAngleDeg": -45,
-            "count": 20
-          }
-        },
-        {
-          "at": {
-            "bar": 3,
-            "beat": 3
-          },
-          "mechanicId": "A06",
-          "params": {
-            "orientation": "HORIZONTAL",
-            "position": 0.5
+            "gapAngleDeg": 0,
+            "mode": "COLLAPSE"
           }
         },
         {
@@ -981,8 +1051,8 @@
           },
           "mechanicId": "A10",
           "params": {
-            "mode": "COLLAPSE",
-            "gapAngleDeg": 135
+            "gapAngleDeg": 180,
+            "mode": "EXPAND"
           }
         }
       ],
@@ -996,29 +1066,129 @@
           "A10"
         ]
       },
-      "notes": "Spiral, fan, ring with a gap, laser, then a collapsing ring on the last downbeat."
+      "notes": "The ring collapses onto the player and then blows back out. The window rotates between the two, so the safe spot is a place, not a memorised angle."
     },
     {
       "id": "AP14",
-      "name": "Outward Then Inward",
+      "name": "Spray Double Time",
       "mode": "ARENA",
-      "function": "PRACTICE",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 3,
+        "inputComplexity": 3,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "eighth",
+          "driving"
+        ],
+        "sections": [
+          "chorus",
+          "climax"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "bulletsPerBurst": 2,
+            "origin": "CENTER",
+            "startAngleDeg": -90,
+            "stepDeg": 30,
+            "subdivision": 0.5,
+            "emitter": "DIAMOND",
+            "emitterRadius": 0.2,
+            "emitterSpeed": 0.5
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "bulletsPerBurst": 2,
+            "origin": "EDGE",
+            "startAngleDeg": 90,
+            "stepDeg": 30,
+            "subdivision": 0.5
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "arms": 2,
+            "bulletsPerBurst": 2,
+            "origin": "CENTER",
+            "startAngleDeg": -90,
+            "stepDeg": 45,
+            "subdivision": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A04",
+          "params": {
+            "arms": 2,
+            "bulletsPerBurst": 2,
+            "origin": "EDGE",
+            "startAngleDeg": 90,
+            "stepDeg": 45,
+            "subdivision": 1
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 1,
+        "requiresMechanics": [
+          "A04"
+        ]
+      },
+      "notes": "Eighth-note emissions: three blades per bar. The rotation is still one direction, so the read is the same -- only the tempo of the read changes."
+    },
+    {
+      "id": "AP15",
+      "name": "Safe Tile Sweep",
+      "mode": "ARENA",
+      "function": "COMBINE",
       "difficulty": {
         "overall": 3,
         "reaction": 3,
         "rhythmComplexity": 2,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
+        "spatialComplexity": 3,
+        "inputComplexity": 3,
         "informationLoad": 3
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "quarter",
+          "steady"
         ],
         "sections": [
-          "VERSE",
-          "BUILD"
+          "verse",
+          "chorus"
         ],
         "energy": [
           "MID"
@@ -1030,69 +1200,21 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A02",
           "params": {
-            "origin": "CENTER",
-            "gapAngleDeg": -90
+            "safeAreaCount": 2
           }
         },
         {
           "at": {
-            "bar": 3,
-            "beat": 1
-          },
-          "mechanicId": "A04",
-          "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": -90
-          }
-        }
-      ],
-      "constraints": {
-        "minReactionBeats": 1,
-        "maxSimultaneousThreats": 1,
-        "requiresMechanics": [
-          "A04"
-        ]
-      },
-      "notes": "Ring out, a full bar of quiet, ring back in through the same gap. The pause is the teaching: it separates the two directions so they can be told apart."
-    },
-    {
-      "id": "AP15",
-      "name": "Out Out In",
-      "mode": "ARENA",
-      "function": "VARIATION",
-      "difficulty": {
-        "overall": 4,
-        "reaction": 3,
-        "rhythmComplexity": 3,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
-        "informationLoad": 4
-      },
-      "lengthBars": 4,
-      "musicTags": {
-        "rhythm": [
-          "DOWNBEAT"
-        ],
-        "sections": [
-          "BUILD"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "events": [
-        {
-          "at": {
             "bar": 1,
-            "beat": 1
+            "beat": 3
           },
-          "mechanicId": "A04",
+          "mechanicId": "A09",
           "params": {
-            "origin": "CENTER",
-            "gapAngleDeg": -90
+            "axis": "VERTICAL",
+            "gapWidth": 0.22,
+            "mode": "STATIC"
           }
         },
         {
@@ -1100,10 +1222,21 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A02",
           "params": {
-            "origin": "CENTER",
-            "gapAngleDeg": 30
+            "safeAreaCount": 3
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A09",
+          "params": {
+            "axis": "HORIZONTAL",
+            "gapWidth": 0.22,
+            "mode": "STATIC"
           }
         },
         {
@@ -1111,10 +1244,43 @@
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A02",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": 150
+            "safeAreaCount": 2
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A09",
+          "params": {
+            "axis": "VERTICAL",
+            "gapWidth": 0.2,
+            "mode": "STATIC"
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeAreaCount": 3
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 3
+          },
+          "mechanicId": "A09",
+          "params": {
+            "axis": "HORIZONTAL",
+            "gapWidth": 0.2,
+            "mode": "STATIC"
           }
         }
       ],
@@ -1125,11 +1291,11 @@
           "A04"
         ]
       },
-      "notes": "Two outward rings set an expectation; the third reverses it. The gap moves every bar so the answer is never the same spot twice."
+      "notes": "Safe tiles carve the floor into islands while a straight wall sweeps across. The wall has one static window, so the tile the player commits to has to be on the window line."
     },
     {
       "id": "AP16",
-      "name": "In Rotate Out",
+      "name": "Fan And Spray",
       "mode": "ARENA",
       "function": "COMBINE",
       "difficulty": {
@@ -1137,17 +1303,18 @@
         "reaction": 4,
         "rhythmComplexity": 3,
         "spatialComplexity": 4,
-        "inputComplexity": 1,
+        "inputComplexity": 3,
         "informationLoad": 4
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "eighth",
+          "driving"
         ],
         "sections": [
-          "BUILD",
-          "CHORUS"
+          "chorus",
+          "climax"
         ],
         "energy": [
           "HIGH"
@@ -1159,10 +1326,11 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A07",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": -90
+            "armArcDeg": 42,
+            "arms": 3,
+            "rotationPerBeatDeg": 55
           }
         },
         {
@@ -1170,11 +1338,28 @@
             "bar": 2,
             "beat": 1
           },
+          "mechanicId": "A04",
+          "params": {
+            "direction": "CCW",
+            "origin": "EDGE",
+            "startAngleDeg": -90,
+            "stepDeg": 40,
+            "subdivision": 1,
+            "emitter": "ORBIT",
+            "emitterSpeed": 0.35
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
           "mechanicId": "A07",
           "params": {
-            "arms": 2,
-            "rotationPerBeatDeg": 45,
-            "armArcDeg": 40
+            "armArcDeg": 42,
+            "arms": 3,
+            "reversalBeats": 4,
+            "rotationPerBeatDeg": 55
           }
         },
         {
@@ -1184,8 +1369,11 @@
           },
           "mechanicId": "A04",
           "params": {
+            "direction": "CCW",
             "origin": "CENTER",
-            "gapAngleDeg": 90
+            "startAngleDeg": 90,
+            "stepDeg": 40,
+            "subdivision": 1
           }
         }
       ],
@@ -1197,31 +1385,33 @@
           "A07"
         ]
       },
-      "notes": "Inward ring, a rotating fan to move the player off their spot, then an outward ring through the opposite gap."
+      "notes": "Three fan arms sweeping one way and a spray walking the other. The two rotations are deliberately out of phase: there is a safe wedge, but it moves."
     },
     {
       "id": "AP17",
-      "name": "Alternating Rings",
+      "name": "Pendulum Fan",
       "mode": "ARENA",
       "function": "PRACTICE",
       "difficulty": {
-        "overall": 4,
-        "reaction": 4,
+        "overall": 3,
+        "reaction": 3,
         "rhythmComplexity": 3,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
-        "informationLoad": 4
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 3
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "half",
+          "swinging"
         ],
         "sections": [
-          "CHORUS"
+          "verse",
+          "build"
         ],
         "energy": [
-          "HIGH"
+          "MID"
         ]
       },
       "events": [
@@ -1230,11 +1420,12 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A07",
           "params": {
-            "origin": "CENTER",
-            "gapAngleDeg": -90,
-            "count": 16
+            "armArcDeg": 55,
+            "arms": 2,
+            "reversalBeats": 2,
+            "rotationPerBeatDeg": 45
           }
         },
         {
@@ -1242,11 +1433,12 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A07",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": 0,
-            "count": 16
+            "armArcDeg": 55,
+            "arms": 2,
+            "reversalBeats": 4,
+            "rotationPerBeatDeg": 45
           }
         },
         {
@@ -1254,11 +1446,12 @@
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A07",
           "params": {
-            "origin": "CENTER",
-            "gapAngleDeg": 90,
-            "count": 16
+            "armArcDeg": 40,
+            "arms": 3,
+            "reversalBeats": 3,
+            "rotationPerBeatDeg": 50
           }
         },
         {
@@ -1266,11 +1459,12 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A07",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": 180,
-            "count": 16
+            "armArcDeg": 60,
+            "arms": 2,
+            "reversalBeats": 6,
+            "rotationPerBeatDeg": 40
           }
         }
       ],
@@ -1281,7 +1475,7 @@
           "A04"
         ]
       },
-      "notes": "One ring per bar, alternating direction, with the safe arc walking a quarter turn each time."
+      "notes": "The fan reverses on a fixed cycle, so its arc is a metronome the player can stand still beside -- as long as they stand on the right side of the turning point."
     },
     {
       "id": "AP18",
@@ -1289,24 +1483,25 @@
       "mode": "ARENA",
       "function": "VARIATION",
       "difficulty": {
-        "overall": 4,
+        "overall": 3,
         "reaction": 4,
-        "rhythmComplexity": 4,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
-        "informationLoad": 4
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 3
       },
       "lengthBars": 2,
       "musicTags": {
         "rhythm": [
-          "SUBDIVISION"
+          "eighth",
+          "flowing"
         ],
         "sections": [
-          "BUILD",
-          "CHORUS"
+          "chorus",
+          "build"
         ],
         "energy": [
-          "HIGH"
+          "MID"
         ]
       },
       "events": [
@@ -1317,10 +1512,25 @@
           },
           "mechanicId": "A08",
           "params": {
-            "expand": false,
             "direction": "CCW",
+            "expand": false,
             "stepDeg": 24,
             "subdivision": 0.25
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A08",
+          "params": {
+            "direction": "CW",
+            "expand": false,
+            "stepDeg": 20,
+            "subdivision": 0.25,
+            "pattern": "PULSE",
+            "arms": 8
           }
         }
       ],
@@ -1331,31 +1541,32 @@
           "A08"
         ]
       },
-      "notes": "A spiral converging on the centre. Reads the opposite way round to AP08: the safe space closes rather than opens, so the player has to keep moving outward."
+      "notes": "The same spiral, fired inward and turning the other way. The window is a moving notch on the rim, so the player tracks the rotation rather than a fixed angle."
     },
     {
       "id": "AP19",
-      "name": "Delayed Inward Waves",
+      "name": "Shrinking Window",
       "mode": "ARENA",
-      "function": "COMBINE",
+      "function": "PRACTICE",
       "difficulty": {
-        "overall": 4,
+        "overall": 3,
         "reaction": 4,
-        "rhythmComplexity": 3,
-        "spatialComplexity": 4,
-        "inputComplexity": 1,
-        "informationLoad": 4
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 3,
+        "informationLoad": 3
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "quarter",
+          "steady"
         ],
         "sections": [
-          "BUILD"
+          "build",
+          "chorus"
         ],
         "energy": [
-          "MID",
           "HIGH"
         ]
       },
@@ -1365,25 +1576,39 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A09",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": -90,
-            "gapCount": 2,
-            "count": 16
+            "axis": "HORIZONTAL",
+            "gapWidth": 0.3,
+            "mode": "SHRINK",
+            "shrinkTo": 0.6
           }
         },
         {
           "at": {
             "bar": 2,
-            "beat": 3
+            "beat": 1
           },
-          "mechanicId": "A04",
+          "mechanicId": "A09",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": -45,
-            "gapCount": 2,
-            "count": 16
+            "axis": "VERTICAL",
+            "gapWidth": 0.3,
+            "mode": "SHRINK",
+            "shrinkTo": 0.6
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A09",
+          "params": {
+            "axis": "HORIZONTAL",
+            "direction": "BACKWARD",
+            "gapWidth": 0.28,
+            "mode": "SHRINK",
+            "shrinkTo": 0.55
           }
         },
         {
@@ -1391,10 +1616,13 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "A10",
+          "mechanicId": "A09",
           "params": {
-            "mode": "COLLAPSE",
-            "gapAngleDeg": 0
+            "axis": "VERTICAL",
+            "direction": "BACKWARD",
+            "gapWidth": 0.28,
+            "mode": "SHRINK",
+            "shrinkTo": 0.55
           }
         }
       ],
@@ -1406,31 +1634,32 @@
           "A10"
         ]
       },
-      "notes": "Two inward waves a bar and a half apart, then a collapsing ring on the last downbeat. The offbeat second wave is what stops the phrase becoming a metronome."
+      "notes": "The sweep window tightens as the wall crosses, so a late entry is a narrower entry. The floor is the fairness minimum: it never closes past what the player fits through."
     },
     {
       "id": "AP20",
-      "name": "Converging Climax",
+      "name": "Laser And Ring Climax",
       "mode": "ARENA",
       "function": "CLIMAX",
       "difficulty": {
         "overall": 5,
-        "reaction": 5,
-        "rhythmComplexity": 4,
-        "spatialComplexity": 5,
-        "inputComplexity": 1,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 3,
         "informationLoad": 5
       },
       "lengthBars": 4,
       "musicTags": {
         "rhythm": [
-          "DOWNBEAT"
+          "eighth",
+          "driving"
         ],
         "sections": [
-          "DROP"
+          "climax"
         ],
         "energy": [
-          "HIGH"
+          "PEAK"
         ]
       },
       "events": [
@@ -1441,9 +1670,22 @@
           },
           "mechanicId": "A04",
           "params": {
+            "bulletsPerBurst": 2,
             "origin": "CENTER",
-            "gapAngleDeg": -90,
-            "count": 20
+            "startAngleDeg": -90,
+            "stepDeg": 40,
+            "subdivision": 0.5
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A06",
+          "params": {
+            "orientation": "HORIZONTAL",
+            "position": 0.4
           }
         },
         {
@@ -1451,11 +1693,23 @@
             "bar": 2,
             "beat": 1
           },
+          "mechanicId": "A06",
+          "params": {
+            "orientation": "VERTICAL",
+            "position": 0.6
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
           "mechanicId": "A04",
           "params": {
             "origin": "EDGE",
-            "gapAngleDeg": 90,
-            "count": 20
+            "startAngleDeg": 90,
+            "stepDeg": 40,
+            "subdivision": 0.5
           }
         },
         {
@@ -1463,10 +1717,10 @@
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "A07",
+          "mechanicId": "A06",
           "params": {
-            "arms": 3,
-            "rotationPerBeatDeg": 60
+            "orientation": "HORIZONTAL",
+            "position": 0.6
           }
         },
         {
@@ -1474,11 +1728,10 @@
             "bar": 3,
             "beat": 3
           },
-          "mechanicId": "A04",
+          "mechanicId": "A06",
           "params": {
-            "origin": "EDGE",
-            "gapAngleDeg": -30,
-            "count": 16
+            "orientation": "VERTICAL",
+            "position": 0.4
           }
         },
         {
@@ -1488,8 +1741,23 @@
           },
           "mechanicId": "A10",
           "params": {
+            "gapAngleDeg": -90,
             "mode": "COLLAPSE",
-            "gapAngleDeg": 150
+            "variant": "ADVANCED_ALTERNATING",
+            "rotationPerRingDeg": 46
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 3
+          },
+          "mechanicId": "A07",
+          "params": {
+            "armArcDeg": 45,
+            "arms": 2,
+            "reversalBeats": 2,
+            "rotationPerBeatDeg": 60
           }
         }
       ],
@@ -1502,7 +1770,512 @@
           "A10"
         ]
       },
-      "notes": "Outward, inward, a rotating fan overlapping a second inward wave, then a collapsing ring. Overlapping directions, but every beat still has one readable route."
+      "notes": "A rotating spray walks the arena while two lasers close across it, and the bar ends with the ring collapsing onto whatever the player committed to. Every threat advertises itself; the difficulty is that they advertise at once."
+    },
+    {
+      "id": "AP21",
+      "name": "Sector Chase",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 4,
+        "inputComplexity": 2,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "driving"
+        ],
+        "sections": [
+          "chorus",
+          "build"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A11",
+          "params": {
+            "sectorCount": 6,
+            "sweepDirection": "CW",
+            "skipStep": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A03",
+          "params": {
+            "spawnSide": "LEFT",
+            "formation": "wall",
+            "gaps": 2,
+            "telegraphBeats": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A11",
+          "params": {
+            "sectorCount": 4,
+            "sweepDirection": "CCW",
+            "skipStep": 0,
+            "firstAngleDeg": 45
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A03",
+          "params": {
+            "spawnSide": "RIGHT",
+            "formation": "wall",
+            "gaps": 2,
+            "telegraphBeats": 1
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A11"
+        ]
+      },
+      "notes": "Wedges of the arena go off in turn, first clockwise in sixths and then anticlockwise in quarters. There is no gap to find -- the whole answer is walking the rim at the sweep's pace, and the reversal is the part that punishes memorising one direction."
+    },
+    {
+      "id": "AP22",
+      "name": "Sector And Spray",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 3,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "syncopated"
+        ],
+        "sections": [
+          "climax"
+        ],
+        "energy": [
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A11",
+          "params": {
+            "sectorCount": 6,
+            "sweepDirection": "CCW",
+            "skipStep": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "startAngleDeg": -90,
+            "stepDeg": 45,
+            "subdivision": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "A04",
+          "params": {
+            "origin": "CENTER",
+            "startAngleDeg": -45,
+            "stepDeg": 45,
+            "subdivision": 1
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A11",
+          "params": {
+            "sectorCount": 8,
+            "sweepDirection": "CW",
+            "skipStep": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A10",
+          "params": {
+            "gapAngleDeg": -90,
+            "mode": "COLLAPSE",
+            "variant": "ROTATING_GAP",
+            "rotationPerRingDeg": 34
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A11",
+          "A04",
+          "A10"
+        ]
+      },
+      "notes": "The sweep skips every other wedge, so the player is moving twice as far per step, and a rotating spray lays fire across the arena while they do it. The closing ring is the only thing here that asks for a *place* rather than a pace."
+    },
+    {
+      "id": "AP23",
+      "name": "Shifting Ground",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "half",
+          "flowing"
+        ],
+        "sections": [
+          "build",
+          "breakdown"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeZone": "MOVING",
+            "movePath": "CIRCLE",
+            "moveRadius": 0.24,
+            "moveSpeed": 0.22,
+            "safeAreaSize": 0.3
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeZone": "MOVING",
+            "movePath": "CIRCLE",
+            "moveRadius": 0.24,
+            "moveSpeed": 0.22,
+            "moveStartDeg": 90,
+            "safeAreaSize": 0.3
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeZone": "MOVING",
+            "movePath": "LINE_X",
+            "moveRadius": 0.3,
+            "moveSpeed": 0.3,
+            "safeAreaSize": 0.28
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeZone": "MOVING",
+            "movePath": "LINE_X",
+            "moveRadius": 0.3,
+            "moveSpeed": 0.3,
+            "moveStartDeg": 180,
+            "safeAreaSize": 0.28
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A02"
+        ]
+      },
+      "notes": "The refuge drifts instead of sitting still, and it relocates on the bar: around the circle for two bars -- starting opposite each time, so the drift cannot be camped -- then side to side for two. Standing in the right place is not enough any more; the player has to keep arriving."
+    },
+    {
+      "id": "AP24",
+      "name": "Quadrant Rotation",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "strong_beat",
+          "driving"
+        ],
+        "sections": [
+          "chorus",
+          "climax"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A02",
+          "params": {
+            "safeZone": "QUADRANT",
+            "quadrantCount": 4,
+            "quadrantBeats": 4,
+            "quadrantDirection": "CW"
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A02"
+        ]
+      },
+      "notes": "Only a quarter of the arena is ever safe, and which quarter rotates on the bar. Coarse and rhythmic: the crossing is made on the pulse, not steered, which is the point -- it is the one safe-zone form that is a movement *timing* problem rather than a positioning one."
+    },
+    {
+      "id": "AP25",
+      "name": "Chain Formation",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 4,
+        "inputComplexity": 2,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "driving"
+        ],
+        "sections": [
+          "build",
+          "chorus"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A05",
+          "params": {
+            "layout": "PARALLEL",
+            "chains": 3,
+            "complexity": 0.4
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A05",
+          "params": {
+            "layout": "FAN",
+            "chains": 4,
+            "complexity": 0.5
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A05",
+          "params": {
+            "layout": "SWEEP",
+            "chains": 3,
+            "pivot": "RIGHT",
+            "rotationPerBeat": 24
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A05",
+          "params": {
+            "layout": "CURVE_C",
+            "chains": 3,
+            "complexity": 0.6
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 3,
+        "requiresMechanics": [
+          "A05"
+        ]
+      },
+      "notes": "The same squad of chains, re-formed every bar: abreast, fanned out, sweeping on a pivot, then arced. The ask never changes -- find the lane that is not a chain -- so each bar is a fresh read of one familiar verb rather than a new threat."
+    },
+    {
+      "id": "AP26",
+      "name": "Floor Stripes",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 1,
+        "informationLoad": 2
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "half",
+          "steady"
+        ],
+        "sections": [
+          "verse",
+          "build"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "horizontal_strip"
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "vertical_strip"
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "cross"
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "A01",
+          "params": {
+            "layout": "sector"
+          }
+        }
+      ],
+      "constraints": {
+        "minReactionBeats": 1,
+        "maxSimultaneousThreats": 2,
+        "requiresMechanics": [
+          "A01"
+        ]
+      },
+      "notes": "Where is safe, drawn in bigger and bigger strokes: one row, one column, both at once, then a quarter wedge. The warning length is the escape walk, so the cross telegraphs longer than the strip -- the shapes teach themselves."
     },
     {
       "id": "RP01",
@@ -1538,7 +2311,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 0.9
           }
         },
         {
@@ -1591,21 +2364,30 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.8
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 2
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 4
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -1649,14 +2431,20 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R03"
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6
+          }
         }
       ],
       "constraints": {
@@ -1700,28 +2488,40 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.8
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 2
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.9
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 4
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -1766,21 +2566,30 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R08"
+          "mechanicId": "R08",
+          "params": {
+            "launchStrength": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -1824,28 +2633,40 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R02"
+          "mechanicId": "R02",
+          "params": {
+            "width": 0.9
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R02"
+          "mechanicId": "R02",
+          "params": {
+            "width": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 3
           },
-          "mechanicId": "R03"
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6
+          }
         }
       ],
       "constraints": {
@@ -1891,35 +2712,50 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R08"
+          "mechanicId": "R08",
+          "params": {
+            "launchStrength": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R08"
+          "mechanicId": "R08",
+          "params": {
+            "launchStrength": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 4
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.9
+          }
         }
       ],
       "constraints": {
@@ -1964,35 +2800,50 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.8
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 1.5
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.9
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 2.5
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 4
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -2037,7 +2888,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 0.8
+            "height": 0.7
           }
         },
         {
@@ -2047,7 +2898,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 0.9
           }
         },
         {
@@ -2057,7 +2908,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.2
+            "height": 1.1
           }
         },
         {
@@ -2067,7 +2918,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.4
+            "height": 1.3
           }
         },
         {
@@ -2075,7 +2926,10 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R03"
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6
+          }
         },
         {
           "at": {
@@ -2137,14 +2991,20 @@
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -2197,6 +3057,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.0,
             "surface": "CEILING"
           }
         },
@@ -2207,6 +3068,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.1,
             "surface": "CEILING"
           }
         },
@@ -2217,6 +3079,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.0,
             "surface": "CEILING"
           }
         },
@@ -2234,6 +3097,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.1,
             "surface": "CEILING"
           }
         },
@@ -2242,14 +3106,20 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 4,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -2293,70 +3163,100 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.8
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 1.5
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.9
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 2
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R08"
+          "mechanicId": "R08",
+          "params": {
+            "launchStrength": 1.1
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 4
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1.5
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 2.5
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 3.5
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 4
           },
-          "mechanicId": "R03"
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6
+          }
         }
       ],
       "constraints": {
@@ -2412,6 +3312,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.0,
             "surface": "CEILING"
           }
         },
@@ -2422,6 +3323,7 @@
           },
           "mechanicId": "R03",
           "params": {
+            "clearance": 0.6,
             "surface": "CEILING"
           }
         },
@@ -2432,6 +3334,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.1,
             "surface": "CEILING"
           }
         },
@@ -2442,6 +3345,7 @@
           },
           "mechanicId": "R01",
           "params": {
+            "height": 1.0,
             "surface": "CEILING"
           }
         },
@@ -2450,14 +3354,20 @@
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 4,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         }
       ],
       "constraints": {
@@ -2504,56 +3414,80 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 1,
             "beat": 3
           },
-          "mechanicId": "R08"
+          "mechanicId": "R08",
+          "params": {
+            "launchStrength": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.1
+          }
         },
         {
           "at": {
             "bar": 2,
             "beat": 3
           },
-          "mechanicId": "R03"
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6
+          }
         },
         {
           "at": {
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "R02"
+          "mechanicId": "R02",
+          "params": {
+            "width": 0.9
+          }
         },
         {
           "at": {
             "bar": 3,
             "beat": 3
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 4,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         },
         {
           "at": {
             "bar": 4,
             "beat": 3
           },
-          "mechanicId": "R03"
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6
+          }
         }
       ],
       "constraints": {
@@ -2599,14 +3533,20 @@
             "bar": 1,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.8
+          }
         },
         {
           "at": {
             "bar": 3,
             "beat": 1
           },
-          "mechanicId": "R01"
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
         }
       ],
       "constraints": {
@@ -4100,6 +5040,950 @@
         ]
       },
       "notes": "Four opposite pairs, then a full clockwise turn at double speed."
+    },
+    {
+      "id": "RP16",
+      "name": "Platform Step",
+      "mode": "RUNNER",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 2,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 2,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "half",
+          "steady"
+        ],
+        "sections": [
+          "intro",
+          "verse"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.5
+          }
+        }
+      ],
+      "notes": "Two low platforms: at 0.04 high the runner walks up without jumping, so the lesson is that a platform is terrain before it is an obstacle."
+    },
+    {
+      "id": "RP17",
+      "name": "Platform Hop",
+      "mode": "RUNNER",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "steady"
+        ],
+        "sections": [
+          "verse",
+          "build"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.12,
+            "surface": "FLOOR",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "FLOOR",
+            "width": 1.0
+          }
+        }
+      ],
+      "notes": "A single jump-height platform per bar. The front face is the obstacle and the top is the reward: land on it and the beat after is free."
+    },
+    {
+      "id": "RP18",
+      "name": "Staircase Up",
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "rising"
+        ],
+        "sections": [
+          "build",
+          "chorus"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.08,
+            "surface": "FLOOR",
+            "width": 0.9
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "FLOOR",
+            "width": 0.9
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.2,
+            "surface": "FLOOR",
+            "width": 0.9
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.1,
+            "surface": "FLOOR",
+            "width": 0.9
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.16,
+            "surface": "FLOOR",
+            "width": 0.9
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.22,
+            "surface": "FLOOR",
+            "width": 0.9
+          }
+        }
+      ],
+      "notes": "Three risers on consecutive beats, each one higher than the last. Every step is a jump, and the landing of one is the take-off of the next."
+    },
+    {
+      "id": "RP19",
+      "name": "Platform Ladder",
+      "mode": "RUNNER",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 3
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "eighth",
+          "driving"
+        ],
+        "sections": [
+          "chorus",
+          "build"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1.5
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2.5
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1.5
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.16,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 2.5
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.16,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        }
+      ],
+      "notes": "Platforms on the half-beat, alternating a low step and a full hop, with a spike on the ground at the end of the bar so the ground route is never the answer."
+    },
+    {
+      "id": "RP20",
+      "name": "Gap Bridge",
+      "mode": "RUNNER",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "steady"
+        ],
+        "sections": [
+          "verse",
+          "build"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R02",
+          "params": {
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.2
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R02",
+          "params": {
+            "width": 1.1
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.4
+          }
+        }
+      ],
+      "notes": "A gap with a platform parked over its far side. The jump clears the gap, the platform is what the player lands on -- one obstacle doing two jobs."
+    },
+    {
+      "id": "RP21",
+      "name": "Platform Leap",
+      "mode": "RUNNER",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "syncopated"
+        ],
+        "sections": [
+          "chorus",
+          "build"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R02",
+          "params": {
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "FLOOR",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.9
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R02",
+          "params": {
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.16,
+            "surface": "FLOOR",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 0.9
+          }
+        }
+      ],
+      "notes": "A gap whose only landing is a high platform over the middle. The take-off is fixed by the gap edge, so the jump is committed to before the platform is under the player."
+    },
+    {
+      "id": "RP22",
+      "name": "Gravity Shelf",
+      "mode": "RUNNER",
+      "function": "TRANSITION",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 3,
+        "inputComplexity": 2,
+        "informationLoad": 3
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "half",
+          "floating"
+        ],
+        "sections": [
+          "bridge",
+          "build"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R09"
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "CEILING",
+            "width": 1.2
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "CEILING",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "CEILING",
+            "width": 1.2
+          }
+        }
+      ],
+      "notes": "The flip arrives and the shelf is already on the ceiling: the player lands on the new surface a step above it, and the second shelf is a real jump."
+    },
+    {
+      "id": "RP23",
+      "name": "Gravity Corridor",
+      "mode": "RUNNER",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 4,
+        "inputComplexity": 3,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "quarter",
+          "driving"
+        ],
+        "sections": [
+          "chorus",
+          "climax"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R09"
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "CEILING",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "CEILING",
+            "width": 1.2
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "R09"
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "FLOOR",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 3
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.2
+          }
+        }
+      ],
+      "notes": "Two flips, shelves on both surfaces, and a spike after the first flip so the ceiling is not optional. The read is which surface the next shelf belongs to."
+    },
+    {
+      "id": "RP24",
+      "name": "Platform Climax",
+      "mode": "RUNNER",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 5,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 4,
+        "inputComplexity": 4,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "eighth",
+          "driving"
+        ],
+        "sections": [
+          "climax"
+        ],
+        "energy": [
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R02",
+          "params": {
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.2
+          }
+        },
+        {
+          "at": {
+            "bar": 1,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1.5
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.16,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 0.8
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "R09"
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 2
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "CEILING",
+            "width": 1.2
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 4
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0,
+            "surface": "CEILING"
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.14,
+            "surface": "CEILING",
+            "width": 1.0
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 3
+          },
+          "mechanicId": "R01",
+          "params": {
+            "height": 1.0,
+            "surface": "CEILING"
+          }
+        },
+        {
+          "at": {
+            "bar": 4,
+            "beat": 4
+          },
+          "mechanicId": "R03",
+          "params": {
+            "clearance": 0.6,
+            "surface": "CEILING"
+          }
+        }
+      ],
+      "notes": "The full vocabulary at once: a bridge, a ladder on the half-beat, a flip with a shelf already waiting, and a low wall closing the bar. No bar repeats the one before it."
+    },
+    {
+      "id": "RP25",
+      "name": "Platform Recovery",
+      "mode": "RUNNER",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 2,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 2,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 2,
+      "musicTags": {
+        "rhythm": [
+          "half",
+          "steady"
+        ],
+        "sections": [
+          "outro",
+          "bridge"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.4
+          }
+        },
+        {
+          "at": {
+            "bar": 2,
+            "beat": 1
+          },
+          "mechanicId": "R04",
+          "params": {
+            "height": 0.04,
+            "surface": "FLOOR",
+            "width": 1.4
+          }
+        }
+      ],
+      "notes": "One low shelf per bar and nothing else: a landing beat the player can breathe on without the runner ever stopping."
     }
   ]
 }

@@ -12,8 +12,9 @@
  */
 
 import { ConstantTempoMap, type TempoMap } from './TempoMap';
-import { TUNING } from '../tuning';
+import { beatsForSeconds, TUNING } from '../tuning';
 import type {
+  CourseSpec,
   GameMode,
   LevelDefinition,
   MechanicLibrary,
@@ -23,6 +24,10 @@ import type {
   SongDefinition,
 } from './types';
 import { GAME_MODES } from './types';
+import { composeCourse, planCourse } from '../mechanics/runner/runnerPlanner';
+import { isArchetype, isMotionVerb } from '../mechanics/runner/motion';
+import { SCROLL_LEAD_BEATS } from '../mechanics/runner/runnerGeometry';
+import type { Trajectory } from '../mechanics/runner/trajectory';
 
 /** One laid-out repetition of one pattern, at an absolute bar. */
 export interface CompiledPlacement {
@@ -44,6 +49,15 @@ export interface CompiledSection {
   endBar: number;
   placements: CompiledPlacement[];
   /**
+   * A RUNNER course, already planned into a trajectory.
+   *
+   * Planning happens here rather than at spawn time so a course that cannot be
+   * built is a *load* error the author sees immediately, not a silent gap in the
+   * middle of a run. When present, `placements` is empty and the section's
+   * hazards come from the course instead.
+   */
+  course: CompiledCourse | null;
+  /**
    * How many beats before the section starts its mode must already be live, so
    * a first-beat mechanic can show its telegraph. Derived from the mechanics
    * the section actually uses.
@@ -61,6 +75,16 @@ export interface CompiledSection {
    * one place the game can be unfair without any single hazard being unfair.
    */
   breatherFromBeat: number | null;
+}
+
+/** A course spec, planned. The trajectory is the artifact everything reads. */
+export interface CompiledCourse {
+  spec: CourseSpec;
+  trajectory: Trajectory;
+  /** Absolute beat the section's first phrase starts on. */
+  startBeat: number;
+  /** Beats of track the course needs to scroll in before its first phrase. */
+  leadInBeats: number;
 }
 
 export interface CompiledLevel {
@@ -176,6 +200,10 @@ export class LevelLoader {
         errors.push(`${where}: patterns must be an array`);
         continue;
       }
+      if (section.course) {
+        this.validateCourse(section, where, errors, warnings);
+        continue;
+      }
       if (section.patterns.length === 0) {
         // Empty on purpose is a real case: a Polish Lab movement test, or a
         // deliberate rest. Report it, do not reject it.
@@ -219,6 +247,80 @@ export class LevelLoader {
     }
   }
 
+  /**
+   * Validate an authored RUNNER course.
+   *
+   * The physics is checked by `npm run runner-check` against the planned
+   * trajectory; what is checked here is the *authoring*: that the phrases are
+   * real archetypes, that they fill the section, and that a course is not asked
+   * to run in a mode that has no way to carry it.
+   */
+  private validateCourse(section: SectionDefinition, where: string, errors: string[], warnings: string[]): void {
+    const course = section.course;
+    if (!course) return;
+    if (section.mode !== 'RUNNER') {
+      errors.push(`${where}: has a course but its mode is ${section.mode} -- courses are RUNNER-only`);
+    }
+    // A procedural course (spec §44-§48) has no authored phrase list to check:
+    // the composer fills it at compile time, deterministically per seed. Its
+    // *parameters* are what the authoring validator sees.
+    const generate = course.generate;
+    if (generate !== undefined && Array.isArray(course.phrases) && course.phrases.length > 0) {
+      warnings.push(`${where}: declares both course.generate and an authored phrase list -- the authored list takes precedence and generate is ignored`);
+    }
+    if (generate !== undefined) {
+      if (!(generate.beats > 0)) errors.push(`${where}: course.generate.beats must be > 0`);
+      if (!Number.isInteger(generate.seed)) errors.push(`${where}: course.generate.seed must be an integer`);
+      if (generate.intensity !== undefined && (generate.intensity < 0 || generate.intensity > 1)) {
+        errors.push(`${where}: course.generate.intensity is outside 0..1`);
+      }
+      if (generate.phraseBeats !== undefined && !(generate.phraseBeats > 0)) {
+        errors.push(`${where}: course.generate.phraseBeats must be > 0`);
+      }
+    }
+    if (!Array.isArray(course.phrases) || course.phrases.length === 0) {
+      // No authored list is fine when the composer owns the phrases -- but only
+      // if its parameters were sane, which the block above has already judged.
+      if (generate !== undefined && generate.beats > 0 && Number.isInteger(generate.seed)) return;
+      errors.push(`${where}: course.phrases must be a non-empty array`);
+      return;
+    }
+    if (section.patterns.length > 0) {
+      warnings.push(`${where}: declares both patterns and a course -- the course takes precedence and the patterns are ignored`);
+    }
+    const phraseBeats = course.phraseBeats ?? 4;
+    if (!(phraseBeats > 0)) errors.push(`${where}: course.phraseBeats must be > 0`);
+    const totalBeats = course.phrases.reduce((sum, p) => sum + (p.beats ?? phraseBeats), 0);
+    const sectionBeats = section.lengthBars * 4;
+    if (totalBeats > sectionBeats) {
+      warnings.push(`${where}: course is ${totalBeats} beats but the section is ${sectionBeats} -- the tail runs past the section`);
+    } else if (totalBeats < sectionBeats) {
+      warnings.push(`${where}: course is ${totalBeats} of ${sectionBeats} beats -- ${sectionBeats - totalBeats} beat(s) will have no terrain`);
+    }
+    for (const [i, phrase] of course.phrases.entries()) {
+      if (!isArchetype(phrase.archetype)) {
+        errors.push(`${where}: course phrase ${i} has unknown archetype "${phrase.archetype}"`);
+      }
+      if (phrase.beats !== undefined && !(phrase.beats > 0)) {
+        errors.push(`${where}: course phrase ${i} has beats ${phrase.beats} (must be > 0)`);
+      }
+      if (phrase.intensity !== undefined && (phrase.intensity < 0 || phrase.intensity > 1)) {
+        errors.push(`${where}: course phrase ${i} intensity ${phrase.intensity} is outside 0..1`);
+      }
+      if (phrase.verbs !== undefined) {
+        if (!Array.isArray(phrase.verbs) || phrase.verbs.length === 0) {
+          errors.push(`${where}: course phrase ${i} has an empty verbs list -- omit it to use the archetype`);
+        } else {
+          for (const verb of phrase.verbs) {
+            if (!isMotionVerb(verb)) {
+              errors.push(`${where}: course phrase ${i} has unknown verb "${verb}"`);
+            }
+          }
+        }
+      }
+    }
+  }
+
   // ---- compilation -------------------------------------------------------
 
   private compile(level: LevelDefinition, warnings: string[]): CompiledLevel {
@@ -249,6 +351,12 @@ export class LevelLoader {
         }
       }
 
+      // A course replaces the pattern timeline for this section. It is planned
+      // here, at load, so a course that cannot be planned fails loudly.
+      const course = definition.course
+        ? this.compileCourse(definition, beatsPerBar)
+        : null;
+
       return {
         definition,
         id: definition.id,
@@ -256,17 +364,60 @@ export class LevelLoader {
         startBar: definition.startBar,
         endBar: definition.startBar + definition.lengthBars,
         placements,
+        course,
         // Never lead in by more than a bar: a mode swap should stay musical.
-        leadInBeats: Math.min(maxTelegraph, beatsPerBar),
+        leadInBeats: course ? course.leadInBeats : Math.min(maxTelegraph, beatsPerBar),
         transitionOut: definition.transitionOut ?? null,
         nextMode: next?.mode ?? null,
+        // The breather is a *second* requirement (a full three-second
+        // countdown, whatever the tempo), with the legacy beat count as a
+        // floor so slow songs never cut it short.
         breatherFromBeat: modeChanges
-          ? (definition.startBar - 1 + definition.lengthBars) * beatsPerBar - TUNING.transition.breatherBeats
+          ? (definition.startBar - 1 + definition.lengthBars) * beatsPerBar
+            - Math.max(TUNING.transition.breatherBeats, beatsForSeconds(level.song.bpm, TUNING.transition.countdownSeconds))
           : null,
       };
     });
 
     const endBar = sections.reduce((max, s) => Math.max(max, s.endBar), 1);
     return { definition: level, song: level.song, tempo, sections, endBar, warnings };
+  }
+
+  /**
+   * Plan a section's course into a trajectory.
+   *
+   * The course is anchored to the section's first beat and every beat in it is
+   * absolute, so nothing downstream has to add an offset. The lead-in is one bar
+   * of scroll -- the same spatial warning every RUNNER obstacle gets -- so the
+   * mode is live and the first slab is already on screen when the section starts
+   * rather than materialising under the player.
+   */
+  private compileCourse(section: SectionDefinition, beatsPerBar: number): CompiledCourse {
+    const course = section.course!;
+    // A procedural course is expanded here, at load, by the same phrase
+    // composer every seeded generator test uses (spec §44-§48). The expansion
+    // is deterministic per seed, and what it produces is an ordinary
+    // `CourseSpec` -- the planned, validated pipeline below cannot tell it from
+    // an authored level, which is the point.
+    if (course.generate !== undefined && (!Array.isArray(course.phrases) || course.phrases.length === 0)) {
+      const generate = course.generate;
+      const composed = composeCourse({
+        beats: generate.beats,
+        seed: generate.seed,
+        intensity: generate.intensity,
+        phraseBeats: generate.phraseBeats ?? course.phraseBeats,
+      });
+      course.phrases = composed.phrases;
+      if (course.phraseBeats === undefined) course.phraseBeats = composed.phraseBeats;
+      if (course.seed === undefined) course.seed = generate.seed;
+    }
+    const startBeat = (section.startBar - 1) * beatsPerBar;
+    const trajectory = planCourse(course, { startBeat, phraseBeats: course.phraseBeats });
+    return {
+      spec: course,
+      trajectory,
+      startBeat,
+      leadInBeats: Math.max(SCROLL_LEAD_BEATS, beatsPerBar),
+    };
   }
 }

@@ -1,0 +1,423 @@
+{
+  "mode": "VERTICAL",
+  "audit_meta": {
+    "type": "READ-ONLY RUNTIME AUDIT",
+    "date": "2026-09-20",
+    "reverified": "2026-09-21: corrected spawn-lead scaling claim (lead is the UNSCALED library telegraph; tier/intensity scaling is dead data for V01-V04) and staggered same-lane hold overlap (second hold auto-MISSes; only same-beat heads are playable)",
+    "spec": "prompt/audit prompt/BeatBound_VERTICAL_Capability_Audit_Prompt.md",
+    "human_report": "VERTICAL_CAPABILITY_AUDIT.md",
+    "no_gameplay_code_modified": true,
+    "no_git_operations": true
+  },
+  "player": {
+    "lane_count": 6,
+    "lane_index_order": "1..6, left to right (Highway.laneX: (lane - 3.5) * LANE_W)",
+    "lane_keys": {
+      "1": ["a"],
+      "2": ["s"],
+      "3": ["d"],
+      "4": ["j"],
+      "5": ["k"],
+      "6": ["l"]
+    },
+    "keys_source": "src/core/controls.ts VERTICAL_LANE_KEYS",
+    "key_remap_support": false,
+    "key_aliases_per_lane": 1,
+    "arbitrary_key_allowed": false,
+    "simultaneous_input_cap_code": null,
+    "simultaneous_input_cap_effective": 6,
+    "keyboard_rollover_assumed": false,
+    "uses_keydown": true,
+    "uses_keyup": true,
+    "input_buffering": "none (early presses discarded; RUNNER-style buffer absent)",
+    "hold_requires_continuous_hold": true,
+    "hold_lapse_tolerance_beats": 0.12,
+    "regrab_allowed": true,
+    "regrab_scope": "pre-BROKEN only: re-holding decays offBeats at 2x; once BROKEN or MISSED the note is terminal (judge() only handles PENDING/HOLDING)",
+    "blur_behavior": "window blur clears all held keys; active holds lapse and break after 0.12 beats",
+    "autoplay": false,
+    "assist": {
+      "invincible_dev_flag": "?invincible URL param (src/config.ts devOptionsFromLocation): damage not applied, judgement unchanged"
+    },
+    "duo_role_support": "role field (PLAYER_A/PLAYER_B/BOTH) passed through but has no input split; metadata-only"
+  },
+  "input_model": {
+    "press_edge": "Input.wasPressed (per-frame edge set; event.repeat filtered)",
+    "hold_state": "Input.isDown",
+    "early_press_penalty": false,
+    "ghost_tap_penalty": false,
+    "same_lane_note_requires_repress": true,
+    "key_hint_stale_metadata": [
+      "beatbound_library_v1/levels.index.json vertical_test blurb: 'Hit D F J K' (actual: A S D J K L)",
+      "editor/rules/transition-rules.json: 'VERTICAL': 'D F J K lanes' (actual: A S D J K L)"
+    ]
+  },
+  "physics": {
+    "model": "3D perspective highway; travel is a pure function of beat",
+    "z_of": "z(beatsAway) = Z_HIT + beatsAway * worldUnitsPerBeat",
+    "Z_HIT": 1,
+    "Z_EXIT": 0.72,
+    "Z_NEAR": 0.55,
+    "Z_FAR": 5.6,
+    "worldUnitsPerBeat": 0.9,
+    "approachBeats": 2,
+    "approach_seconds_at_120bpm": 1.0,
+    "spawn_arch_z": 2.8,
+    "note_first_visible_z_note": "spawn lead = UNSCALED library telegraph (2 beats for V01-V04): MechanicRegistry.spawnLeadBeats (lines 82-85) reads the raw mechanics.mvp.json timing, NOT the tier/intensity-scaled resolveTiming output, which no V mechanic reads. Notes always appear at the arch (z=2.8); approach is a constant 2 beats and cannot be shortened by difficulty or intensity",
+    "expiry": "note expires (EXPIRED) once tail passes z<0.72 (~0.311 beats past beat+holdBeats); mechanic removed 0.6 beats after last target",
+    "bpm_dependency": "seconds-per-window scale with tempo; beat geometry constant",
+    "difficulty_dependency": "none on travel"
+  },
+  "judgement": {
+    "verdicts": ["PERFECT", "NICE", "GOOD", "MISS"],
+    "windows_beats": {
+      "perfect": 0.09,
+      "nice": 0.16,
+      "good": 0.25
+    },
+    "miss_condition": "offset > 0.25 beats (late side only; early side never misses, presses before -0.25 do nothing)",
+    "unit": "beats (BPM-dependent in seconds; independent of difficulty and intensity)",
+    "seconds_at_120bpm": { "perfect": 45, "nice": 80, "good": 125, "unit": "ms" },
+    "seconds_at_123.05bpm": { "perfect": 43.9, "nice": 78.0, "good": 121.9, "unit": "ms" },
+    "early_late_display": false,
+    "score_system": "none (no point score; only notesHit/notesMissed, combo/bestCombo, per-verdict counts, ACC %)",
+    "combo": { "hit": "+1", "miss": "reset to 0", "milestone_every": 10 },
+    "health": {
+      "max": 100,
+      "miss_damage": 8,
+      "bypasses_invulnerability": true,
+      "source": "src/tuning.ts TUNING.health.damage.MISS"
+    },
+    "feedback_sfx": {
+      "PERFECT": "tap_perfect",
+      "NICE": "tap_good",
+      "GOOD": "tap_good",
+      "MISS": "miss",
+      "hold_start": "hold_start",
+      "hold_tick": "hold_tick (every 0.5 beat while holding)",
+      "hold_complete": "hold_complete",
+      "drift_checkpoint": "drift_checkpoint (UNREACHABLE: drift branch has no producer)"
+    }
+  },
+  "notes": [
+    {
+      "id": "V01",
+      "name": "Tap",
+      "available": true,
+      "category": "tap",
+      "implementation": "LaneNoteMechanic",
+      "source_files": [
+        "src/mechanics/vertical/LaneNoteMechanic.ts",
+        "src/mechanics/vertical/index.ts",
+        "src/modes/rhythm/NoteMode.ts",
+        "src/modes/vertical/VerticalMode.ts"
+      ],
+      "registry_key": "V01",
+      "input_type": "keydown edge on lane key",
+      "sustained": false,
+      "multi_lane": "single lane param; lanes list also accepted (V03 semantics)",
+      "composable": true,
+      "parameters": {
+        "lane": { "type": "number", "default": 1, "clamp": "round + clamp 1..6 (readLanes)", "unit": "lane index" },
+        "lanes": { "type": "number[]", "default": null, "clamp": "each rounded + clamped 1..6, deduped; fallback lane 1", "unit": "lane indexes" },
+        "holdBeats": { "type": "number", "default": 0, "clamp": "none (0 or negative behaves as tap)", "unit": "beats", "warning": "consumed: >0 turns V01 into a hold" }
+      },
+      "units": "beats / lane indexes",
+      "collision": "none (dangerShapes returns []; rhythm notes are judged, not collided)",
+      "judgement": "PERFECT <=0.09 beat, NICE <=0.16, GOOD <=0.25, MISS >0.25 (late)",
+      "timing": { "library_telegraphBeats": 2, "library_durationBeats": 0, "spawnLead_effect": "spawn lead is the UNSCALED library telegraph (always 2); the tier x intensity scaled timing.telegraphBeats is never read by V mechanics, so neither tier nor intensity changes when the note becomes visible" },
+      "safe_to_autogenerate": true,
+      "autogenerate_bounds": "same-lane interval >= 1 beat recommended (0.5 hard floor; below 0.5 windows overlap and one press double-hits)",
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V01", "params": { "lane": 3 } },
+      "advanced_example": { "at": { "bar": 2, "beat": 2.5, "offsetBeats": 0 }, "mechanicId": "V01", "params": { "lane": 5 } }
+    },
+    {
+      "id": "V02",
+      "name": "Hold",
+      "available": true,
+      "category": "hold",
+      "implementation": "HoldNoteMechanic extends LaneNoteMechanic",
+      "source_files": [
+        "src/mechanics/vertical/HoldNoteMechanic.ts",
+        "src/mechanics/vertical/LaneNoteMechanic.ts",
+        "src/modes/rhythm/NoteMode.ts"
+      ],
+      "registry_key": "V02",
+      "input_type": "keydown edge + continuous isDown",
+      "sustained": true,
+      "multi_lane": false,
+      "composable": true,
+      "parameters": {
+        "lane": { "type": "number", "default": 1, "clamp": "round + clamp 1..6", "unit": "lane index" },
+        "holdBeats": { "type": "number", "default": 2, "resolution": "first positive of params.holdBeats, event timing.durationBeats, then 2 (pickPositive)", "unit": "beats" },
+        "durationBeats": { "type": "number", "default": 2, "note": "event-level escape hatch; becomes holdBeats when holdBeats param absent", "unit": "beats" }
+      },
+      "units": "beats",
+      "collision": "none",
+      "judgement": {
+        "start": "tap verdict at head (PERFECT/NICE/GOOD)",
+        "during": "offBeats accumulates while key up; break (BROKEN=MISS, -8 HP) when offBeats > holdToleranceBeats 0.12; decays 2x while held (regrab)",
+        "end": "NO end judgement; auto-completes to HIT at beat >= head+holdBeats (hold_complete sfx), even mid-lapse within tolerance"
+      },
+      "timing": { "library_telegraphBeats": 2, "library_durationBeats": 2 },
+      "overlap_rules": "no same-lane conflict checks, BUT staggered overlapping holds in one lane are effectively unplayable: the second hold's head has no keydown edge while the first is held, so it stays PENDING and MISSES at +0.25 beats (-8 HP); releasing to hit it breaks the first hold after 0.12 beats. Same-beat heads DO work: one press sends both targets to HOLDING",
+      "safe_to_autogenerate": true,
+      "autogenerate_bounds": "hold 1..6 beats recommended; hold tail then same-lane note needs >=0.5 beat gap (re-press required)",
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V02", "params": { "lane": 4, "holdBeats": 4 } },
+      "advanced_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V02", "params": { "durationBeats": 3 } }
+    },
+    {
+      "id": "V03",
+      "name": "Double",
+      "available": true,
+      "category": "chord_tap",
+      "implementation": "LaneNoteMechanic (lanes list)",
+      "source_files": [
+        "src/mechanics/vertical/LaneNoteMechanic.ts",
+        "src/mechanics/vertical/index.ts"
+      ],
+      "registry_key": "V03",
+      "input_type": "simultaneous keydown edges on multiple lane keys",
+      "sustained": false,
+      "multi_lane": true,
+      "composable": true,
+      "parameters": {
+        "lanes": { "type": "number[]", "default": [1, 4], "clamp": "rounded + clamped 1..6, deduped; >6 entries silently collapse; empty fallback [1]", "unit": "lane indexes" },
+        "lane": { "type": "number", "default": 1, "note": "accepted (readLanes fallback) but defeats the purpose", "unit": "lane index" },
+        "holdBeats": { "type": "number", "default": 0, "warning": "consumed: >0 turns the chord into simultaneous holds", "unit": "beats" }
+      },
+      "units": "beats / lane indexes",
+      "collision": "none",
+      "judgement": "each target judged independently, same windows as tap; one keydown only satisfies its own lane",
+      "timing": { "library_telegraphBeats": 2, "library_durationBeats": 0 },
+      "chord_cap": { "code_hard_cap": null, "effective_cap": 6, "library_max": 2 },
+      "safe_to_autogenerate": true,
+      "autogenerate_bounds": "chord size <=2 recommended (<=6 hard); next event >=1 beat later",
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V03", "params": { "lanes": [1, 4] } },
+      "advanced_example": { "at": { "bar": 1, "beat": 3 }, "mechanicId": "V03", "params": { "lanes": [1, 3, 6] } }
+    },
+    {
+      "id": "V04",
+      "name": "Drift Hold",
+      "available": true,
+      "available_as_documented": false,
+      "behavior_flattened_to": "single-lane straight hold (identical to V02)",
+      "category": "hold",
+      "implementation": "DriftHoldMechanic",
+      "source_files": [
+        "src/mechanics/vertical/DriftHoldMechanic.ts",
+        "src/mechanics/vertical/index.ts"
+      ],
+      "registry_key": "V04",
+      "input_type": "keydown edge + continuous isDown (single key, no hand swap)",
+      "sustained": true,
+      "multi_lane": false,
+      "composable": true,
+      "parameters": {
+        "path": { "type": "array [[beatOffset,lane],...] or [{beatOffset,lane},...]", "default": "[[0,1],[1,2],[2,3],[3,4]]", "runtime_behavior": "PARSED THEN DISCARDED: only path[0].lane is used as head lane; target.path is NOT set; lane switching NOT SUPPORTED at content level", "unit": "beats, lane index" },
+        "lane": { "type": "number", "default": 1, "note": "head lane when no path given; clamp 1..6", "unit": "lane index" },
+        "holdBeats": { "type": "number", "default": "path end beatOffset, else timing.durationBeats", "clamp": "Math.max(0.5, holdBeats)", "unit": "beats" }
+      },
+      "units": "beats / lane indexes",
+      "collision": "none",
+      "judgement": "identical to V02 (no drift branch reachable: driftToleranceBeats 0.18 applies only to path holds, which no longer exist)",
+      "timing": { "library_telegraphBeats": 2, "library_durationBeats": 4 },
+      "safe_to_autogenerate": true,
+      "autogenerate_bounds": "author as a plain hold; do NOT author path lane changes (silently ignored); min 0.5 beats",
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V04", "params": { "lane": 2, "holdBeats": 4 } },
+      "advanced_example_accepted_but_flattened": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V04", "params": { "path": [[0, 1], [2, 2], [4, 3], [6, 4]], "holdBeats": 6 }, "runtime_result": "6-beat hold in lane 1; path lanes 2/3/4 discarded" }
+    }
+  ],
+  "notes_not_supported": [
+    "flick", "slide (non-hold)", "drag", "cross-lane tap", "per-lane multiple judgement lines", "touch/mouse input", "arbitrary key remap"
+  ],
+  "patterns": [
+    { "id": "VP01", "name": "Stair Up", "lengthBars": 1, "function": "TEACH", "difficulty_overall": 1, "note_types": ["V01"], "lane_usage": "1->2->3->4, one per beat", "events": 4, "density_events_per_bar": 4.0, "uses_drift": false, "drift_flattened": false },
+    { "id": "VP02", "name": "Sustain", "lengthBars": 2, "function": "TEACH", "difficulty_overall": 2, "note_types": ["V02"], "lane_usage": "lane 2 and 3, holdBeats 3", "events": 2, "density_events_per_bar": 1.0, "uses_drift": false, "drift_flattened": false },
+    { "id": "VP03", "name": "Alternating", "lengthBars": 1, "function": "PRACTICE", "difficulty_overall": 2, "note_types": ["V01"], "lane_usage": "lane 1<->4 alternating per beat", "events": 4, "density_events_per_bar": 4.0, "uses_drift": false, "drift_flattened": false },
+    { "id": "VP04", "name": "Double Beat", "lengthBars": 1, "function": "COMBINE", "difficulty_overall": 3, "note_types": ["V03"], "lane_usage": "chords [1,4] and [2,3], every 2 beats", "events": 2, "density_events_per_bar": 2.0, "uses_drift": false, "drift_flattened": false },
+    { "id": "VP05", "name": "Taps Into Hold", "lengthBars": 2, "function": "COMBINE", "difficulty_overall": 3, "note_types": ["V01", "V02"], "lane_usage": "taps 1->2->3 then hold lane 4 (4 beats)", "events": 4, "density_events_per_bar": 2.0, "uses_drift": false, "drift_flattened": false },
+    { "id": "VP06", "name": "Drift Up", "lengthBars": 2, "function": "TEACH", "difficulty_overall": 3, "note_types": ["V04"], "lane_usage": "authored path 1->4 over 6 beats; RUNTIME: straight hold lane 1", "events": 1, "density_events_per_bar": 0.5, "uses_drift": false, "drift_flattened": true },
+    { "id": "VP07", "name": "Drift Zigzag", "lengthBars": 2, "function": "PRACTICE", "difficulty_overall": 4, "note_types": ["V04"], "lane_usage": "authored zigzag 4->3->2->3->4; RUNTIME: straight hold lane 4", "events": 1, "density_events_per_bar": 0.5, "uses_drift": false, "drift_flattened": true },
+    { "id": "VP08", "name": "Hold Plus Taps", "lengthBars": 2, "function": "COMBINE", "difficulty_overall": 4, "note_types": ["V02", "V01"], "lane_usage": "hold lane 1 (6 beats) while taps on lanes 3/4", "events": 6, "density_events_per_bar": 3.0, "uses_drift": false, "drift_flattened": false },
+    { "id": "VP09", "name": "Vertical Climax", "lengthBars": 4, "function": "CLIMAX", "difficulty_overall": 5, "note_types": ["V03", "V01", "V04"], "lane_usage": "chords [1,4]/[2,3], 4-tap stair, authored descending drift 4->3->2->1 (RUNTIME: hold lane 4), closing taps lane 4", "events": 9, "density_events_per_bar": 2.25, "uses_drift": false, "drift_flattened": true }
+  ],
+  "pattern_shape_inventory": {
+    "tap_streams": true,
+    "alternating_lanes": true,
+    "chords": true,
+    "holds": true,
+    "drifts": false,
+    "call_response": "partial (VP05 taps resolving into a hold)",
+    "trills": false,
+    "staircases": true,
+    "sub_beat_streams": false,
+    "lanes_5_6_used_in_library": false
+  },
+  "levels_using_vertical": [
+    { "file": "beatbound_library_v1/vertical_test.level.json", "sections": ["V-T01", "V-T02", "V-T03"], "patterns": ["VP01", "VP03", "VP04"], "bpm": 120, "audio_missing_falls_back_to_click_track": true },
+    { "file": "beatbound_library_v1/prototype_90s.level.json", "sections": ["S04"], "patterns": ["VP01", "VP03"], "bpm": 120 },
+    { "file": "beatbound_library_v1/test_song.level.json", "sections": ["S03"], "patterns": ["VP01", "VP03", "VP04", "VP08", "VP09"], "bpm": 120, "generated_by": "BeatBound Level Editor" },
+    { "file": "beatbound_library_v1/dance_fruits_musicsteve_void_-_toosie_slide_sped_up.level.json", "sections": ["S03"], "patterns": ["VP01", "VP04", "VP02"], "bpm": 123.05, "generated_by": "BeatBound Level Editor" }
+  ],
+  "sequencing": {
+    "level": { "version": "string", "song": ["id", "title", "audio", "bpm>0", "timeSignature [num, den]"], "sections": "array" },
+    "section": {
+      "id": "string", "startBar": "int >=1 (1-based)", "lengthBars": "int >=1", "mode": "ARENA|RUNNER|VERTICAL|RADIAL|DUO",
+      "function": "metadata-only", "difficulty": "int 1..5; NO VERTICAL gameplay effect - the tier lands in resolved timing.telegraphBeats which V01-V04 never read; only feeds ambient energy via BeatBoundGame.sectionEnergy()", "patterns": "array", "transitionOut": "string|null; shown as transition label", "course": "RUNNER-only (error in VERTICAL sections)"
+    },
+    "placement": { "patternId": "required", "repeat": "int >=1 default 1", "intensity": "number 0..1 default 0.5 (validated)" },
+    "pattern": {
+      "id": "string", "name": "string", "mode": "GameMode", "function": "metadata-only",
+      "difficulty": "metadata-only: overall, reaction, rhythmComplexity, spatialComplexity, inputComplexity, informationLoad",
+      "lengthBars": "int; layout unit", "musicTags": "metadata-only", "events": "array", "notes": "documentation",
+      "constraints": { "minReactionBeats": "CONSUMED (telegraph floor)", "maxSimultaneousThreats": "NOT CONSUMED", "requiresMechanics": "NOT CONSUMED" }
+    },
+    "event": {
+      "at": { "bar": "int >=1", "beat": "number >=1, fractional allowed", "offsetBeats": "number, added after bar/beat" },
+      "mechanicId": "string (V01|V02|V03|V04 for VERTICAL)",
+      "params": "free object, shallow-merged over mechanic defaults",
+      "role": "PLAYER_A|PLAYER_B|BOTH|SYSTEM (metadata-only for gameplay)",
+      "event_params_also_accepted": { "telegraphBeats": "overrides resolved timing.telegraphBeats ONLY - never read by V mechanics, so spawn lead / approach is unaffected", "durationBeats": "resolved timing; becomes V02 holdBeats fallback", "cooldownBeats": "resolved as recoveryBeats; unconsumed by V mechanics" }
+    },
+    "scheduling": {
+      "activationBeat": "(bar-1)*beatsPerBar + (beat-1) + offsetBeats, beatsPerBar = timeSignature[0]",
+      "spawnBeat": "activationBeat - UNSCALED library telegraph (2 beats for V01-V04; MechanicRegistry.spawnLeadBeats reads raw library timing, not the scaled resolveTiming output)",
+      "breather_skip": "events with activationBeat >= section.breatherFromBeat are SILENTLY skipped (mode-change runway = max(6 beats, 3 seconds))"
+    },
+    "tempo": "ConstantTempoMap only for shipped levels; BeatGridTempoMap exists but unused",
+    "no_top_level_fields": "there is no generic top-level bar/beat/subdivision/durationBeats/lane/path field; those live at event.at, params and mechanic defaults"
+  },
+  "difficulty": {
+    "section_difficulty_1_to_5": {
+      "effect": "NONE on VERTICAL gameplay (reverified 2026-09-21): tierForDifficulty lands in resolved timing.telegraphBeats, which V01-V04 never read; spawn lead uses the unscaled library telegraph. Only consumer is ambient energy (BeatBoundGame.sectionEnergy)",
+      "mapping_reference": { "1": "EASY x1.5", "2": "MEDIUM x1.25 (default when unset)", "3": "HARD x1.0", "4": "INTENSE x0.9", "5": "INTENSE x0.9" },
+      "no_effect_on": ["judgement windows", "scroll speed", "note density", "chord caps", "health", "approach/spawn lead"]
+    },
+    "placement_intensity_0_to_1": {
+      "effect": "NONE on VERTICAL gameplay (reverified 2026-09-21): scaleTelegraphBeats output goes into resolved timing.telegraphBeats, which no V mechanic reads; approach stays a constant 2 beats",
+      "no_effect_on": ["VERTICAL density/count/speed (scaleCount/scaleSpeed/scaleDensity unused by V mechanics)", "spawn lead/approach"]
+    },
+    "pattern_difficulty_object": "metadata-only, no runtime consumer",
+    "window_scaling": "none; windows fixed in beats",
+    "ambient_only": "section difficulty+intensity drive feel.setEnergy (background motes), not gameplay"
+  },
+  "safety": {
+    "existing_protections": [
+      "lane clamp: round + clamp 1..6 everywhere (readLanes, clampLane); invalid falls back to lane 1",
+      "LevelLoader validation: unknown patternId/mechanicId errors, mode mismatch warning, bar overlap error, intensity range error, bars overflow warning",
+      "mode-change breather: spawning stops max(6 beats, 3s) before a mode change; deactivate() clears all mechanics without penalty",
+      "pending spawn queue cap 64 per mode (oldest dropped, counted in droppedSpawns)",
+      "death cleanup: clock.clearSchedule + modes.clearHazards",
+      "render stall pause (gap > 0.35s rewinds to last simulated beat)"
+    ],
+    "missing_protections": [
+      "no note-vs-note overlap / same-lane duplicate merge check",
+      "no min same-lane spacing check",
+      "no chord size cap",
+      "no hold-overlap or hold-tail-vs-next-head conflict check",
+      "no VERTICAL chart feasibility simulator (tools/fairness-check audits ARENA events only)"
+    ],
+    "verdict": "No runtime chart-feasibility guarantee detected."
+  },
+  "safe_generation_bounds": {
+    "lane_count": 6,
+    "min_same_lane_interval_beats": 0.5,
+    "min_same_lane_interval_basis": "2 x goodWindow (0.25); below this one press can double-hit both notes",
+    "recommended_same_lane_interval_beats": 1.0,
+    "max_runtime_chord_size": 6,
+    "recommended_max_chord_size": 2,
+    "min_hold_duration_beats": 0.5,
+    "min_hold_duration_note": "V04 clamps to >=0.5; V01/V02 accept 0 (tap) or negative (behaves as tap)",
+    "recommended_hold_duration_beats": [1, 6],
+    "min_lane_change_time": null,
+    "approach_time_beats": 2,
+    "approach_time_seconds_null_note": "BPM-dependent: beats * 60 / bpm",
+    "judgement_windows_beats": { "perfect": 0.09, "nice": 0.16, "good": 0.25 },
+    "hold_lapse_tolerance_beats": 0.12,
+    "hold_lapse_tolerance_drift_beats": 0.18,
+    "drift_lapse_tolerance_note": "unreachable: applies only to path holds, which no content can produce",
+    "mode_change_silence_before_boundary": "max(6 beats, 3 seconds converted to beats)",
+    "unknown_fields_policy": "values above are code-verified; null = not present in runtime"
+  },
+  "music_affinity": {
+    "source_warning": "musicTags are METADATA ONLY (Director guidance); runtime never reads them",
+    "mechanics": {
+      "V01": { "rhythm": ["BEAT", "SUBDIVISION"], "instruments": ["MELODY", "KICK", "SNARE"], "sections": ["VERSE", "CHORUS"], "energy": ["LOW", "MID", "HIGH"], "best_for": ["kick", "snare", "hi-hat (<=0.5 beat streams)", "melody contour via lane sequences", "vocal syllables", "arpeggio"] },
+      "V02": { "rhythm": ["BEAT"], "instruments": ["MELODY", "VOCAL"], "sections": ["VERSE", "BREAKDOWN"], "energy": ["LOW", "MID"], "best_for": ["sustain vocal", "long melody tones", "phrase resolution"] },
+      "V03": { "rhythm": ["STRONG_BEAT", "DOWNBEAT"], "instruments": ["KICK", "BASS"], "sections": ["BUILD", "CHORUS"], "energy": ["MID", "HIGH"], "best_for": ["bass pulse", "downbeat accents", "build impacts"] },
+      "V04": { "rhythm": ["SUSTAIN"], "instruments": ["VOCAL", "LEAD"], "sections": ["CHORUS"], "energy": ["MID", "HIGH"], "best_for": ["sustain vocal (plays as straight hold; lane tracing NOT supported)"] }
+    },
+    "patterns": {
+      "VP01": { "rhythm": ["BEAT"], "sections": ["INTRO", "VERSE"], "energy": ["LOW"] },
+      "VP02": { "rhythm": ["SUSTAIN"], "sections": ["VERSE", "BREAKDOWN"], "energy": ["LOW", "MID"] },
+      "VP03": { "rhythm": ["BEAT", "SUBDIVISION"], "sections": ["VERSE", "BUILD"], "energy": ["MID"] },
+      "VP04": { "rhythm": ["STRONG_BEAT", "DOWNBEAT"], "sections": ["BUILD", "CHORUS"], "energy": ["HIGH"] },
+      "VP05": { "rhythm": ["BEAT", "SUSTAIN"], "sections": ["VERSE"], "energy": ["MID"] },
+      "VP06": { "rhythm": ["SUSTAIN"], "sections": ["CHORUS"], "energy": ["MID"] },
+      "VP07": { "rhythm": ["SUSTAIN"], "sections": ["CHORUS"], "energy": ["MID", "HIGH"] },
+      "VP08": { "rhythm": ["BEAT", "SUSTAIN"], "sections": ["CHORUS"], "energy": ["HIGH"] },
+      "VP09": { "rhythm": ["BEAT", "SUSTAIN"], "sections": ["DROP"], "energy": ["HIGH"] }
+    }
+  },
+  "known_risks": [
+    { "severity": "NOT SUPPORTED", "risk": "lane-switching drift (slide/ path hold) unreachable from content: V04 flattens path to head lane; VP06/VP07/VP09 named 'Drift...' play as straight holds", "evidence": "src/mechanics/vertical/DriftHoldMechanic.ts (RETIRED comment; target.path never set)" },
+    { "severity": "IMPOSSIBLE", "risk": "chord larger than 6 lanes cannot be expressed: lanes clamped 1..6 and deduped, silently collapsing", "evidence": "src/mechanics/vertical/LaneNoteMechanic.ts readLanes" },
+    { "severity": "IMPOSSIBLE", "risk": "consecutive same-lane notes without key release: wasPressed is an edge; holding through the next head guarantees MISS", "evidence": "src/core/Input.ts, src/modes/rhythm/NoteMode.ts judge" },
+    { "severity": "HIGH RISK", "risk": "same-lane notes <0.5 beats apart: judgement windows overlap; one press can double-hit both (double score/combo) or a press lands ambiguously", "evidence": "NoteMode judge per-target, no press consumption" },
+    { "severity": "HIGH RISK", "risk": "events scheduled inside the pre-mode-change breather (max(6 beats, 3s)) are silently never spawned", "evidence": "src/core/PatternScheduler.ts schedulePlacement breatherFromBeat continue" },
+    { "severity": "HIGH RISK", "risk": "MISS damage 8 bypasses collision invulnerability: 3 misses = 24 HP with no mitigation", "evidence": "src/tuning.ts, src/core/HealthManager.ts, NoteMode registerMiss" },
+    { "severity": "HIGH RISK", "risk": "hold tail immediately followed by same-lane note (<0.5 beat): requires release+repress within one window; frequently BROKEN/MISS", "evidence": "input edge + holdToleranceBeats 0.12" },
+    { "severity": "CONDITIONAL", "risk": "V01 with params.holdBeats>0 silently becomes a hold; VP06/VP07 difficulty metadata (inputComplexity 4) no longer matches flattened behavior", "evidence": "LaneNoteMechanic constructor, patterns.mvp.json" },
+    { "severity": "CONDITIONAL", "risk": "stale key hints in metadata: levels.index.json blurb and editor/rules/transition-rules.json say 'D F J K'; actual keys are A S D J K L", "evidence": "src/core/controls.ts VERTICAL_LANE_KEYS" },
+    { "severity": "CONDITIONAL", "risk": "vertical_test.level.json references audio/vertical_test_01.mp3 which does not exist; falls back to click track", "evidence": "beatbound_library_v1/audio contains only editor/ assets; BeatBoundGame.load fallback" },
+    { "severity": "CONDITIONAL", "risk": "intensity is often assumed to add density or shorten reaction time; for VERTICAL it has NO gameplay effect at all (approach constant 2 beats; resolved telegraph is dead data for V mechanics)", "evidence": "MechanicRegistry.spawnLeadBeats reads the unscaled library telegraph; V01-V04 never read timing.telegraphBeats" },
+    { "severity": "CONDITIONAL", "risk": "window blur releases all keys: an active hold breaks after 0.12 beats of lapse (mitigated by auto-pause on visibilitychange)", "evidence": "src/core/Input.ts onBlur, NoteMode judgeHold" }
+  ],
+  "unreachable_or_dead": [
+    {
+      "kind": "unreachable_engine_system",
+      "name": "drift path system (multi-checkpoint path holds)",
+      "components": [
+        "NoteMode.judgeHold isDrift branch (src/modes/rhythm/NoteMode.ts)",
+        "TUNING.vertical.driftToleranceBeats = 0.18 (src/tuning.ts)",
+        "VerticalMode.renderDrift (src/modes/vertical/VerticalMode.ts)",
+        "capabilities.requiredLaneAt / checkpointIndexAt path traversal (src/core/capabilities.ts)",
+        "sfx drift_checkpoint (src/feel/AudioFX.ts)"
+      ],
+      "reason": "sole former producer DriftHoldMechanic no longer writes target.path; no mechanic, pattern, level or lab can produce a NoteTarget with path.length > 1"
+    },
+    {
+      "kind": "parsed_but_discarded_param",
+      "name": "V04 params.path (library default and VP06/VP07/VP09 event paths)",
+      "reason": "readPath parses and sorts but only path[0].lane is consumed; the rest is dropped before target construction"
+    }
+  ],
+  "metadata_only_fields": [
+    "pattern.difficulty (overall + 5 sub-scores)",
+    "pattern.function and section.function",
+    "pattern.musicTags and mechanic.musicTags / playerSkills / compatibility",
+    "pattern.constraints.maxSimultaneousThreats",
+    "pattern.constraints.requiresMechanics",
+    "mechanic.status (MVP/OPTIONAL/STRETCH)",
+    "mechanic.difficulty",
+    "event.role (PLAYER_A/PLAYER_B/BOTH) - no input split",
+    "params.cooldownBeats -> recoveryBeats resolved but unconsumed by V mechanics",
+    "stale display hints: levels.index.json 'D F J K', editor transition-rules 'D F J K lanes', VP06/VP07 notes describing lane slides"
+  ],
+  "json_examples": {
+    "note_on_authoring_unit": "VERTICAL notes enter runtime only as pattern events (level -> patterns.mvp.json); there is no note-level JSON",
+    "minimal": {
+      "V01_tap": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V01", "params": { "lane": 3 } },
+      "V02_hold": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V02", "params": { "lane": 4, "holdBeats": 4 } },
+      "V03_chord": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V03", "params": { "lanes": [1, 4] } },
+      "V04_hold": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V04", "params": { "lane": 2, "holdBeats": 4 } }
+    },
+    "advanced": {
+      "V01_fractional_beat_lane5": { "at": { "bar": 2, "beat": 2.5, "offsetBeats": 0 }, "mechanicId": "V01", "params": { "lane": 5 } },
+      "V03_three_key_chord": { "at": { "bar": 1, "beat": 3 }, "mechanicId": "V03", "params": { "lanes": [1, 3, 6] } },
+      "V02_duration_fallback": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V02", "params": { "durationBeats": 3 } },
+      "V04_path_accepted_but_flattened": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "V04", "params": { "path": [[0, 1], [2, 2], [4, 3], [6, 4]], "holdBeats": 6 }, "runtime_result": "6-beat hold in lane 1" }
+    }
+  }
+}

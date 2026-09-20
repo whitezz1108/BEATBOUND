@@ -20,7 +20,7 @@ import type { GameMode } from '../../core/types';
 import { TUNING } from '../../tuning';
 import type { GameplayMode, ModeContext } from '../GameplayMode';
 
-export type Verdict = 'PERFECT' | 'GOOD' | 'MISS';
+export type Verdict = 'PERFECT' | 'NICE' | 'GOOD' | 'MISS';
 
 export interface Judgement {
   verdict: Verdict;
@@ -37,6 +37,10 @@ export abstract class NoteMode implements GameplayMode {
   protected lastPatternId = '-';
   protected combo = 0;
   protected bestCombo = 0;
+  /** How many of each verdict this run has produced, for the side panel. */
+  protected readonly verdictCounts: Record<Verdict, number> = {
+    PERFECT: 0, NICE: 0, GOOD: 0, MISS: 0,
+  };
 
   /** Beat the last hold tick fired on, so ticks stay on the subdivision. */
   private lastTickBeat = -Infinity;
@@ -70,10 +74,16 @@ export abstract class NoteMode implements GameplayMode {
     return this.mode === 'RADIAL' ? TUNING.radial.goodWindowBeats : TUNING.vertical.goodWindowBeats;
   }
 
+  /** The middle tier: crisper than GOOD, looser than PERFECT. */
+  get niceWindow(): number {
+    return this.mode === 'RADIAL' ? TUNING.radial.niceWindowBeats : TUNING.vertical.niceWindowBeats;
+  }
+
   activate(_atBeat: number): void {
     this.mechanics = [];
     this.lastJudgement = null;
     this.combo = 0;
+    (Object.keys(this.verdictCounts) as Verdict[]).forEach((k) => { this.verdictCounts[k] = 0; });
   }
 
   deactivate(_atBeat: number): void {
@@ -138,12 +148,15 @@ export abstract class NoteMode implements GameplayMode {
     target.hitBeat = beat;
     target.offBeats = 0;
     target.lastCheckpoint = -1;
-    const perfect = Math.abs(offset) <= this.perfectWindow;
+    const abs = Math.abs(offset);
+    const verdict: Verdict = abs <= this.perfectWindow
+      ? 'PERFECT'
+      : abs <= this.niceWindow ? 'NICE' : 'GOOD';
     target.state = target.holdBeats > 0 ? 'HOLDING' : 'HIT';
     this.ctx.status.registerNoteHit();
     this.combo += 1;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
-    this.onJudged(target, perfect ? 'PERFECT' : 'GOOD', beat);
+    this.onJudged(target, verdict, beat);
   }
 
   /**
@@ -198,10 +211,13 @@ export abstract class NoteMode implements GameplayMode {
   private onJudged(target: NoteTarget, verdict: Verdict, beat: number): void {
     const at = this.judgementAnchor(target, beat);
     this.lastJudgement = { verdict, beat, x: at.x, y: at.y };
+    this.verdictCounts[verdict] += 1;
 
     if (verdict === 'MISS') {
       this.ctx.feel.sfx('miss');
       this.ctx.feel.impact('LIGHT', { x: at.x, y: at.y, colour: '#ff5470', shockwave: false });
+      // A miss costs a ring too: it has to read as an event, not a shrug.
+      this.ctx.feel.shockwave(at.x, at.y, 0.2, '#ff5470', 0.3, 2.5);
       return;
     }
 
@@ -209,15 +225,19 @@ export abstract class NoteMode implements GameplayMode {
     if (verdict === 'PERFECT') {
       this.ctx.feel.sfx(radial ? 'direction_perfect' : 'tap_perfect');
       this.ctx.feel.impact('MEDIUM', { x: at.x, y: at.y, colour: '#6de3ff' });
+    } else if (verdict === 'NICE') {
+      this.ctx.feel.sfx(radial ? 'direction_hit' : 'tap_good');
+      this.ctx.feel.impact('LIGHT', { x: at.x, y: at.y, colour: '#ffd76d' });
     } else {
       this.ctx.feel.sfx(radial ? 'direction_hit' : 'tap_good');
       this.ctx.feel.impact('LIGHT', { x: at.x, y: at.y, colour: '#9affc0' });
     }
     if (target.holdBeats > 0) this.ctx.feel.sfx('hold_start');
     // Milestone combos get their own flourish rather than a louder note cue.
-    if (this.combo > 0 && this.combo % 16 === 0) {
+    if (this.combo > 0 && this.combo % 10 === 0) {
       this.ctx.feel.sfx(radial ? 'radial_combo' : 'hold_complete', 0.8);
-      this.ctx.feel.shockwave(at.x, at.y, 0.3, '#6de3ff', 0.4, 2);
+      this.ctx.feel.shockwave(at.x, at.y, 0.36, '#6de3ff', 0.45, 3);
+      this.ctx.feel.impact('MEDIUM', { x: at.x, y: at.y, colour: '#6de3ff', particles: false });
     }
   }
 
@@ -226,28 +246,53 @@ export abstract class NoteMode implements GameplayMode {
     r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#0b0f18');
     r.withFieldClip(() => {
       this.renderStage(r, beat);
-      for (const target of this.allTargets()) this.renderNote(r, target, beat);
+      this.renderNotes(r, beat);
       this.renderJudgement(r, beat);
       this.renderCombo(r);
     });
   }
 
-  private renderJudgement(r: Renderer, beat: number): void {
+  /**
+   * All notes, in draw order. The base draws soonest-first, which suits a
+   * flat board; a mode with depth (VERTICAL's highway) overrides to draw
+   * far-to-near instead, so nearer notes overlap the ones behind them.
+   */
+  protected renderNotes(r: Renderer, beat: number): void {
+    for (const target of this.allTargets()) this.renderNote(r, target, beat);
+  }
+
+  protected renderJudgement(r: Renderer, beat: number): void {
     const j = this.lastJudgement;
     if (!j) return;
     const age = beat - j.beat;
     if (age < 0 || age > 0.75) return;
     const alpha = 1 - age / 0.75;
-    const colour = j.verdict === 'MISS' ? '#ff5470' : j.verdict === 'PERFECT' ? '#6de3ff' : '#9affc0';
+    const colour = j.verdict === 'MISS' ? '#ff5470'
+      : j.verdict === 'PERFECT' ? '#6de3ff'
+      : j.verdict === 'NICE' ? '#ffd76d' : '#9affc0';
     // Floats upward as it fades, so successive judgements do not overlap.
-    r.text(j.verdict, j.x, j.y - 0.05 - age * 0.06, colour, 20, 'center', alpha);
+    const y = j.y - 0.05 - age * 0.06;
+    r.glow(j.x, y, 0.07, colour, 0.4 * alpha);
+    r.text(j.verdict, j.x, y, colour, 22, 'center', alpha);
+    r.text(j.verdict, j.x, y, '#ffffff', 22, 'center', alpha * 0.25);
   }
 
-  private renderCombo(r: Renderer): void {
+  protected renderCombo(r: Renderer): void {
     if (this.combo < 4) return;
-    r.text(`${this.combo}`, 0.5, 0.1, '#e8ecf8', 26, 'center', 0.75);
-    r.text('COMBO', 0.5, 0.145, '#8d99b5', 10, 'center', 0.6);
+    // Pop on every increment: the number itself dances with the streak.
+    if (this.combo !== this.lastComboSeen) {
+      this.lastComboSeen = this.combo;
+      this.comboPopBeat = this.ctx.clock.visualBeat;
+    }
+    const pop = Math.max(0, 1 - (this.ctx.clock.visualBeat - this.comboPopBeat) * 5);
+    const size = 30 + pop * 10;
+    r.glow(0.5, 0.1, 0.05 + pop * 0.02, '#6de3ff', 0.18 + pop * 0.22);
+    r.text(`${this.combo}`, 0.5, 0.1, '#e8ecf8', size, 'center', 0.8);
+    r.text('COMBO', 0.5, 0.148, '#8d99b5', 10, 'center', 0.6);
   }
+
+  protected lastComboSeen = 0;
+  protected comboPopBeat = -9;
 
   /** Required lane for a target right now -- drift holds move between lanes. */
   protected laneOf(target: NoteTarget, beat: number): number {

@@ -29,7 +29,7 @@ const PRESETS: Record<PolishPreset, PresetScale> = {
   MAX: { camera: 2.2, particles: 2.4, screen: 1.9, ambient: 2 },
 };
 
-let preset: PolishPreset = 'STANDARD';
+let preset: PolishPreset = 'MAX';
 
 export function setPolishPreset(next: PolishPreset): void {
   preset = next;
@@ -76,10 +76,32 @@ export const TUNING = {
 
   /** How long a gameplay-mode change takes, and how much it calms down first. */
   transition: {
-    /** Beats of reduced hazard density before a mode change. */
+    /**
+     * Seconds the mode-change countdown runs for. The beat count is derived at
+     * load from the song's tempo (see beatsForSeconds), so the player always
+     * gets a full three seconds to read what is coming regardless of BPM.
+     */
+    countdownSeconds: 3,
+    /**
+     * Beats of reduced hazard density before a mode change -- the legacy
+     * floor, kept as a minimum so slow songs never cut the breather short.
+     */
     breatherBeats: 6,
     /** Beats the visual scene transition runs for. */
     sceneBeats: 2,
+  },
+
+  /**
+   * Fairness floors, in seconds. These are absolute: no difficulty tier, no
+   * intensity, no pattern is allowed to push a hazard below them. See
+   * src/core/fairness.ts -- the mechanics and the fairness-check tool both
+   * clamp against these numbers.
+   */
+  fairness: {
+    /** Warning below which a hazard is physically unreactable. */
+    reactionFloorSeconds: 0.6,
+    /** Warning below which a hazard stops being comfortable. */
+    comfortReactionSeconds: 0.9,
   },
 
   camera: {
@@ -112,10 +134,14 @@ export const TUNING = {
     /**
      * Collision radius. Smaller than the drawn avatar on purpose: a dodge that
      * looks like it grazed should read as a graze, not a hit.
+     *
+     * Both radii were cut ~30% in the polish pass -- the avatar was the same
+     * size as a projectile, which made every near-miss feel arbitrary. The
+     * smaller body is what the fairness system's gap floors are built around.
      */
-    playerRadius: 0.021,
-    /** Drawn radius. Collision is ~80% of this. */
-    playerVisualRadius: 0.026,
+    playerRadius: 0.014,
+    /** Drawn radius. Collision is ~75% of this. */
+    playerVisualRadius: 0.018,
     /**
      * Global multiplier on how long arena hazards take to travel. Above 1 means
      * slower. Difficulty is meant to come from pattern design -- layering, safe
@@ -124,12 +150,33 @@ export const TUNING = {
     hazardTravelScale: 1.55,
     /** Acceleration/deceleration smoothing, in seconds to reach full speed. */
     playerAccelSeconds: 0.07,
-    projectileSpeed: 1.0,
-    projectileRadius: 0.03,
+    /**
+     * How fast a projectile crosses the arena, at `speed: 1`.
+     *
+     * Cut from 1.0 in the projectile pass. The brief's complaint was "a few very
+     * large high-speed generic circles"; this is the high-speed half of that.
+     * Slower crossings mean more of the field is legible at once, which is what
+     * lets the pattern library carry *more* bullets rather than faster ones.
+     */
+    projectileSpeed: 0.85,
+    /**
+     * Bullet radii, by source.
+     *
+     * `projectileRadius` was 0.03 -- more than twice the player's 0.014 body, so
+     * a bullet was a bigger object than the thing dodging it, and its sprite hid
+     * the very gaps it was asking the player to find. Both are cut here.
+     *
+     * The two families differ on purpose: a centre emitter is a *thing* in the
+     * arena the player can look at, while an edge bullet is an interruption
+     * arriving from off-screen, so it is drawn smaller and given a pointed
+     * silhouette to compensate. See `mechanics/arena/bullets.ts`.
+     */
+    projectileRadius: 0.019,
+    edgeProjectileRadius: 0.015,
     /** Trail samples kept per projectile. */
     projectileTrail: 6,
     /** A dodge this close to a hazard edge counts as perfect. */
-    perfectDodgeMargin: 0.028,
+    perfectDodgeMargin: 0.020,
     /** Cooldown between perfect-dodge awards, in beats. */
     perfectDodgeCooldownBeats: 0.5,
   },
@@ -156,6 +203,18 @@ export const TUNING = {
   runner: {
     /** Field units of track per beat. Raise for a faster-feeling run. */
     unitsPerBeat: 0.26,
+    /**
+     * Body size. The avatar was cut ~25% in the polish pass -- the old body was
+     * the same width as the gaps between obstacles, so every dodge that looked
+     * clear clipped. The smaller body gives the clearance numbers in the
+     * mechanics (wall clearance, spike width) real headroom instead of pixel
+     * perfection. See RunnerPlayer for the exported constants.
+     */
+    standingHeight: 0.094,
+    slidingHeight: 0.044,
+    playerWidth: 0.030,
+    /** Platforms up to this height auto-step instead of needing a jump. */
+    stepUpHeight: 0.045,
     /**
      * Airtime of a standard jump, in beats.
      *
@@ -194,7 +253,10 @@ export const TUNING = {
   vertical: {
     /** Beats of travel from the top of the board to the judgement line. */
     approachBeats: 2,
+    /** World units a note covers per beat on the 3D highway (see Highway.ts). */
+    worldUnitsPerBeat: 0.9,
     perfectWindowBeats: 0.09,
+    niceWindowBeats: 0.16,
     goodWindowBeats: 0.25,
     /** A hold survives this long un-held before it breaks. */
     holdToleranceBeats: 0.12,
@@ -206,6 +268,7 @@ export const TUNING = {
     /** Beats a prompt takes to travel from the rim to the judgement ring. */
     approachBeats: 2,
     perfectWindowBeats: 0.09,
+    niceWindowBeats: 0.16,
     goodWindowBeats: 0.25,
     /**
      * Diagonals are entered as two cardinals at once, which never land on the
@@ -222,3 +285,14 @@ export const TUNING = {
     energyBonus: 18,
   },
 } as const;
+
+/**
+ * Whole beats spanning at least `seconds` at the given BPM.
+ *
+ * Count-ins and mode-change countdowns are *second* requirements (the player
+ * needs three real seconds, not six musical beats), so they are converted to
+ * beats from the song's tempo everywhere they are consumed.
+ */
+export function beatsForSeconds(bpm: number, seconds: number): number {
+  return Math.max(1, Math.round((seconds * bpm) / 60));
+}
