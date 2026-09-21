@@ -37,6 +37,8 @@ const state = {
   consistencyNotes: [],
   selection: { type: 'section', id: null },
   levelFile: null,
+  hasDirectorContext: false, // director_context.json exists on the server
+  hasFullAnalysis: false, // music_analysis_v2.json exists on the server
 };
 
 // ---------------------------------------------------------------------------
@@ -81,6 +83,8 @@ async function uploadSong(file) {
     state.analysis = null;
     state.blueprint = null;
     state.levelFile = null;
+    state.hasDirectorContext = false; // stale exports were cleared server-side
+    state.hasFullAnalysis = false;
     state.selection = { type: 'section', id: null };
     refresh();
     setStatus(`uploaded ${state.song.title} — ready to analyse`);
@@ -91,22 +95,40 @@ async function uploadSong(file) {
 
 async function analyze() {
   const bpm = parseFloat($('bpm-override').value);
-  setStatus('analysing with librosa (this can take a minute)…');
+  setStatus('analysing (V2: rhythm, energy, tonal, structure, stems, melody — this can take a minute)…');
   $('btn-analyze').disabled = true;
   try {
     const data = await postJson('/api/analyze', { bpm: Number.isFinite(bpm) ? bpm : undefined });
     state.analysis = data.analysis;
+    state.hasDirectorContext = Boolean(data.directorContext);
+    state.hasFullAnalysis = true; // a successful run always writes the V2 doc
     refresh();
     const r = data.report;
-    setStatus(
+    let msg =
       `analysed: ${r.bpm_override ? 'bpm override' : 'detected'} ${data.analysis.tempo.bpm} BPM · ` +
-        `${r.bars} bars · ${r.sections} sections · ${r.onsets} onsets`
-    );
+      `${r.bars} bars · ${r.sections} sections · ${r.onsets} onsets`;
+    if (data.directorContext) {
+      const d = data.directorContext;
+      msg += ` · director context ready (${d.phrases} phrases, ${d.repeat_groups} repeat groups, ${d.important_events} events)`;
+    }
+    setStatus(msg);
   } catch (err) {
     setStatus(`analysis failed: ${err.message}`, true);
   } finally {
     $('btn-analyze').disabled = false;
+    refresh();
   }
+}
+
+/** Trigger a browser download of one of the server-side analysis exports. */
+function downloadExport(endpoint, filename) {
+  const a = document.createElement('a');
+  a.href = `${endpoint}?download=1`;
+  a.download = filename; // the Content-Disposition header names it too
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setStatus(`downloading ${filename}…`);
 }
 
 async function direct() {
@@ -699,6 +721,8 @@ function refresh() {
   $('btn-generate').disabled = !state.blueprint;
   $('btn-check').disabled = !state.levelFile;
   $('btn-playtest').disabled = !state.levelFile;
+  $('btn-download-director').disabled = !state.hasDirectorContext;
+  $('btn-download-full').disabled = !state.hasFullAnalysis;
   $('playtest-file').textContent = state.levelFile ?? '—';
   $('timeline-hint').classList.toggle('hidden', Boolean(state.analysis));
   $('timeline-legend').classList.toggle('hidden', !Boolean(state.blueprint));
@@ -765,6 +789,12 @@ function wireEvents() {
   });
 
   $('btn-analyze').addEventListener('click', analyze);
+  $('btn-download-director').addEventListener('click', () => {
+    downloadExport('/api/director-context', 'director_context.json');
+  });
+  $('btn-download-full').addEventListener('click', () => {
+    downloadExport('/api/analysis-v2', 'music_analysis_v2.json');
+  });
   $('btn-direct').addEventListener('click', direct);
   $('btn-generate').addEventListener('click', generateLevel);
   $('btn-check').addEventListener('click', runChecks);
@@ -830,6 +860,8 @@ async function init() {
     ]);
     state.song = st.song;
     state.levelFile = st.levelFile;
+    state.hasDirectorContext = Boolean(st.hasDirectorContext);
+    state.hasFullAnalysis = Boolean(st.hasFullAnalysis);
     state.patterns = pats.entries;
     state.mechanics = mechs;
     state.tuningMirror = st.tuningMirror ?? null;

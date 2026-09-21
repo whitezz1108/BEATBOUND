@@ -17,6 +17,8 @@ import { RotatingFanMechanic } from './RotatingFanMechanic';
 import { SpiralMechanic } from './SpiralMechanic';
 import { WaveSweepMechanic } from './WaveSweepMechanic';
 import { RingMechanic } from './RingMechanic';
+import { SectorSweepMechanic } from './SectorSweepMechanic';
+import { RhythmBreakoutMechanic } from './RhythmBreakoutMechanic';
 
 export function registerArenaMechanics(registry: MechanicRegistry): void {
   registry.register('A01', (ctx) => new FloorWarningMechanic(ctx));
@@ -29,4 +31,10 @@ export function registerArenaMechanics(registry: MechanicRegistry): void {
   registry.register('A08', (ctx) => new SpiralMechanic(ctx));
   registry.register('A09', (ctx) => new WaveSweepMechanic(ctx));
   registry.register('A10', (ctx) => new RingMechanic(ctx));
+  registry.register('A11', (ctx) => new SectorSweepMechanic(ctx));
+  // A12's prep window is authored data (`prepBeats`), so it can be longer than
+  // the library telegraph the scheduler derives its spawn lead from. The extra
+  // lead costs nothing -- the mechanic renders nothing while SCHEDULED -- and
+  // it guarantees the seal exists in time to form for the whole build-up.
+  registry.register('A12', (ctx) => new RhythmBreakoutMechanic(ctx), { spawnLeadBeats: 16 });
 }

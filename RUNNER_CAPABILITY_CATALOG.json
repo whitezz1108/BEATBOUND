@@ -1,0 +1,608 @@
+{
+  "mode": "RUNNER",
+  "audit_date": "2026-09-20",
+  "audit_type": "READ-ONLY RUNTIME AUDIT",
+  "verified_by": [
+    "npm run runner-check executed at audit time: 25/25 patterns clearable, 15/15 courses fly as planned, 9/9 seeded procedural courses ok",
+    "jump envelope computed by executing src/mechanics/runner/runnerPhysics.ts in node"
+  ],
+  "player": {
+    "x": 0.22,
+    "x_behavior": "FIXED — the world scrolls right-to-left; the player never translates horizontally",
+    "visual_size": { "standing_w": 0.03, "standing_h": 0.094, "sliding_h": 0.044, "units": "field units" },
+    "collision": {
+      "shape": "circle at body centre",
+      "radius": 0.015,
+      "radius_formula": "min(bodyW, slidingH) / 2",
+      "stand_top_above_feet": 0.062,
+      "slide_top_above_feet": 0.037
+    },
+    "actions": {
+      "jump": true,
+      "variable_height_jump": true,
+      "double_jump": "one per take-off, armed automatically; re-armable by course AIRJUMP ring",
+      "slide": "posture while grounded (S / Down)",
+      "manual_gravity_flip": "grounded only (Shift / F)",
+      "dash": false,
+      "air_dash": false,
+      "wall_jump": false,
+      "drop_through": false,
+      "hold_to_fly": false
+    },
+    "input_keys": { "jump": ["w", "arrowup", " "], "slide": ["s", "arrowdown"], "flip": ["shift", "f"] },
+    "damage": { "obstacle_hp_of_100": 15, "invulnerable_seconds": 0.8, "fall_out": "OBSTACLE damage + teleport to base surface" },
+    "fall_out_threshold": { "floor_gravity_feet_y_gt": 1.02, "ceiling_gravity_feet_y_lt": -0.02 }
+  },
+  "physics": {
+    "units": "field units; time in beats; speeds in field units/second; gravity in field units/second^2",
+    "units_per_beat": 0.26,
+    "speed_events": "NONE — scroll speed is constant at every difficulty and intensity",
+    "ground_y": 0.72,
+    "ceiling_y": 0.28,
+    "field_gap": 0.44,
+    "player_x": 0.22,
+    "track_x_formula": "x(beat) = 0.22 + (activationBeat - beat) * 0.26",
+    "scroll_lead_beats": 4,
+    "scroll_tail_beats": 1.5,
+    "gravity_by_bpm": {
+      "comment": "g = 8*apex / (airBeats * secondsPerBeat)^2; jumpV = g * airBeats * spb / 2",
+      "bpm_90": { "gravity_units_per_s2": 6.38, "jump_velocity_units_per_s": 2.02, "jump_seconds": 0.633, "scroll_units_per_s": 0.39 },
+      "bpm_100": { "gravity_units_per_s2": 7.88, "jump_velocity_units_per_s": 2.25, "jump_seconds": 0.57, "scroll_units_per_s": 0.433 },
+      "bpm_110": { "gravity_units_per_s2": 9.53, "jump_velocity_units_per_s": 2.47, "jump_seconds": 0.518, "scroll_units_per_s": 0.477 },
+      "bpm_120": { "gravity_units_per_s2": 11.35, "jump_velocity_units_per_s": 2.69, "jump_seconds": 0.475, "scroll_units_per_s": 0.52 },
+      "bpm_150": { "gravity_units_per_s2": 17.73, "jump_velocity_units_per_s": 3.37, "jump_seconds": 0.38, "scroll_units_per_s": 0.65 }
+    },
+    "jump": {
+      "apex_units": 0.32,
+      "air_beats": 0.95,
+      "apex_beats": 0.475,
+      "jump_cut_factor": 0.45,
+      "min_jump_apex_units": 0.0648,
+      "min_tap_beats": 0.08,
+      "apex_at_min_tap": 0.1435,
+      "input_buffer_seconds": 0.12,
+      "coyote_seconds": 0.09,
+      "step_up_units": 0.045,
+      "terminal_velocity": "none",
+      "air_control": "none (x fixed)"
+    },
+    "double_jump": {
+      "per_takeoff": 1,
+      "armed": "automatically at take-off; cleared on landing and on gravity flips; re-armable by course AIRJUMP ring (window ±1/3 beat)",
+      "impulse_scale": 0.6374,
+      "extra_apex_above_press_units": 0.13,
+      "combined_apex_units": 0.45,
+      "combined_air_beats": 1.0805,
+      "combined_distance_units": 0.2809,
+      "planned_press_beat": 0.475
+    },
+    "gravity": {
+      "supported_states": ["FLOOR (+1)", "CEILING (-1)"],
+      "flip_mechanisms": [
+        "R09 GravityFlipMechanic zone (pattern pipeline; sign of gravityScale while ACTIVE)",
+        "course flip timeline (phrase inverted flag / GRAVITY_FLIP_UP / GRAVITY_FLIP_DOWN / GRAVITY_ZIGZAG; per-segment flipAt beat)",
+        "manual key flip (grounded only; multiplies course gravity; no JSON)"
+      ],
+      "flip_semantics": "INSTANT SNAP: velocity zeroed, feet teleported to the new base line (0.72 / 0.28), grounded cleared, coyote 0.09s granted, armed air jump cleared; visual surface eases over gravitySnapBeats=0.18 beats (presentation only)",
+      "velocity_preserved_across_flip": false,
+      "sprite_hitbox_synchronized": true,
+      "camera_flips": false,
+      "world_colors_invert": true,
+      "obstacle_mirroring": "obstacles are surface-tagged FLOOR/CEILING; only the live surface's hazards/terrain are active — no runtime mirroring needed",
+      "air_flip_possible": "course flips land at an authored beat mid-flight; manual flip is grounded-only",
+      "constraints": {
+        "gravity_telegraph_beats_course_gate_visual": 3,
+        "gravity_snap_beats": 0.18,
+        "r09_timing": { "durationBeats": 4, "telegraphBeats": 1, "cooldownBeats": 2 },
+        "planner_flip_beats": 0.5,
+        "min_flip_spacing_runtime_clamp": "NONE (planner practice >= 2 beats; composer reserves phraseBeats*2 for flip pairs)",
+        "landing_protection": "course planner auto-emits a 2.4-beat landing plate at every flip; pattern mode has NO such protection"
+      }
+    }
+  },
+  "player_physics": {
+    "note": "all values computed from src/mechanics/runner/runnerPhysics.ts and src/tuning.ts TUNING.runner",
+    "horizontal": { "movement": "world scroll only", "units_per_beat": 0.26, "units_per_second_formula": "0.26 * BPM / 60" },
+    "vertical": {
+      "model": "ballistic integration, dt clamped <= 0.05s",
+      "gravity_units_per_s2_at_120bpm": 11.35,
+      "jump_velocity_units_per_s_at_120bpm": 2.69,
+      "velocity_positive": "down the screen (world y)"
+    },
+    "forgiveness": { "input_buffer_seconds": 0.12, "coyote_seconds": 0.09, "step_up_units": 0.045, "head_bonk_damage": 0 },
+    "world_bounds": { "feet_y_clamp": [-1.4, 2.4], "fall_out_floor": 1.02, "fall_out_ceiling": -0.02 }
+  },
+  "jump_envelope": {
+    "units": "field units (heights/distances), beats (times)",
+    "full_jump": {
+      "apex": 0.32,
+      "air_beats": 0.95,
+      "horizontal_distance_units": 0.247,
+      "max_safe_gap_units": 0.2106,
+      "max_safe_gap_margin_beats": 0.14,
+      "max_gap_zero_margin_units": 0.247,
+      "beats_above_0_04": 0.8886,
+      "beats_above_default_spike_0_09": 0.8054
+    },
+    "horizontal_progress_default_speed": {
+      "0.25_beat_units": 0.065,
+      "0.5_beat_units": 0.13,
+      "1_beat_units": 0.26,
+      "2_beat_units": 0.52,
+      "4_beat_units": 1.04
+    },
+    "cut_jumps": [
+      { "hold_beats": 0, "apex": 0.0648, "air_beats": 0.4275, "distance_units": 0.1112 },
+      { "hold_beats": 0.08, "apex": 0.1435, "air_beats": 0.5759, "distance_units": 0.1497 },
+      { "hold_beats": 0.2, "apex": 0.2345, "air_beats": 0.7303, "distance_units": 0.1899 },
+      { "hold_beats": 0.3, "apex": 0.2854, "air_beats": 0.8273, "distance_units": 0.2151 },
+      { "hold_beats": 0.55, "apex": 0.32, "air_beats": 0.95, "distance_units": 0.247 }
+    ],
+    "landing_rise_table": [
+      { "rise": 0.06, "landing_beats": 0.9032, "distance_units": 0.2348 },
+      { "rise": 0.08, "landing_beats": 0.8864, "distance_units": 0.2305 },
+      { "rise": 0.12, "landing_beats": 0.8505, "distance_units": 0.2211 },
+      { "rise": 0.16, "landing_beats": 0.8109, "distance_units": 0.2108 },
+      { "rise": 0.27, "landing_beats": 0.6628, "distance_units": 0.1723 },
+      { "rise": 0.3008, "landing_beats": 0.5864, "distance_units": 0.1525 }
+    ],
+    "drops": [
+      { "depth": 0.06, "beats": 0.2057 },
+      { "depth": 0.12, "beats": 0.2909 },
+      { "depth": 0.16, "beats": 0.3359 },
+      { "depth": 0.27, "beats": 0.4363 }
+    ],
+    "pad_jumps": [
+      { "strength": 1.35, "apex": 0.5832, "air_beats": 1.2825, "distance_units": 0.3335, "max_gap_units": 0.2971 },
+      { "strength": 1.4, "apex": 0.6272, "air_beats": 1.33, "distance_units": 0.3458, "max_gap_units": 0.3094 },
+      { "strength": 2.0, "apex": 1.28, "air_beats": 1.9, "distance_units": 0.494, "max_gap_units": 0.4576 }
+    ],
+    "inverted_symmetry": "EXACT — physics is gravity-relative; envelope identical on ceiling. Placement caps (MAX_LEVEL 0.27) are the only asymmetry.",
+    "speed_sensitivity": "arc shape is tempo-invariant in beats; only seconds scale with BPM. There are no speed changes to break spacing."
+  },
+  "safe_generation_bounds": {
+    "min_reaction_seconds": 1.2,
+    "min_reaction_seconds_note": "3.0 beats from field edge (x=1.0) to player; = 180/BPM seconds: 1.2 s @150 BPM, 1.5 s @120, 2.0 s @90. From the 1.08 render cull: 3.31 beats.",
+    "max_jumpable_gap_default_speed_units": 0.2106,
+    "max_jumpable_gap_with_double_jump_units": 0.2445,
+    "max_jumpable_gap_with_pad_1_35_units": 0.2971,
+    "max_jumpable_gap_absolute_units": 0.247,
+    "max_step_up_units": 0.27,
+    "max_step_up_note": "single-jump planner cap MAX_LEVEL 0.27 (physical maxRise 0.3008, apex 0.32); DOUBLE_JUMP_MOUNT block at 0.34; combined double-jump apex 0.45",
+    "max_step_down_units": 0.27,
+    "max_step_down_note": "planner floor MIN_LEVEL 0; any drop is survivable if the target has support; drop time = 0.475*sqrt(depth/0.32) beats",
+    "min_obstacle_spacing_beats": 1.0,
+    "min_obstacle_spacing_note": "for independent jump demands; 0.5-beat spacing valid only as a one-jump-spanning group (runner-check grouping); take-off comfort floor 0.10 beats",
+    "gravity_flip_min_spacing_beats": 2.0,
+    "gravity_flip_min_spacing_note": "NO runtime clamp; 2 beats is the observed planner minimum (GRAVITY_ZIGZAG: 4 beats for flip-play-flip); legacy R09 enforces 4+2 beats between portals",
+    "min_landing_width_units": 0.104,
+    "min_landing_width_note": "max(BODY_WIDTH*2, 0.4 beats * 0.26)",
+    "max_authored_gap_width_units": 0.22,
+    "max_authored_gap_width_warning": "R02 clamp ceiling 0.22 EXCEEDS max_jumpable_gap_default_speed 0.2106 — autogenerators must cap authored gaps at 0.21 units (R02 width param <= ~1.5)"
+  },
+  "primitives": [
+    {
+      "id": "R01",
+      "name": "Spike",
+      "available": true,
+      "pipeline": "pattern",
+      "category": "hazard",
+      "source_files": ["src/mechanics/runner/SpikeMechanic.ts", "src/mechanics/runner/index.ts", "beatbound_library_v1/mechanics.mvp.json"],
+      "parameters": {
+        "height": { "type": "number", "default": 1.0, "clamp": "final = clamp(0.09 * height * lerp(1,1.15,intensity), 0.04, 0.16)", "unit": "multiplier on 0.09 base" },
+        "surface": { "type": "string", "default": "FLOOR", "values": ["FLOOR", "CEILING"], "note": "any other value means FLOOR" },
+        "durationBeats": { "type": "number", "default": 0, "note": "library timing; obstacle lifetime is spatial (activation+1.5 beats), not phase-based" }
+      },
+      "units": { "height": "field units", "position": "beat (x = trackX)" },
+      "collision": { "shape": "rect", "width": 0.024, "height": "authored height", "deadly": true, "damage_source": "OBSTACLE (15 hp)", "note": "drawn as triangle, collides as enclosing rect" },
+      "timing": { "anchored_to": "activation beat", "danger_window_beats": 0.21, "warning": "spatial scroll-in (~3 beats visible)", "lifetime_beats": "activation + 1.5" },
+      "safe_to_autogenerate": { "yes_with": "height 0.8-1.2; spacing >= 1 beat for separate jumps, or grouped under one arc", "avoid": "spike within ~0.21 beats after a planned landing beat" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "R01", "params": { "height": 1.0 } }
+    },
+    {
+      "id": "R02",
+      "name": "Gap",
+      "available": true,
+      "pipeline": "pattern",
+      "category": "terrain/hazard",
+      "source_files": ["src/mechanics/runner/GapMechanic.ts", "src/mechanics/runner/index.ts", "beatbound_library_v1/mechanics.mvp.json"],
+      "parameters": {
+        "width": { "type": "number", "default": 1.0, "clamp": "final = clamp(0.13 * width * lerp(1,1.25,intensity), 0.06, 0.22)", "unit": "multiplier on 0.13 base" },
+        "durationBeats": { "type": "number", "default": 0 }
+      },
+      "units": { "width": "field units of track" },
+      "collision": { "shape": "absence of floor (RunnerTerrain.groundGap)", "deadly": "fall-out = OBSTACLE 15 + reset to base line", "floor_only": true },
+      "timing": { "anchored_to": "activation beat (centred)", "clearable": "width <= 0.2106 units at default jump", "lifetime_beats": "activation + 1.5" },
+      "safe_to_autogenerate": { "yes_with": "width <= 1.5 (0.195 units)", "avoid": "width >= 1.55 (clamped 0.22 > jumpable 0.2106) — IMPOSSIBLE" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "R02", "params": { "width": 1.0 } }
+    },
+    {
+      "id": "R03",
+      "name": "Low Wall",
+      "available": true,
+      "pipeline": "pattern",
+      "category": "hazard",
+      "source_files": ["src/mechanics/runner/LowWallMechanic.ts", "src/mechanics/runner/index.ts", "beatbound_library_v1/mechanics.mvp.json"],
+      "parameters": {
+        "clearance": { "type": "number", "default": 0.5, "clamp": "final = clamp(clearance * 0.15 * lerp(1,0.85,intensity), 0.062, 0.14)", "unit": "authored 0..1 scaled to field units" },
+        "surface": { "type": "string", "default": "FLOOR", "values": ["FLOOR", "CEILING"] }
+      },
+      "units": { "clearance": "field units of gap under the beam" },
+      "collision": { "shape": "rect", "width": 0.07, "height": 0.14, "deadly": true, "damage_source": "OBSTACLE" },
+      "timing": { "anchored_to": "activation beat", "answer": "slide (body 0.044 < clearance 0.062..0.14 < standing 0.094)", "lifetime_beats": "activation + 1.5" },
+      "safe_to_autogenerate": { "yes_with": "default params; land the player >= 0.10 beats before the wall window", "avoid": "placing within a landing window of another jump" },
+      "minimal_example": { "at": { "bar": 1, "beat": 3 }, "mechanicId": "R03", "params": { "clearance": 0.6 } }
+    },
+    {
+      "id": "R04",
+      "name": "Platform",
+      "available": true,
+      "pipeline": "pattern",
+      "category": "terrain",
+      "source_files": ["src/mechanics/runner/PlatformMechanic.ts", "src/mechanics/runner/index.ts", "beatbound_library_v1/mechanics.mvp.json"],
+      "parameters": {
+        "surface": { "type": "string", "default": "FLOOR", "values": ["FLOOR", "CEILING"] },
+        "height": { "type": "number", "default": 0.12, "clamp": "[0.02, 0.24]", "unit": "field units above the surface" },
+        "width": { "type": "number", "default": 1.0, "clamp": "multiplier [0.5, 2.5] on 0.13 units (0.5 beats)" }
+      },
+      "units": { "height": "field units", "width": "field units" },
+      "collision": { "standable_face": "top (FLOOR) / underside (CEILING)", "lethal_part": "leading face only (x1 side, depth 0.035)", "damage_source": "OBSTACLE", "auto_step": "height <= 0.045 walked over, no jump" },
+      "timing": { "anchored_to": "activation beat (centred)", "face_arrives_late": "leading face reaches the player (width/2)/0.26 beats after the beat", "lifetime_beats": "activation + 1.5" },
+      "safe_to_autogenerate": { "yes_with": "height <= 0.16 per hop (rise +0.12 takes 0.851 beats); steps at 0.04 auto-walk", "avoid": "relying on the block body to block (only the face hurts); stacking >0.27 total without intermediate landings" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "R04", "params": { "height": 0.12, "surface": "FLOOR", "width": 1.0 } }
+    },
+    {
+      "id": "R08",
+      "name": "Bounce Pad",
+      "available": true,
+      "pipeline": "pattern",
+      "category": "terrain/helper",
+      "source_files": ["src/mechanics/runner/BouncePadMechanic.ts", "src/mechanics/runner/index.ts", "beatbound_library_v1/mechanics.mvp.json"],
+      "parameters": {
+        "launchStrength": { "type": "number", "default": 1.0, "clamp": "final = clamp(launchStrength * lerp(1,1.2,intensity), 1, 2)", "unit": "multiplier on jump impulse (apex scales with its square)" }
+      },
+      "units": { "strength": "dimensionless multiplier" },
+      "collision": { "shape": "rect 0.09 x 0.022 on GROUND_Y", "deadly": false, "trigger": "feet within 0.03 of pad face + x overlap -> launch()" },
+      "timing": { "anchored_to": "activation beat", "floor_only_in_pattern_pipeline": true, "library_telegraph_beats": 0.25 },
+      "safe_to_autogenerate": { "yes_with": "strength 1.0-1.35 in open sky", "avoid": "ceiling hazards inside the arc; strength >= 1.35 exceeds the 0.44 field span" },
+      "minimal_example": { "at": { "bar": 1, "beat": 3 }, "mechanicId": "R08", "params": { "launchStrength": 1.1 } }
+    },
+    {
+      "id": "R09",
+      "name": "Gravity Flip",
+      "available": true,
+      "pipeline": "pattern",
+      "category": "modifier",
+      "source_files": ["src/mechanics/runner/GravityFlipMechanic.ts", "src/mechanics/runner/index.ts", "src/modes/runner/RunnerMode.ts", "beatbound_library_v1/mechanics.mvp.json"],
+      "parameters": {
+        "gravityScale": { "type": "number", "default": -1, "clamp": "[-2, 2]; only the sign is used" },
+        "durationBeats": { "type": "number", "default": 4, "note": "library timing; inversion lasts exactly this long" },
+        "cooldownBeats": { "type": "number", "default": 2 }
+      },
+      "units": { "duration": "beats" },
+      "collision": { "shape": "none (portal zone)", "deadly": false },
+      "timing": { "flip_lands": "the instant the mechanic turns ACTIVE", "telegraph_beats": 1, "effect": "gravity sign flips; player snaps to the far base line (see physics.gravity.flip_semantics)" },
+      "safe_to_autogenerate": { "yes_with": "keep the destination surface free of live gaps for the whole 4-beat zone; respect 4+2 beat cadence", "avoid": "overlapping zones; flips with floor gaps ACTIVE" },
+      "minimal_example": { "at": { "bar": 1, "beat": 1 }, "mechanicId": "R09", "params": { "gravityScale": -1 } }
+    },
+    {
+      "id": "COURSE_SLAB",
+      "name": "Course slab (platform / walkway / roof)",
+      "available": true,
+      "pipeline": "course",
+      "category": "terrain",
+      "source_files": ["src/mechanics/runner/trajectory.ts", "src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts", "src/mechanics/runner/RunnerCourseMechanic.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat (slab centred)" },
+        "width": { "type": "number", "unit": "field units", "default_landing": "max(minLandingWidth 0.104, 1.2 beats * 0.26)" },
+        "faceY": { "type": "number", "unit": "world y of standable face" },
+        "backY": { "type": "number", "unit": "world y of far face" },
+        "surface": { "type": "string", "values": ["FLOOR", "CEILING"] },
+        "floating": { "type": "boolean", "note": "floating slabs are PLATFORM_DEPTH 0.05 thick and can also block (corridors); anchored slabs reach the base line and never block" }
+      },
+      "units": { "y": "field units (0 top .. 1 bottom)" },
+      "collision": { "shape": "solid block; support+blocker via resolveProbe", "deadly": false },
+      "timing": { "authored_via": "movement verbs only — NOT directly authorable in level JSON" },
+      "safe_to_autogenerate": { "yes_with": "use the planner verbs; planner enforces maxRise, MAX_LEVEL 0.27, minLandingWidth, corridor headroom >= 0.2595", "avoid": null },
+      "minimal_example": { "note": "slabs are compiled from verbs; a STAIRCASE_UP phrase emits four 1.2-beat treads at +0.06 each", "course_phrase": { "archetype": "CLIMB_AND_DROP", "verbs": ["STAIRCASE_UP"] } }
+    },
+    {
+      "id": "COURSE_GAP",
+      "name": "Course gap (hole)",
+      "available": true,
+      "pipeline": "course",
+      "category": "terrain/hazard",
+      "source_files": ["src/mechanics/runner/trajectory.ts", "src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat (centred)" },
+        "width": { "type": "number", "unit": "field units", "formula": "maxGapWidthForAirtime(actual flight airbeats) * gapScale (0.6 for SKY_STEPS)" },
+        "surface": { "type": "string", "values": ["FLOOR", "CEILING"] }
+      },
+      "units": { "width": "field units" },
+      "collision": { "shape": "missing floor on the live surface", "deadly": "fall-out" },
+      "timing": { "authored_via": "GAP_JUMP / LONG_GAP / SKY_STEPS verbs" },
+      "safe_to_autogenerate": { "yes_with": "always — planner sizes holes from the crossing flight's own airtime minus 0.14 beats", "avoid": null },
+      "minimal_example": { "course_phrase": { "archetype": "GAP_RUN", "verbs": ["GAP_JUMP", "LONG_GAP"] } }
+    },
+    {
+      "id": "COURSE_PAD",
+      "name": "Course bounce pad",
+      "available": true,
+      "pipeline": "course",
+      "category": "helper",
+      "source_files": ["src/mechanics/runner/trajectory.ts", "src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat" },
+        "faceY": { "type": "number", "unit": "world y of the face it launches from" },
+        "surface": { "type": "string", "values": ["FLOOR", "CEILING"] },
+        "strength": { "type": "number", "default": 1.35 }
+      },
+      "units": { "strength": "dimensionless" },
+      "collision": { "shape": "rect 0.09 x 0.022 on the face", "deadly": false, "trigger": "contact" },
+      "timing": { "authored_via": "RHYTHMIC_BOUNCE verb" },
+      "safe_to_autogenerate": { "yes_with": "planner placement only", "avoid": null },
+      "minimal_example": { "course_phrase": { "archetype": "BOUNCE", "verbs": ["RHYTHMIC_BOUNCE"] } }
+    },
+    {
+      "id": "COURSE_AIRJUMP",
+      "name": "Course air-jump ring",
+      "available": true,
+      "pipeline": "course",
+      "category": "helper",
+      "source_files": ["src/mechanics/runner/trajectory.ts", "src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts", "src/modes/runner/RunnerMode.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat; live ±1/3 beat" },
+        "faceY": { "type": "number", "unit": "world y of ring centre" },
+        "surface": { "type": "string", "values": ["FLOOR", "CEILING"] }
+      },
+      "units": { "window": "beats" },
+      "collision": { "shape": "none", "deadly": false, "effect": "re-arms a spent mid-air jump while live" },
+      "timing": { "window_beats": 0.3333, "authored_via": "DOUBLE_JUMP_MOUNT verb (ring at the first arc apex)" },
+      "safe_to_autogenerate": { "yes_with": "planner placement only (DOUBLE_JUMP_MOUNT)", "avoid": null },
+      "minimal_example": { "course_phrase": { "archetype": "CLIMB_AND_DROP", "verbs": ["DOUBLE_JUMP_MOUNT"] } }
+    },
+    {
+      "id": "COURSE_SPIKE",
+      "name": "Course spike hazard",
+      "available": true,
+      "pipeline": "course",
+      "category": "hazard",
+      "source_files": ["src/mechanics/runner/trajectory.ts", "src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat" },
+        "faceY": { "type": "number", "unit": "world y of the tip" },
+        "surface": { "type": "string", "values": ["FLOOR", "CEILING"] },
+        "answer": { "type": "string", "note": "debug verb label" }
+      },
+      "units": { "height": "surface-to-faceY field units" },
+      "collision": { "shape": "rect w 0.024 from surface to tip", "deadly": true, "damage_source": "OBSTACLE", "surface_filtered": "only lethal on the live surface" },
+      "timing": { "authored_via": "LONG_JUMP / LONG_GAP / AIRBORNE_ACCENT verbs when phrase intensity > 0.55", "render_cull_x": 1.08 },
+      "safe_to_autogenerate": { "yes_with": "planner guarantees the crossing arc clears it", "avoid": null },
+      "minimal_example": { "course_phrase": { "archetype": "GROOVE", "verbs": ["LONG_JUMP"], "intensity": 0.7 } }
+    },
+    {
+      "id": "COURSE_WALL",
+      "name": "Course beam (slide wall)",
+      "available": true,
+      "pipeline": "course",
+      "category": "hazard",
+      "source_files": ["src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat" },
+        "faceY": { "type": "number", "unit": "world y of the running surface it hangs over" },
+        "clearance": { "type": "number", "default": 0.13, "note": "planner uses BEAM_CLEARANCE 0.0495; band [0.037, 0.062]" },
+        "surface": { "type": "string", "values": ["FLOOR", "CEILING"] }
+      },
+      "units": { "clearance": "field units of gap under the beam, measured from the walkway" },
+      "collision": { "shape": "rect 0.07 x 0.14", "deadly": true, "damage_source": "OBSTACLE" },
+      "timing": { "authored_via": "corridor runs at phrase intensity > 0.55 (slideUnder)", "answer": "slide" },
+      "safe_to_autogenerate": { "yes_with": "planner placement only", "avoid": null },
+      "minimal_example": { "course_phrase": { "archetype": "CORRIDOR", "verbs": ["TOP_BOTTOM_CORRIDOR"], "intensity": 0.7 } }
+    },
+    {
+      "id": "COURSE_FLIP",
+      "name": "Course gravity flip gate",
+      "available": true,
+      "pipeline": "course",
+      "category": "modifier",
+      "source_files": ["src/mechanics/runner/trajectory.ts", "src/mechanics/runner/courseWorld.ts", "src/mechanics/runner/runnerPlanner.ts", "src/mechanics/runner/RunnerCourseMechanic.ts"],
+      "parameters": {
+        "beat": { "type": "number", "unit": "absolute beat of inversion (segment flipAt)" },
+        "to": { "type": "string", "values": ["FLOOR", "CEILING"] }
+      },
+      "units": { "beat": "beats" },
+      "collision": { "shape": "none", "deadly": false, "note": "planner auto-emits a 2.4-beat landing plate at the destination" },
+      "timing": { "persists": "until the next flip (no un-flipped state)", "visual_charge_beats": 3, "flip_duration_beats": 0.5 },
+      "safe_to_autogenerate": { "yes_with": "phrase inverted flag or GRAVITY_FLIP_* / GRAVITY_ZIGZAG verbs; >= 2 beats between flips", "avoid": "FLIP pairs with < phraseBeats*2 beats remaining (composer already re-rolls these)" },
+      "minimal_example": { "course_phrase": { "archetype": "FLIP", "inverted": true, "verbs": ["CEILING_HOP", "GRAVITY_FLIP_DOWN"] } }
+    },
+    {
+      "id": "ACTION_JUMP",
+      "name": "Player jump (single, variable height, buffered, coyote)",
+      "available": true,
+      "pipeline": "player_action",
+      "category": "action",
+      "source_files": ["src/modes/runner/RunnerPlayer.ts", "src/mechanics/runner/runnerPhysics.ts", "src/core/controls.ts"],
+      "parameters": {
+        "hold_beats": { "type": "player input", "range": "0 (cut floor 0.0648 apex) .. full (0.32 apex at >= 0.475 beat hold)" }
+      },
+      "units": { "hold": "beats" },
+      "collision": { "note": "landing exact-face; step-up 0.045 grounded" },
+      "timing": { "air_beats": 0.95, "buffer_seconds": 0.12, "coyote_seconds": 0.09 },
+      "safe_to_autogenerate": { "yes_with": "any obstacle cleared by the jump_envelope", "avoid": null },
+      "minimal_example": { "player_input": "press W / Up / Space" }
+    },
+    {
+      "id": "ACTION_AIR_JUMP",
+      "name": "Player double jump (mid-air second press)",
+      "available": true,
+      "pipeline": "player_action",
+      "category": "action",
+      "source_files": ["src/modes/runner/RunnerPlayer.ts", "src/mechanics/runner/runnerPhysics.ts"],
+      "parameters": {},
+      "units": {},
+      "collision": {},
+      "timing": { "per_takeoff": 1, "impulse_scale": 0.6374, "extra_apex_units": 0.13, "cleared_on": ["landing", "gravity flip"] },
+      "safe_to_autogenerate": { "yes_with": "courses may assume it only for DOUBLE_JUMP_MOUNT; pattern mode cannot require it (no rings) though skilled players have it", "avoid": "designing pattern-mode obstacles that REQUIRE the air jump" },
+      "minimal_example": { "player_input": "press jump again while airborne" }
+    },
+    {
+      "id": "ACTION_SLIDE",
+      "name": "Player slide",
+      "available": true,
+      "pipeline": "player_action",
+      "category": "posture",
+      "source_files": ["src/modes/runner/RunnerPlayer.ts", "src/core/controls.ts"],
+      "parameters": {},
+      "units": { "body_height_while_sliding": 0.044 },
+      "collision": { "note": "required under beams (clearance < 0.062 stand top)" },
+      "timing": { "note": "only while grounded; no speed effect (x fixed)" },
+      "safe_to_autogenerate": { "yes_with": "beams with clearance in [0.037, 0.062)", "avoid": null },
+      "minimal_example": { "player_input": "hold S / Down" }
+    },
+    {
+      "id": "ACTION_MANUAL_FLIP",
+      "name": "Player manual gravity flip",
+      "available": true,
+      "pipeline": "player_action",
+      "category": "action",
+      "source_files": ["src/modes/runner/RunnerMode.ts", "src/core/controls.ts"],
+      "parameters": {},
+      "units": {},
+      "collision": { "note": "multiplies course gravity; snaps to the other base line" },
+      "timing": { "condition": "grounded only", "cue": "HEAVY impact + particles" },
+      "safe_to_autogenerate": { "yes_with": "treat both base lines as potentially traversable", "avoid": "relying on the player staying on one surface" },
+      "minimal_example": { "player_input": "press Shift / F while grounded" }
+    }
+  ],
+  "patterns": {
+    "library_patterns": [
+      { "id": "RP01", "name": "Basic Jump", "lengthBars": 1, "difficulty": 1, "mechanics": ["R01"], "function": "TEACH" },
+      { "id": "RP02", "name": "Double Jump", "lengthBars": 1, "difficulty": 2, "mechanics": ["R01"], "function": "PRACTICE" },
+      { "id": "RP03", "name": "Jump Slide", "lengthBars": 1, "difficulty": 2, "mechanics": ["R01", "R03"], "function": "PRACTICE" },
+      { "id": "RP04", "name": "Triple Chain", "lengthBars": 1, "difficulty": 3, "mechanics": ["R01"], "function": "PRACTICE" },
+      { "id": "RP05", "name": "Jump Bounce Jump", "lengthBars": 2, "difficulty": 3, "mechanics": ["R01", "R08"], "function": "VARIATION" },
+      { "id": "RP06", "name": "Short Gap Chain", "lengthBars": 2, "difficulty": 3, "mechanics": ["R02", "R01", "R03"], "function": "VARIATION" },
+      { "id": "RP07", "name": "Bounce Chain", "lengthBars": 2, "difficulty": 3, "mechanics": ["R08", "R01"], "function": "VARIATION" },
+      { "id": "RP08", "name": "Half Beat Jumps", "lengthBars": 1, "difficulty": 4, "mechanics": ["R01"], "function": "VARIATION" },
+      { "id": "RP09", "name": "Rapid Stair", "lengthBars": 2, "difficulty": 4, "mechanics": ["R01", "R03"], "function": "VARIATION" },
+      { "id": "RP10", "name": "Gravity Entry", "lengthBars": 2, "difficulty": 3, "mechanics": ["R09", "R01"], "function": "TRANSITION" },
+      { "id": "RP11", "name": "Gravity Alternation", "lengthBars": 4, "difficulty": 5, "mechanics": ["R09", "R01"], "function": "CLIMAX" },
+      { "id": "RP12", "name": "Runner Climax", "lengthBars": 2, "difficulty": 5, "mechanics": ["R01", "R08", "R03"], "function": "CLIMAX" },
+      { "id": "RP13", "name": "Ceiling Chain", "lengthBars": 4, "difficulty": 4, "mechanics": ["R09", "R01", "R03"], "function": "VARIATION" },
+      { "id": "RP14", "name": "Mixed Chain", "lengthBars": 4, "difficulty": 4, "mechanics": ["R01", "R08", "R03", "R02"], "function": "COMBINE" },
+      { "id": "RP15", "name": "Recovery", "lengthBars": 4, "difficulty": 1, "mechanics": ["R01"], "function": "RECOVERY" },
+      { "id": "RP16", "name": "Platform Step", "lengthBars": 2, "difficulty": 1, "mechanics": ["R04"], "function": "TEACH" },
+      { "id": "RP17", "name": "Platform Hop", "lengthBars": 2, "difficulty": 2, "mechanics": ["R04"], "function": "PRACTICE" },
+      { "id": "RP18", "name": "Staircase Up", "lengthBars": 2, "difficulty": 2, "mechanics": ["R04"], "function": "VARIATION" },
+      { "id": "RP19", "name": "Platform Ladder", "lengthBars": 2, "difficulty": 3, "mechanics": ["R04", "R01"], "function": "COMBINE" },
+      { "id": "RP20", "name": "Gap Bridge", "lengthBars": 2, "difficulty": 2, "mechanics": ["R02", "R04"], "function": "PRACTICE" },
+      { "id": "RP21", "name": "Platform Leap", "lengthBars": 2, "difficulty": 3, "mechanics": ["R02", "R04", "R01"], "function": "COMBINE" },
+      { "id": "RP22", "name": "Gravity Shelf", "lengthBars": 2, "difficulty": 3, "mechanics": ["R09", "R04"], "function": "TRANSITION" },
+      { "id": "RP23", "name": "Gravity Corridor", "lengthBars": 4, "difficulty": 4, "mechanics": ["R09", "R04", "R01"], "function": "COMBINE" },
+      { "id": "RP24", "name": "Platform Climax", "lengthBars": 4, "difficulty": 4, "mechanics": ["R02", "R04", "R01", "R09", "R03"], "function": "CLIMAX" },
+      { "id": "RP25", "name": "Platform Recovery", "lengthBars": 2, "difficulty": 1, "mechanics": ["R04"], "function": "RECOVERY" }
+    ],
+    "all_clearable": true,
+    "verification": "npm run runner-check at audit time: 0 impossible, 0 tight at intensities 0.2/0.55/0.9",
+    "course_levels": [
+      { "file": "runner_test_01_basic_chain.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "GROOVE" },
+      { "file": "runner_test_02_short_short_long.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "GROOVE" },
+      { "file": "runner_test_03_staircase.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "CLIMB_AND_DROP" },
+      { "file": "runner_test_04_high_low.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "WAVE" },
+      { "file": "runner_test_05_gap_chain.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "GAP_RUN" },
+      { "file": "runner_test_06_drop_and_jump.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "CLIMB_AND_DROP" },
+      { "file": "runner_test_07_gravity_flip.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "FLIP/GRAVITY_ZIGZAG" },
+      { "file": "runner_test_08_inverted_chain.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "INVERTED_GROOVE" },
+      { "file": "runner_test_09_vertical_corridor.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "CORRIDOR" },
+      { "file": "runner_test_10_dense_phrase.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "BURST" },
+      { "file": "runner_test_11_mixed_showcase.level.json", "bpm": 120, "bars": 10, "phrases": 10, "family": "all" },
+      { "file": "runner_test_12_double_jump.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "DOUBLE_JUMP_MOUNT" },
+      { "file": "runner_test_13_sky_steps.level.json", "bpm": 120, "bars": 8, "phrases": 8, "family": "SKY_STEPS" },
+      { "file": "runner_showcase.level.json", "bpm": 120, "bars": 30, "phrases": 26, "family": "handcrafted all-families" },
+      { "file": "runner_procedural.level.json", "bpm": 100, "bars": 16, "phrases": 16, "family": "generate {beats:64, seed:7, intensity:0.6}" }
+    ],
+    "pattern_based_runner_sections": [
+      { "file": "runner_test.level.json", "bpm": 110, "sections": ["R-T01 RP01x2+RP16x3", "R-T02 RP03x2+RP17x3", "R-T03 RP20x2+RP19x2"] },
+      { "file": "prototype_90s.level.json", "sections": ["S02 RP01x2+RP16x3", "S06 RP18x3"] },
+      { "file": "test_song.level.json", "sections": ["S02 RP01+RP04x4+RP03x4+RP05x4"] },
+      { "file": "dance_fruits_musicsteve_void_-_toosie_slide_sped_up.level.json", "sections": ["S02 RP08x4+RP01x3+RP01", "S06 RP01+RP09x4+RP22x3"] }
+    ],
+    "motion_verbs": [
+      "GROUND_RUN", "SHORT_JUMP", "MEDIUM_JUMP", "LONG_JUMP", "HIGH_JUMP", "QUICK_HOP", "DOUBLE_HOP", "TRIPLE_HOP",
+      "LAND_AND_IMMEDIATE_REJUMP", "GAP_JUMP", "LONG_GAP", "DROP", "DROP_AND_JUMP", "STAIRCASE_UP", "STAIRCASE_DOWN",
+      "PLATFORM_ASCENT", "PLATFORM_DESCENT", "HIGH_LOW_ALTERNATION", "PLATFORM_HOP_CHAIN", "RHYTHMIC_BOUNCE",
+      "SYNCOPATED_HOPS", "AIRBORNE_ACCENT", "CEILING_RUN", "CEILING_HOP", "INVERTED_PLATFORM_CHAIN", "GRAVITY_FLIP_UP",
+      "GRAVITY_FLIP_DOWN", "GRAVITY_ZIGZAG", "TOP_BOTTOM_CORRIDOR", "TIGHT_VERTICAL_WINDOW", "DOUBLE_JUMP_MOUNT",
+      "SKY_STEPS", "RELEASE_RUN"
+    ],
+    "phrase_archetypes": ["GROOVE", "ASCENT", "DESCENT", "BOUNCE", "WAVE", "CLIMB_AND_DROP", "GAP_RUN", "FLIP", "INVERTED_GROOVE", "CORRIDOR", "BURST", "RELEASE"],
+    "phrase_roles": ["INTRO", "REPEAT", "VARIATION", "CLIMAX", "RELEASE"]
+  },
+  "sequencing": {
+    "pattern_events": { "at": "{bar (1-based), beat (1-based, fractional ok), offsetBeats? (beats)}", "params_override": "event.params merge over library defaults", "repeat": "placement repeat >= 1", "layout": "patterns laid end-to-end per section in declaration order", "overlap_same_beat": "ALLOWED — multiple mechanics can share a beat (no runtime dedupe)" },
+    "course": { "phraseBeats": "default 4", "phrase_order": "accumulated real length (never index*default)", "phrase_fields": ["archetype", "role?", "beats?", "intensity?", "motif?", "inverted?", "verbs?"], "verbs_override": "explicit verb list replaces the archetype sequence; unknown names dropped (warning) and fall back", "surface_carry": "inverted absent = carry previous surface; level carries across phrases and pre-desends as a real drop", "fill": "verbs that overshoot are dropped whole / trimmed at a segment boundary; remainder filled with running", "loop": "archetype shapes repeat to fill (guard 32 iterations)", "random": "only course.generate (seeded, deterministic per seed)", "conditional": "NONE", "nested": "NONE" },
+    "procedural": { "json": "course.generate {beats, seed, intensity?, phraseBeats?}", "expanded": "at load by composeCourse; anti-repetition + flip-pair reservation + motif recurrence (pool of 4)", "determinism": "verified (composing twice identical)" }
+  },
+  "difficulty": {
+    "placement_intensity": { "range": "0..1", "default": 0.5, "consumers": { "R01": "height lerp 1->1.15", "R02": "width lerp 1->1.25", "R03": "clearance lerp 1->0.85", "R08": "strength lerp 1->1.2", "R04": "ignored", "R09": "ignored" } },
+    "phrase_intensity": { "range": "0..1", "default": 0.5, "consumers": { "heavy_threshold": "> 0.55 adds a spike over LONG_JUMP/LONG_GAP flights and corridor beams", "release_cap": "composer caps DESCENT/RELEASE loudness at 0.4; RELEASE phrases strip hazards (calm())" } },
+    "section_difficulty_1_5": { "status": "METADATA ONLY for RUNNER", "detail": "maps to an ArenaTier handed to mechanics (tier) and to the course mechanic's synthetic intensity — neither is read by any RUNNER mechanic or by RunnerMode" },
+    "metadata_only_fields": [
+      "PatternConstraints.maxSimultaneousThreats (no consumer)",
+      "PatternConstraints.requiresMechanics (no runtime consumer)",
+      "PatternConstraints.minReactionBeats (only scales telegraphs; RUNNER telegraphs 0/0.25 sit below the 0.6-beat floor — inert; R09's 1-beat telegraph can shrink to 0.65 at intensity 1, visual only)",
+      "pattern difficulty sub-scores (reaction, rhythmComplexity, ...)",
+      "mechanic musicTags / playerSkills / compatibility"
+    ],
+    "not_supported": ["speedMultiplier", "obstacleDensity", "reactionScale", "jumpScale (as JSON fields)"]
+  },
+  "safety": {
+    "runtime_guarantees": [
+      "course pipeline: geometry derived from runnerPhysics (holes fit the crossing flight, landings >= 0.104 units, climbs <= MAX_LEVEL 0.27, flip destinations auto-plated, corridor headroom >= ~0.2595)",
+      "level-load validation: unknown archetype/verb/generate params are load errors",
+      "offline CI: runner-check (patterns analytic + course flight-sim + structural audit + procedural at 3 tempos)"
+    ],
+    "runtime_gaps": [
+      "NO runtime jump-feasibility guarantee in RunnerMode — an impossible JSON-authored pattern plays as authored",
+      "R02 clamp ceiling (0.22) exceeds the jumpable max (0.2106)",
+      "maxSimultaneousThreats unenforced",
+      "no swept collision on hazards (per-frame static tests; not practically exploitable at 0.26 units/beat)"
+    ],
+    "fairness_floors": { "reaction_floor_seconds": 0.6, "comfort_reaction_seconds": 0.9, "note": "telegraph-based floors; RUNNER uses a ~3-beat spatial window instead" },
+    "damage": { "obstacle": 15, "invulnerable_seconds": 0.8, "health_max": 100, "death": "health exhaustion only" }
+  },
+  "music_affinity": {
+    "strong_beat": ["R01", "R02", "R08", "R09", "GROUND_RUN", "MEDIUM_JUMP"],
+    "quarter_note_pulse": ["R04 step chains", "QUICK_HOP", "DOUBLE_HOP", "SHORT_JUMP"],
+    "eighth_note_sequence": ["TRIPLE_HOP", "SYNCOPATED_HOPS", "half-beat spike groups (RP08/RP12)"],
+    "melody_contour": ["STAIRCASE_UP", "STAIRCASE_DOWN", "PLATFORM_ASCENT", "PLATFORM_DESCENT", "HIGH_LOW_ALTERNATION", "SKY_STEPS"],
+    "phrase_boundary": ["archetype role changes", "FLIP (surface inversion)", "motif recurrence", "phrase tint on the running surface"],
+    "build": ["BURST", "CLIMB_AND_DROP", "GAP_RUN", "RHYTHMIC_BOUNCE", "R09 during BUILD"],
+    "drop": ["R09 during DROP/CHORUS", "GAP_RUN", "WAVE", "DROP"],
+    "sustained_section": ["R03 (slide posture)", "RELEASE_RUN", "GROOVE runs", "CORRIDOR"],
+    "role_dramaturgy": "ROLE_ARCHETYPES maps INTRO/REPEAT/VARIATION/CLIMAX/RELEASE to archetype pools; composer loudness: CLIMAX x1.25, INTRO x0.7, RELEASE x0.6, DESCENT/RELEASE capped 0.4"
+  },
+  "known_risks": [
+    "R02 gap width param >= ~1.55 (or >= 1.35 at intensity 1.0) produces a clamped 0.22-unit gap that NO jump can clear (max safe 0.2106) — IMPOSSIBLE terrain reachable from JSON",
+    "R02 width ~1.3-1.55 is frame-perfect (take-off slack below the 0.10-beat comfort floor)",
+    "a spike within ~0.21 beats after a planned landing beat has no answer",
+    "bounce pad strength >= 1.35 sends the player past the opposite surface line (apex 0.583 > 0.44 span) — ceiling hazards inside the arc are unavoidable",
+    "pattern-mode R09 flips teleport the player to the base line — a live floor gap at the flip beat is a fall; courses auto-plate but pattern mode does not",
+    "overlapping R09 zones: last active gravity mechanic wins; flip order can contradict the visuals",
+    "maxSimultaneousThreats is unenforced — hazard stacking on one beat is accepted",
+    "no runtime feasibility guard in RunnerMode; the guarantee lives in loader validation + npm run runner-check",
+    "HazardDemand kind 'SAW' is declared but never emitted (dead enum member)",
+    "CourseWorld.activeSurface() and RunnerMode.RUNNER_UNITS_PER_BEAT are dead (no consumers)",
+    "TUNING.runner.gravityTelegraphBeats has zero consumers (dead tuning knob)",
+    "mechanic ids R05/R06/R07 are absent (numbering gap, not dead code)"
+  ],
+  "reaction_window": {
+    "beats_from_field_edge": 3.0,
+    "beats_from_render_cull_1_08": 3.31,
+    "seconds_by_bpm": { "90": 2.0, "100": 1.8, "110": 1.64, "120": 1.5, "150": 1.2 },
+    "formula": "(1.0 - 0.22) / 0.26 beats = 3 beats; seconds = 180 / BPM",
+    "r09_extra": "1-beat telegraph charge + ACTIVE countdown display",
+    "course_flip_gate_charge_beats": 3
+  }
+}

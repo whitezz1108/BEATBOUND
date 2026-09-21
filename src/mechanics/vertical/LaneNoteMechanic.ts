@@ -16,7 +16,7 @@ import type { InputTargetMechanic, NoteTarget } from '../../core/capabilities';
 import type { Shape } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 
-export const LANE_COUNT = 4;
+export const LANE_COUNT = 6;
 
 export class LaneNoteMechanic extends BaseMechanic implements InputTargetMechanic {
   readonly targets: NoteTarget[];

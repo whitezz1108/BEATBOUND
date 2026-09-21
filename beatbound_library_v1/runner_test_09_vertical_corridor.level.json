@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "runner_test_09_vertical_corridor",
+    "title": "Runner Test 09 — Vertical Corridor",
+    "audio": "audio/editor/test_song.wav",
+    "bpm": 120,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "R-T",
+      "startBar": 1,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "TEACH",
+      "difficulty": 2,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 1,
+        "phrases": [
+          {
+            "archetype": "CORRIDOR",
+            "role": "INTRO",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.4,
+            "verbs": [
+              "TOP_BOTTOM_CORRIDOR"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "INTRO",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.4,
+            "verbs": [
+              "TIGHT_VERTICAL_WINDOW",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "REPEAT",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": [
+              "TOP_BOTTOM_CORRIDOR"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "REPEAT",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": [
+              "TIGHT_VERTICAL_WINDOW",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "VARIATION",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.6,
+            "verbs": [
+              "TOP_BOTTOM_CORRIDOR"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "VARIATION",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.6,
+            "verbs": [
+              "TIGHT_VERTICAL_WINDOW",
+              "GROUND_RUN"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "CLIMAX",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.7,
+            "verbs": [
+              "TOP_BOTTOM_CORRIDOR"
+            ]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "RELEASE",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": [
+              "TIGHT_VERTICAL_WINDOW",
+              "GROUND_RUN"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

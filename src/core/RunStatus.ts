@@ -50,6 +50,19 @@ export class RunStatus {
     this.notesHit += 1;
   }
 
+  /**
+   * A timed input the player did not land, counted but not charged for.
+   *
+   * VERTICAL and RADIAL reach `notesMissed` through `damage('MISS')`, because
+   * there the miss *is* the punishment. An ARENA rhythm encounter punishes
+   * differently -- the seal it failed to break collapses on the player, and
+   * that collision is charged once through the ordinary path -- so the tally
+   * needs a way to move without a second charge on top.
+   */
+  registerNoteMiss(): void {
+    this.notesMissed += 1;
+  }
+
   complete(): void {
     if (this.outcome === 'PLAYING') this.outcome = 'COMPLETE';
   }

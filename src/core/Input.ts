@@ -5,6 +5,9 @@
  * bind keys themselves. Press-edge detection matters for the rhythm modes: a
  * held key must not re-trigger every frame.
  */
+
+import { ARENA_MOVE_KEYS, type AxisKeys } from './controls';
+
 export class Input {
   private readonly down = new Set<string>();
   private readonly pressedThisFrame = new Set<string>();
@@ -45,8 +48,20 @@ export class Input {
 
   /** -1 / 0 / +1 on each axis; y is positive downward to match field space. */
   axis(): { x: number; y: number } {
-    const x = (this.isDown('arrowright', 'd') ? 1 : 0) - (this.isDown('arrowleft', 'a') ? 1 : 0);
-    const y = (this.isDown('arrowdown', 's') ? 1 : 0) - (this.isDown('arrowup', 'w') ? 1 : 0);
+    return this.axisFrom(ARENA_MOVE_KEYS);
+  }
+
+  /**
+   * The same axis read against a different binding.
+   *
+   * ARENA uses this to narrow movement to WASD while a rhythm encounter is
+   * reading the arrow keys. Nothing is stored: the mode chooses a map per
+   * frame, so the moment the encounter ends the full binding is back with no
+   * state to unwind.
+   */
+  axisFrom(keys: AxisKeys): { x: number; y: number } {
+    const x = (this.isDown(...keys.right) ? 1 : 0) - (this.isDown(...keys.left) ? 1 : 0);
+    const y = (this.isDown(...keys.down) ? 1 : 0) - (this.isDown(...keys.up) ? 1 : 0);
     return { x, y };
   }
 }

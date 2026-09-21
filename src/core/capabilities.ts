@@ -15,6 +15,7 @@
 import { DIRECTION8, type Direction8 } from './direction8';
 import type { Rect } from './geometry';
 import type { RuntimeMechanic } from './Mechanic';
+import type { Renderer } from './Renderer';
 
 // --------------------------------------------------------------------------
 // Timed input (VERTICAL, RADIAL)
@@ -134,21 +135,184 @@ export interface BouncePad {
 }
 
 /**
+ * A solid block the player can stand on. `top` is the standable surface for
+ * FLOOR platforms (its upper face); `bottom` is the standable surface for
+ * CEILING platforms (the underside it hangs from).
+ *
+ * Both faces are world y, always, whichever surface the block belongs to. That
+ * is what lets a *floating* block exist: a walkway whose `top` is high above the
+ * floor has a `bottom` that is not on the floor line, so it can be stood on
+ * *and* can stop a rising jump. The old model -- one face derived from a
+ * surface tag -- could not express that, which is why RUNNER had no corridors.
+ */
+export interface Platform {
+  x0: number;
+  x1: number;
+  top: number;
+  bottom: number;
+}
+
+/**
  * RUNNER mechanics that change the world rather than (or as well as) damaging
  * the player. Every member is optional; the mode asks for what it needs.
  */
 export interface RunnerTerrain {
   /** Ground removed while this mechanic is in range. */
   groundGap?(): GroundGap | null;
+  /** Several holes at once. Preferred over `groundGap()` when present. */
+  groundGaps?(): GroundGap[];
   /** Launch pad the player bounces off on contact. */
   bouncePad?(): BouncePad | null;
+  /** Several pads at once. Preferred over `bouncePad()` when present. */
+  bouncePads?(): BouncePad[];
   /** Gravity multiplier applied while ACTIVE (e.g. -1 for a flip). */
   gravityScale?(): number | null;
+  /** A platform to jump onto / run off (R04). */
+  platform?(): Platform | null;
+  /**
+   * Several platforms at once, for terrain that is a *course* rather than one
+   * obstacle -- a staircase, a corridor, a ceiling route. Preferred over
+   * `platform()` when present; the mode reads whichever exists.
+   */
+  platforms?(): Platform[];
+  /**
+   * Which running surface this mechanic currently belongs to.
+   *
+   * Legacy obstacles answer this from a `surface` param, because each one is
+   * pinned to one surface forever. A course mechanic spans both -- it owns the
+   * flip -- so it answers from its own timeline instead. When absent, the mode
+   * falls back to the `surface` param, which is what every existing mechanic
+   * does.
+   */
+  activeSurface?(): TrackSurfaceLike;
 }
+
+/** `'FLOOR' | 'CEILING'`, mirrored here so core does not import from mechanics. */
+export type TrackSurfaceLike = 'FLOOR' | 'CEILING';
 
 export function hasTerrain(m: RuntimeMechanic): m is RuntimeMechanic & RunnerTerrain {
   const t = m as Partial<RunnerTerrain>;
   return typeof t.groundGap === 'function'
+    || typeof t.groundGaps === 'function'
     || typeof t.bouncePad === 'function'
-    || typeof t.gravityScale === 'function';
+    || typeof t.bouncePads === 'function'
+    || typeof t.gravityScale === 'function'
+    || typeof t.platform === 'function'
+    || typeof t.platforms === 'function';
+}
+
+/**
+ * Every solid block a terrain mechanic is currently contributing.
+ *
+ * The singular/plural pairs exist because the two shapes of mechanic differ:
+ * a legacy obstacle is one thing pinned to one surface, while a course is a
+ * whole stretch of level and contributes many at once. Modes read through
+ * these helpers so neither has to know which kind it is talking to.
+ */
+export function platformsOf(m: RuntimeMechanic): Platform[] {
+  const t = m as Partial<RunnerTerrain>;
+  if (typeof t.platforms === 'function') return t.platforms() ?? [];
+  if (typeof t.platform === 'function') {
+    const one = t.platform();
+    return one ? [one] : [];
+  }
+  return [];
+}
+
+/** Every hole in the running surface a terrain mechanic is contributing. */
+export function gapsOf(m: RuntimeMechanic): GroundGap[] {
+  const t = m as Partial<RunnerTerrain>;
+  if (typeof t.groundGaps === 'function') return t.groundGaps() ?? [];
+  if (typeof t.groundGap === 'function') {
+    const one = t.groundGap();
+    return one ? [one] : [];
+  }
+  return [];
+}
+
+/** Every launch pad a terrain mechanic is contributing. */
+export function padsOf(m: RuntimeMechanic): BouncePad[] {
+  const t = m as Partial<RunnerTerrain>;
+  if (typeof t.bouncePads === 'function') return t.bouncePads() ?? [];
+  if (typeof t.bouncePad === 'function') {
+    const one = t.bouncePad();
+    return one ? [one] : [];
+  }
+  return [];
+}
+
+/**
+ * Which surface a mechanic belongs to, given the player's current gravity.
+ *
+ * A course mechanic spans both surfaces and answers for itself; every other
+ * terrain mechanic is pinned by its `surface` param, which is what the mode
+ * reads through `surfaceOf` in the mechanics layer. The fallback lives here so
+ * core keeps its one-way dependency on mechanics.
+ */
+export function surfaceFor(
+  m: RuntimeMechanic,
+  fallback: TrackSurfaceLike,
+): TrackSurfaceLike {
+  const t = m as Partial<RunnerTerrain>;
+  return typeof t.activeSurface === 'function' ? t.activeSurface() : fallback;
+}
+
+// --------------------------------------------------------------------------
+// Sequence encounters (ARENA)
+// --------------------------------------------------------------------------
+
+/**
+ * A mechanic that borrows the player's controls for a scripted musical moment.
+ *
+ * ARENA is a dodge mode: the avatar is steered, never *played*. A12 Rhythm
+ * Breakout breaks that for the length of one encounter -- the player is sealed
+ * in and has to perform a short rhythm phrase to get out -- and this is the
+ * narrow surface that makes it possible without ARENA growing a second input
+ * system or the mechanic learning what a mode is.
+ *
+ * The mode does three things with it, all of them per-frame and stateless, so
+ * an encounter that ends (or dies mid-flight) can never leave the controls in
+ * a strange state:
+ *
+ *   1. asks whether the encounter currently wants directional input,
+ *   2. forwards the presses it wants, and scales movement while it does,
+ *   3. draws the encounter's UI *above* the avatar, which ordinary mechanic
+ *      rendering cannot do because it happens underneath.
+ */
+/** One scored moment of an encounter, drained by the mode into the run's stats. */
+export type SequenceVerdict = 'PERFECT' | 'GOOD' | 'MISS';
+
+export interface SequenceEncounter {
+  /**
+   * True while directional keys belong to the encounter rather than to
+   * movement. False before it starts and after it resolves, so the mode's
+   * control context follows the encounter's own timeline.
+   */
+  capturesInput(beat: number): boolean;
+  /** 0..1 multiplier on walking speed right now. 1 when nothing is happening. */
+  movementScale(beat: number): number;
+  /** A cardinal direction was entered on this frame. */
+  pressDirection(direction: Direction8, beat: number): void;
+  /** The confirm key was pressed on this frame. */
+  pressConfirm(beat: number): void;
+  /** Where the body this encounter is wrapped around currently is. */
+  focusOn(x: number, y: number): void;
+  /** Drawn after the avatar. Everything else goes through `render`. */
+  renderOverlay(r: Renderer, beat: number): void;
+  /**
+   * Verdicts scored since the last call, and clear them.
+   *
+   * The encounter judges its own phrase -- it owns the windows -- but the
+   * *run* owns the tally, so the notes land in RunStatus through the mode like
+   * every other scored input in the game. Drained rather than pushed so the
+   * mechanic never holds a reference to anything outside itself.
+   */
+  drainJudgements(): SequenceVerdict[];
+  /** Short HUD string: how the encounter is going. */
+  readonly encounterLabel: string;
+}
+
+export function isSequenceEncounter(m: RuntimeMechanic): m is RuntimeMechanic & SequenceEncounter {
+  return typeof (m as Partial<SequenceEncounter>).capturesInput === 'function'
+    && typeof (m as Partial<SequenceEncounter>).pressDirection === 'function';
 }

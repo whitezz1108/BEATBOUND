@@ -1,15 +1,30 @@
 /**
- * RUNNER feasibility check: is every obstacle in every RUNNER pattern
- * physically clearable by a perfect player?
+ * RUNNER feasibility check.
  *
- * The runner is the one mode where a pattern can be *impossible* rather than
- * merely hard, because two obstacles can demand contradictory states -- be
- * airborne here, be sliding on the ground 0.13 units later -- and no amount of
- * skill resolves that. This computes the windows analytically from the same
- * constants the mechanics use.
+ * Two questions, one tool (spec §29/§30 -- extend, do not duplicate):
  *
- * Model
- * -----
+ *   1. **Patterns.** Is every obstacle in every RUNNER *pattern* physically
+ *      clearable by a perfect player? The runner is the one mode where a
+ *      pattern can be *impossible* rather than merely hard, because two
+ *      obstacles can demand contradictory states -- be airborne here, be sliding
+ *      on the ground 0.13 units later -- and no amount of skill resolves that.
+ *      This computes the windows analytically from the same constants the
+ *      mechanics use.
+ *
+ *   2. **Courses.** Is every authored RUNNER *course* both flyable and
+ *      well-shaped? A course is planned as a trajectory, so it can be checked
+ *      the way it was built: fly it with the real physics
+ *      (`traversalSim.ts`) and audit its structure (`courseAudit.ts`). Both
+ *      read `runnerPhysics.ts`, so neither can disagree with the planner about
+ *      what a jump is.
+ *
+ * The two halves answer genuinely different questions. A pattern is a fixed
+ * arrangement of hazards with no notion of a route; a course *is* a route, and
+ * the interesting failure is not "can this be dodged" but "does the route the
+ * designer intended actually exist in the geometry".
+ *
+ * ## Pattern model
+ *
  * The track scrolls at UNITS_PER_BEAT, so an obstacle's horizontal extent is a
  * window in beats:
  *
@@ -33,12 +48,23 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { LevelLoader } from '../src/core/LevelLoader';
+import { LevelLoader, type CompiledLevel } from '../src/core/LevelLoader';
 import { UNITS_PER_BEAT } from '../src/mechanics/runner/runnerGeometry';
-import { SPIKE_BASE_HEIGHT, SPIKE_WIDTH } from '../src/mechanics/runner/SpikeMechanic';
+import { SPIKE_BASE_HEIGHT, SPIKE_INTENSITY_SCALE, SPIKE_WIDTH } from '../src/mechanics/runner/SpikeMechanic';
 import { WALL_WIDTH, WALL_CLEARANCE_SCALE } from '../src/mechanics/runner/LowWallMechanic';
-import { GAP_BASE_WIDTH } from '../src/mechanics/runner/GapMechanic';
+import { GAP_BASE_WIDTH, GAP_MAX_WIDTH } from '../src/mechanics/runner/GapMechanic';
+import {
+  FACE_DEPTH as PLATFORM_FACE_DEPTH,
+  MAX_HEIGHT as PLATFORM_MAX_HEIGHT,
+  PLATFORM_BASE_WIDTH,
+} from '../src/mechanics/runner/PlatformMechanic';
 import { PLAYER_WIDTH, SLIDING_HEIGHT, STANDING_HEIGHT } from '../src/modes/runner/RunnerPlayer';
+import { auditCourse } from '../src/mechanics/runner/courseAudit';
+import { buildCourseWorld } from '../src/mechanics/runner/courseWorld';
+import { composeCourse, planCourse } from '../src/mechanics/runner/runnerPlanner';
+import { courseWorldFor } from '../src/mechanics/runner/courseSchedule';
+import { simulateCourse } from '../src/mechanics/runner/traversalSim';
+import { describeZones } from '../src/mechanics/runner/verticalZones';
 import { TUNING } from '../src/tuning';
 import { DATA } from '../src/config';
 import { clamp, lerp } from '../src/core/geometry';
@@ -85,8 +111,13 @@ function describe(mechanicId: string, params: Record<string, unknown>, intensity
 
   switch (mechanicId) {
     case 'R01': {
+      // The scale factor here must be the one `SpikeMechanic` actually uses.
+      // It was 1.3 against the mechanic's 1.15, so the checker was modelling a
+      // taller spike than the game builds and reporting windows that were
+      // narrower than the player will ever meet. A checker that disagrees with
+      // the thing it checks is worse than no checker.
       const height = clamp(
-        SPIKE_BASE_HEIGHT * numberOr(params.height, 1) * lerp(1, 1.3, intensity), 0.04, 0.16,
+        SPIKE_BASE_HEIGHT * numberOr(params.height, 1) * lerp(1, SPIKE_INTENSITY_SCALE, intensity), 0.04, 0.16,
       );
       // Body centre must clear the spike tip by the probe radius.
       const clearHeight = height - (STANDING_HEIGHT / 2 - PROBE_RADIUS);
@@ -102,8 +133,22 @@ function describe(mechanicId: string, params: Record<string, unknown>, intensity
       return { mechanicId, beat, requirement: 'SLIDE', half: halfOf(WALL_WIDTH), clearHeight: 0, surface };
     }
     case 'R02': {
-      const width = clamp(GAP_BASE_WIDTH * numberOr(params.width, 1) * lerp(1, 1.25, intensity), 0.06, 0.22);
+      const width = clamp(GAP_BASE_WIDTH * numberOr(params.width, 1) * lerp(1, 1.25, intensity), 0.06, GAP_MAX_WIDTH);
       return { mechanicId, beat, requirement: 'AIRBORNE', half: halfOf(width), clearHeight: 0.02, surface };
+    }
+    case 'R04': {
+      // Only the front face damages: jump over it and the block becomes terrain.
+      // A platform at or below the step-up height is walked onto, so it is not
+      // an obstacle at all -- the runner resolves it as a step.
+      const height = clamp(numberOr(params.height, 0.12), 0.02, PLATFORM_MAX_HEIGHT);
+      if (height <= TUNING.runner.stepUpHeight) return null;
+      const clearHeight = height - (STANDING_HEIGHT / 2 - PROBE_RADIUS);
+      // The face sits on the LEADING edge, so it reaches the player half a
+      // block later than the obstacle's own beat. A spike is centred on its
+      // beat; a platform is not, and pretending otherwise would misplace it.
+      const width = clamp(numberOr(params.width, 1), 0.5, 2.5) * PLATFORM_BASE_WIDTH;
+      const faceBeat = beat + (width / 2 - PLATFORM_FACE_DEPTH / 2) / UNITS_PER_BEAT;
+      return { mechanicId, beat: faceBeat, requirement: 'JUMP', half: halfOf(PLATFORM_FACE_DEPTH), clearHeight: Math.max(0.001, clearHeight), surface };
     }
     case 'R08':
     case 'R09':
@@ -218,6 +263,94 @@ function analyse(patternId: string, obstacles: Obstacle[], intensity: number): F
 
 let loader: LevelLoader;
 
+/**
+ * Every level in the library, for the course half of the report.
+ *
+ * The index is read rather than a list being hardcoded here, so a new level is
+ * checked the moment it is added -- which is the only way a check stays run.
+ */
+function levelFiles(): string[] {
+  const index = JSON.parse(readFileSync(resolve(LIBRARY_DIR, 'levels.index.json'), 'utf8')) as {
+    levels: Array<{ file: string }>;
+  };
+  return index.levels.map((entry) => entry.file);
+}
+
+/** Fly and audit every course in a level. Returns the issue count. */
+async function checkCourses(files: string[]): Promise<{ fatal: number; warnings: number }> {
+  let fatal = 0;
+  let warnings = 0;
+  let courses = 0;
+  const rows: string[] = [];
+
+  for (const file of files) {
+    let level: CompiledLevel;
+    try {
+      level = await loader.load({
+        levelUrl: `/${file}`,
+        patternsUrl: DATA.patterns,
+        mechanicsUrl: DATA.mechanics,
+      });
+    } catch (error) {
+      rows.push(`  ${file.padEnd(46)}LOAD FAILED: ${(error as Error).message.split('\n')[0]}`);
+      fatal += 1;
+      continue;
+    }
+    for (const section of level.sections) {
+      if (!section.course) continue;
+      courses += 1;
+      const { trajectory } = section.course;
+      const world = courseWorldFor(section.course);
+      const bpm = level.song.bpm;
+
+      const flight = simulateCourse(world, trajectory, { bpm });
+      const audit = auditCourse(world, trajectory);
+      const metrics = flight.metrics;
+
+      const problems = [
+        ...flight.issues.map((i) => `FLIGHT ${i.kind} @${i.beat.toFixed(2)} ${i.detail}`),
+        ...audit.issues.map((i) => `SHAPE  ${i.kind} @${i.beat.toFixed(2)} ${i.detail}`),
+      ];
+      fatal += flight.issues.length + audit.issues.length;
+
+      const verdict = problems.length === 0 ? 'ok' : `${problems.length} issue(s)`;
+      // Padded to a width the longest library name fits in, with a gap: a name
+      // longer than the constant used to push the verdict into the label with no
+      // space at all ("... / R-Tok"), which reads as part of the section id.
+      rows.push(`  ${`${file} / ${section.id}`.padEnd(52)}${verdict}`);
+      for (const problem of problems) rows.push(`      ${problem}`);
+      rows.push(
+        `      metrics: ${metrics.jumps} jumps (${metrics.jumpsPerBar.toFixed(2)}/bar) · `
+        + `${metrics.airborneRatio.toFixed(2)} airborne · v-range ${metrics.verticalRange.toFixed(3)} · `
+        + `${metrics.gravityStateChanges} flip(s) · max flat ${metrics.maxFlatRunBeats.toFixed(1)} beats · `
+        + `${metrics.phrases} phrase(s) · motif repeat ${(metrics.motifRepeatRate * 100).toFixed(0)}% · `
+        + `hazards/bar ${metrics.hazardDensity.toFixed(2)} · structure/bar ${metrics.structuralDensity.toFixed(2)}`,
+      );
+      if (metrics.maxEmptyScreenBeats > 0) {
+        warnings += 1;
+        rows.push(`      NOTE   longest empty stretch ${metrics.maxEmptyScreenBeats.toFixed(2)} beats`);
+      }
+      rows.push(
+        `      zones: ${describeZones(metrics.zones)}  (dominant ${metrics.zones.dominant}, `
+        + `${metrics.zones.zonesUsed}/5 used, bottom-heavy ${(metrics.zones.bottomHeavyRatio * 100).toFixed(0)}%)`,
+      );
+    }
+  }
+
+  console.log(`\nRUNNER courses -- can the intended route actually be flown?\n`);
+  if (courses === 0) {
+    console.log('  (no section in the library declares a course)\n');
+    return { fatal, warnings };
+  }
+  for (const row of rows) console.log(row);
+  console.log(
+    fatal === 0
+      ? `\n${courses} course(s) fly as planned.\n`
+      : `\n${fatal} problem(s) across ${courses} course(s).\n`,
+  );
+  return { fatal, warnings };
+}
+
 async function main(): Promise<void> {
   loader = new LevelLoader();
   await loader.loadLibraries(DATA.patterns, DATA.mechanics);
@@ -280,7 +413,105 @@ async function main(): Promise<void> {
       ? `\nEvery RUNNER pattern is clearable${tight > 0 ? ` (${tight} tight window(s) -- playable but demanding)` : ''}.\n`
       : `\n${impossible} impossible obstacle(s) across the RUNNER library.\n`,
   );
-  process.exit(impossible === 0 ? 0 : 1);
+
+  const courses = await checkCourses(levelFiles());
+  const procedural = checkProcedural();
+  process.exit(impossible === 0 && courses.fatal === 0 && procedural.fatal === 0 ? 0 : 1);
+}
+
+/**
+ * Seeded composition, validated at multiple tempos (spec §52, §67).
+ *
+ * The authored library proves the planner on handcrafted courses; this block
+ * proves the *composer* on generated ones. Every course here goes through the
+ * same `planCourse` -> world -> flight-sim -> audit pipeline the library
+ * levels use -- there is no second, looser path for procedural content. The
+ * tempos are representative slow / medium / high values; the physics is
+ * beat-based, so what this proves is that nothing downstream of the beat
+ * (scheduling, telegraph beats, scroll speed assumptions) silently assumes
+ * one tempo.
+ *
+ * §67 also asks that seeds differ *meaningfully* while staying valid, so the
+ * archetype sequences are compared across seeds and every course is held to
+ * the same flight/audit bar. Determinism is checked by composing twice.
+ */
+function checkProcedural(): { fatal: number } {
+  const bpms = [90, 120, 150];
+  const seeds = [1, 7, 13];
+  const beats = 64;
+  let fatal = 0;
+  let courses = 0;
+  const rows: string[] = [];
+  const archetypeSequences = new Map<number, string>();
+
+  for (const bpm of bpms) {
+    for (const seed of seeds) {
+      courses += 1;
+      const problems: string[] = [];
+      const spec = composeCourse({ beats, seed, intensity: 0.6 });
+      // §46: same seed, same course. A composer that drifted would make every
+      // other claim here unreproducible.
+      const again = composeCourse({ beats, seed, intensity: 0.6 });
+      if (JSON.stringify(spec) !== JSON.stringify(again)) {
+        problems.push('DETERMINISM composing twice with one seed produced different phrase lists');
+      }
+      archetypeSequences.set(seed, spec.phrases.map((p) => p.archetype).join(','));
+
+      const trajectory = planCourse(spec, { startBeat: 0 });
+      const world = buildCourseWorld(trajectory);
+      const flight = simulateCourse(world, trajectory, { bpm });
+      const audit = auditCourse(world, trajectory);
+      problems.push(
+        ...flight.issues.map((i) => `FLIGHT ${i.kind} @${i.beat.toFixed(2)} ${i.detail}`),
+        ...audit.issues.map((i) => `SHAPE  ${i.kind} @${i.beat.toFixed(2)} ${i.detail}`),
+      );
+
+      // The contiguity invariant, checked directly: the sim proves the course
+      // is *flyable*, this proves the trajectory is still the connected path
+      // everything downstream trusts.
+      for (const phrase of trajectory.phrases) {
+        for (let i = 0; i + 1 < phrase.segments.length; i++) {
+          const a = phrase.segments[i];
+          const b = phrase.segments[i + 1];
+          const flip = a.flipAt !== undefined || b.flipAt !== undefined;
+          const beatOk = Math.abs(a.startBeat + a.beats - b.startBeat) < 1e-6;
+          const yOk = flip || Math.abs(a.endFeetY - b.startFeetY) < 1e-6;
+          if (!beatOk || !yOk) {
+            problems.push(`CONTIGUITY @${b.startBeat.toFixed(2)} ${a.verb}->${b.verb}`);
+            break;
+          }
+        }
+      }
+
+      const m = flight.metrics;
+      fatal += problems.length;
+      const verdict = problems.length === 0 ? 'ok' : `${problems.length} issue(s)`;
+      rows.push(
+        `  ${`${bpm} BPM`.padEnd(8)}seed ${String(seed).padEnd(3)}${verdict}`
+        + `   ${m.jumps} jumps · ${(m.airborneRatio * 100).toFixed(0)}% airborne · `
+        + `${m.gravityStateChanges} flip(s) · ${m.zones.zonesUsed}/5 zones · `
+        + `bottom-heavy ${(m.zones.bottomHeavyRatio * 100).toFixed(0)}% · `
+        + `${m.phrases} phrase(s), motif repeat ${(m.motifRepeatRate * 100).toFixed(0)}%`,
+      );
+      for (const problem of problems) rows.push(`        ${problem}`);
+    }
+  }
+
+  // §67: no seed may be a rerun of another. One shared archetype sequence
+  // across seeds would mean the composer's randomness selects nothing.
+  const distinct = new Set(archetypeSequences.values()).size;
+  console.log(`\nRUNNER procedural -- seeded composition at three tempos (spec §52, §67)\n`);
+  for (const row of rows) console.log(row);
+  if (distinct < archetypeSequences.size) {
+    fatal += 1;
+    console.log(`  SEED VARIETY ${archetypeSequences.size} seeds produced ${distinct} distinct archetype sequence(s)`);
+  }
+  console.log(
+    distinct === archetypeSequences.size && fatal === 0
+      ? `\nEvery seeded course flies as planned, and the seeds compose differently.\n`
+      : `\n${fatal} procedural problem(s) across ${courses} seeded course(s).\n`,
+  );
+  return { fatal };
 }
 
 void main();

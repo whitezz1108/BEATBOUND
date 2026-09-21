@@ -3,29 +3,52 @@
  *
  * The player is pinned at a fixed x while the track scrolls past, so an
  * obstacle scheduled on a beat arrives exactly on that beat. Jump and slide are
- * the whole vocabulary; the mode resolves them against generic hazard shapes
- * plus the RunnerTerrain capability (gaps, pads, gravity), never against
+ * the input vocabulary; the mode resolves them against generic hazard shapes
+ * plus the RunnerTerrain capability (gaps, pads, slabs, gravity), never against
  * specific mechanic ids.
+ *
+ * ## Terrain is geometry, not a surface tag
+ *
+ * Every terrain mechanic reports a solid block as a `Platform`: the x range it
+ * occupies and the world y of its two faces. From that the mode derives, for the
+ * gravity it is currently under:
+ *
+ *   - the *support* -- the highest face at or below the feet, which is what the
+ *     player stands on and lands on;
+ *   - the *blocker* -- the lowest face above the head, which is what stops a
+ *     rising jump.
+ *
+ * A block anchored to the floor has its lower face on the floor line, so it can
+ * never block; a block anchored to the ceiling has its upper face on the ceiling
+ * line and can never support. A *floating* block does both, which is what makes
+ * a corridor (a raised walkway with a slab over it) expressible at all.
+ *
+ * Because support and blocker are read from the same two numbers, a level can
+ * never disagree with itself about whether something is standable or solid.
  *
  * The presentation exists to sell speed and to keep the *running surface*
  * obvious at all times -- especially through a gravity inversion, where the
  * player needs to know within a frame which way is down.
  */
 
-import { hasTerrain } from '../../core/capabilities';
+import { gapsOf, hasTerrain, padsOf, platformsOf, surfaceFor, type Platform } from '../../core/capabilities';
 import { circleIntersectsShape, clamp, type Circle } from '../../core/geometry';
+import { RUNNER_FLIP_KEYS, RUNNER_JUMP_KEYS, RUNNER_SLIDE_KEYS } from '../../core/controls';
 import type { MechanicUpdate, RuntimeMechanic } from '../../core/Mechanic';
 import type { Renderer } from '../../core/Renderer';
 import type { SpawnedMechanicInfo } from '../../core/PatternScheduler';
 import type { GameMode } from '../../core/types';
 import { CEILING_Y, GROUND_Y, PLAYER_X, UNITS_PER_BEAT } from '../../mechanics/runner/runnerGeometry';
-import { surfaceForGravity, surfaceOf } from '../../mechanics/runner/surface';
+import { BODY_HEIGHT, beatsToUnits } from '../../mechanics/runner/runnerPhysics';
+import { resolveProbe, xOverGap, type TerrainProbe } from '../../mechanics/runner/terrainProbe';
+import { surfaceForGravity, surfaceOf, type TrackSurface } from '../../mechanics/runner/surface';
 import { TUNING } from '../../tuning';
 import type { GameplayMode, ModeContext } from '../GameplayMode';
 import { RunnerPlayer } from './RunnerPlayer';
+import { renderRunnerDebug, type DebugPhrase } from './RunnerDebug';
 
-const JUMP_KEYS = ['w', 'arrowup', ' '];
-const SLIDE_KEYS = ['s', 'arrowdown'];
+/** How close the feet must be to a pad's face for it to fire. */
+const PAD_CAPTURE = 0.03;
 
 export class RunnerMode implements GameplayMode {
   readonly mode: GameMode = 'RUNNER';
@@ -34,7 +57,22 @@ export class RunnerMode implements GameplayMode {
   private lastHitBeat = -Infinity;
   private lastPatternId = '-';
   private gravityDirection = 1;
+  /**
+   * The player's own inversion, set by the flip key while grounded.
+   * Multiplies the course's gravity, so a manual flip mirrors whichever
+   * route the course is currently playing -- and the next authored flip
+   * flips both together. The other base line is solid wherever the level
+   * has no hole, so a manual flip is safe exactly as often as it looks.
+   */
+  private manualFlip = false;
   private jumps = 0;
+  /** Last probe handed to the player, kept for the debug view. */
+  private probe: TerrainProbe = { support: GROUND_Y, blocker: null };
+  private debug = false;
+  /** Rolling record of where the player actually was, for the debug view. */
+  private readonly breadcrumbs: Array<{ x: number; y: number }> = [];
+  /** Last phrase the course reported, for the debug view (spec §63). */
+  private phrase: DebugPhrase | null = null;
 
   constructor(private readonly ctx: ModeContext) {}
 
@@ -42,6 +80,8 @@ export class RunnerMode implements GameplayMode {
     this.player.reset();
     this.mechanics = [];
     this.gravityDirection = 1;
+    this.manualFlip = false;
+    this.breadcrumbs.length = 0;
   }
 
   deactivate(_atBeat: number): void {
@@ -58,11 +98,23 @@ export class RunnerMode implements GameplayMode {
   }
 
   update(u: MechanicUpdate): void {
+    if (this.ctx.input.wasPressed('`')) this.debug = !this.debug;
+
     for (const m of this.mechanics) m.update(u);
 
-    const nextGravity = this.currentGravityDirection();
+    const alive = this.ctx.status.outcome === 'PLAYING';
+    // A manual flip is chosen on the ground, mid-run: the GD-ball read. It
+    // toggles which side of the field the player is riding; the course's own
+    // flip timeline keeps running underneath and flips both sides together.
+    if (alive && this.player.isGrounded && this.ctx.input.wasPressed(...RUNNER_FLIP_KEYS)) {
+      this.manualFlip = !this.manualFlip;
+    }
+    const courseGravity = this.currentGravityDirection();
+    const nextGravity = courseGravity * (this.manualFlip ? -1 : 1);
     if (nextGravity !== this.gravityDirection) {
       // The flip itself is the event, not the zone: one heavy cue, no pause.
+      // It fires for the course's authored flips and for the player's own
+      // manual flip alike -- the world inverting is the world inverting.
       const body = this.player.body;
       this.ctx.feel.impact('HEAVY', {
         x: body.x + body.w / 2, y: body.y + body.h / 2,
@@ -74,19 +126,21 @@ export class RunnerMode implements GameplayMode {
       });
       this.gravityDirection = nextGravity;
     }
-
-    const alive = this.ctx.status.outcome === 'PLAYING';
-    const hasFloor = !this.isOverGap();
+    this.probe = this.resolveTerrain();
+    this.phrase = this.currentPhrase();
+    // A live ring arms one mid-air jump; the second press is still the
+    // player's. Armed mid-air only, disarmed on landing and on flips.
+    if (alive && !this.player.isGrounded && this.airJumpLive()) this.player.armAirJump();
     const step = this.player.update(
       u.deltaSeconds,
       u.secondsPerBeat,
       {
-        jumpPressed: alive && this.ctx.input.wasPressed(...JUMP_KEYS),
-        jumpHeld: alive && this.ctx.input.isDown(...JUMP_KEYS),
-        slide: alive && this.ctx.input.isDown(...SLIDE_KEYS),
+        jumpPressed: alive && this.ctx.input.wasPressed(...RUNNER_JUMP_KEYS),
+        jumpHeld: alive && this.ctx.input.isDown(...RUNNER_JUMP_KEYS),
+        slide: alive && this.ctx.input.isDown(...RUNNER_SLIDE_KEYS),
       },
       this.gravityDirection,
-      hasFloor,
+      this.probe,
     );
 
     if (step.jumped) {
@@ -107,6 +161,15 @@ export class RunnerMode implements GameplayMode {
         direction: this.gravityDirection > 0 ? -Math.PI / 2 : Math.PI / 2, spread: Math.PI * 0.8,
       });
     }
+    if (step.bonked) {
+      // A bonk is information, not damage: the corridor is tighter than the
+      // jump. A short click and a puff of dust sell it without punishing.
+      const body = this.player.body;
+      this.ctx.feel.emit(body.x + body.w / 2, body.y, {
+        count: 6, speed: 0.35, colour: '#9fb0d0', size: 0.005, life: 0.25, shape: 'spark',
+        direction: this.gravityDirection > 0 ? -Math.PI / 2 : Math.PI / 2, spread: Math.PI * 0.6,
+      });
+    }
 
     this.applyBouncePads(u.secondsPerBeat);
     if (alive) this.resolveCollisions(u);
@@ -114,6 +177,10 @@ export class RunnerMode implements GameplayMode {
     if (this.mechanics.some((m) => m.isFinished)) {
       this.mechanics = this.mechanics.filter((m) => !m.isFinished);
     }
+
+    const body = this.player.body;
+    this.breadcrumbs.push({ x: body.x + body.w / 2, y: body.y + body.h / 2 });
+    if (this.breadcrumbs.length > 180) this.breadcrumbs.shift();
   }
 
   /** Last active gravity mechanic wins; absent any, gravity is normal. */
@@ -126,29 +193,96 @@ export class RunnerMode implements GameplayMode {
     return 1;
   }
 
-  private isOverGap(): boolean {
-    const surface = surfaceForGravity(this.gravityDirection);
+  /**
+   * The phrase the course says is playing, for the debug view.
+   *
+   * Read off the mechanic that owns the phrase timeline rather than tracked
+   * here, so the mode still knows nothing about courses: a mechanic either
+   * answers the question or it does not.
+   */
+  private currentPhrase(): DebugPhrase | null {
     for (const m of this.mechanics) {
-      if (!hasTerrain(m) || surfaceOf(m) !== surface) continue;
-      const gap = m.groundGap?.() ?? null;
-      if (gap && PLAYER_X > gap.x0 && PLAYER_X < gap.x1) return true;
+      const owner = m as { phraseAt?: (beat: number) => DebugPhrase | null };
+      if (typeof owner.phraseAt !== 'function') continue;
+      const phrase = owner.phraseAt(this.ctx.clock.absoluteBeat);
+      if (phrase) return phrase;
+    }
+    return null;
+  }
+
+  /** True while the course has an air-jump ring live under the player. */
+  private airJumpLive(): boolean {
+    for (const m of this.mechanics) {
+      const owner = m as { airJumpLive?: (beat: number) => boolean };
+      if (typeof owner.airJumpLive !== 'function') continue;
+      if (owner.airJumpLive(this.ctx.clock.absoluteBeat)) return true;
     }
     return false;
   }
 
+  private isOverGap(surface: TrackSurface = surfaceForGravity(this.gravityDirection)): boolean {    for (const m of this.mechanics) {
+      if (!hasTerrain(m)) continue;
+      if (surfaceFor(m, surfaceOf(m)) !== surface) continue;
+      if (xOverGap(gapsOf(m), PLAYER_X)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Everything solid around the player right now.
+   *
+   * The work is done by `resolveProbe` in the mechanics layer, so the live mode
+   * and the traversal simulator resolve terrain with *the same code* rather than
+   * two implementations that have to be kept in step by hand (spec §8). All this
+   * does is gather the slabs on the player's current surface and hand them over.
+   */
+  private resolveTerrain(): TerrainProbe {
+    const gravityDown = this.gravityDirection > 0;
+    const surface = surfaceForGravity(this.gravityDirection);
+    const platforms: Platform[] = [];
+    for (const m of this.mechanics) {
+      if (!hasTerrain(m)) continue;
+      // A slab belongs to the surface the *mechanic* is on, which for a course
+      // is whatever its own flip timeline says right now.
+      if (surfaceFor(m, surfaceOf(m)) !== surface) continue;
+      for (const plat of platformsOf(m)) {
+        if (PLAYER_X < plat.x0 || PLAYER_X > plat.x1) continue;
+        platforms.push(plat);
+      }
+    }
+    return resolveProbe(platforms, {
+      gravityDown,
+      baseY: gravityDown ? GROUND_Y : CEILING_Y,
+      feet: this.player.feet,
+      head: this.player.head,
+      reach: this.player.isGrounded ? TUNING.runner.stepUpHeight : 0,
+      overGap: this.isOverGap(surface),
+    });
+  }
+
+  /**
+   * Pads fire on contact with the face they sit on, whichever surface that is.
+   * Reading the pad's own y rather than the base surface means a pad can sit on
+   * a platform -- which is how a chain climbs past a single jump's apex.
+   */
   private applyBouncePads(secondsPerBeat: number): void {
-    if (!this.player.isGrounded && this.player.height > 0.02) return;
+    const g = this.gravityDirection;
+    const gravityDown = g > 0;
+    const surface = surfaceForGravity(g);
+    const feet = this.player.feet;
     const body = this.player.body;
     for (const m of this.mechanics) {
       if (!hasTerrain(m)) continue;
-      const pad = m.bouncePad?.() ?? null;
-      if (!pad) continue;
-      const overlapsX = body.x < pad.rect.x + pad.rect.w && body.x + body.w > pad.rect.x;
-      if (overlapsX) {
+      if (surfaceFor(m, surfaceOf(m)) !== surface) continue;
+      for (const pad of padsOf(m)) {
+        const padFace = gravityDown ? pad.rect.y : pad.rect.y + pad.rect.h;
+        if (Math.abs(feet - padFace) > PAD_CAPTURE) continue;
+        const overlapsX = body.x < pad.rect.x + pad.rect.w && body.x + body.w > pad.rect.x;
+        if (!overlapsX) continue;
         this.player.launch(secondsPerBeat, pad.strength);
         this.ctx.feel.impact('MEDIUM', {
           x: pad.rect.x + pad.rect.w / 2, y: pad.rect.y,
-          dirX: 0, dirY: -1, colour: '#4dffd0', sfx: 'bounce',
+          dirX: 0, dirY: gravityDown ? -1 : 1, colour: '#4dffd0', sfx: 'bounce',
         });
         return;
       }
@@ -164,7 +298,7 @@ export class RunnerMode implements GameplayMode {
         this.ctx.feel.playerHit(PLAYER_X, this.player.surfaceY);
         this.ctx.feel.sfx('runner_fail');
       }
-      this.player.reset();
+      this.player.reset(this.gravityDirection > 0 ? GROUND_Y : CEILING_Y);
       return;
     }
 
@@ -178,7 +312,10 @@ export class RunnerMode implements GameplayMode {
     const surface = surfaceForGravity(this.gravityDirection);
     for (const m of this.mechanics) {
       // An obstacle on the surface the player is not attached to is scenery.
-      if (surfaceOf(m) !== surface) continue;
+      // A course declares its own live surface, so ask the mechanic rather than
+      // trusting a static `surface` param.
+      if (hasTerrain(m) && surfaceFor(m, surfaceOf(m)) !== surface) continue;
+      if (!hasTerrain(m) && surfaceOf(m) !== surface) continue;
       for (const shape of m.hazards()) {
         if (!circleIntersectsShape(probe, shape)) continue;
         if (this.ctx.status.damage(m.damageSource, u.songTime)) {
@@ -201,6 +338,21 @@ export class RunnerMode implements GameplayMode {
       for (const m of this.mechanics) m.render(r);
       this.renderSpeedStreaks(r, beat);
       this.player.render(r, this.ctx.status.isInvulnerable(this.ctx.clock.songTime), beat);
+      if (this.debug) {
+        renderRunnerDebug(r, {
+          probe: this.probe,
+          gravityDirection: this.gravityDirection,
+          player: this.player,
+          breadcrumbs: this.breadcrumbs,
+          beat,
+          beatsPerBar: this.ctx.clock.beatsPerBar,
+          mechanics: this.mechanics,
+          phrase: this.phrase?.label,
+          motif: this.phrase?.motif,
+          phraseIntensity: this.phrase?.intensity,
+          groundRatio: this.phrase?.groundRatio,
+        });
+      }
       const since = beat - this.lastHitBeat;
       if (since >= 0 && since <= 0.5) {
         r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, '#ff3355', 0.25 * (1 - since / 0.5));
@@ -248,6 +400,19 @@ export class RunnerMode implements GameplayMode {
 
     // The player's lane, so timing reads against a fixed reference.
     r.line(PLAYER_X, 0, PLAYER_X, 1, '#6de3ff', 1, 0.12);
+
+    // The reachable envelope: how high a jump from the current surface gets.
+    // This is the single most useful read in a platforming sequence -- it says
+    // "this is the highest thing you can land on from here" without a tutorial.
+    if (this.debug) {
+      const apex = this.probe.support === null
+        ? null
+        : this.probe.support - this.gravityDirection * (TUNING.runner.jumpHeight + BODY_HEIGHT);
+      if (apex !== null) {
+        r.line(0, apex, 1, apex, '#6de3ff', 1, 0.3);
+        r.text('jump apex', 0.99, apex - 0.022, '#6de3ff', 10, 'right', 0.5);
+      }
+    }
   }
 
   /** Horizontal streaks behind the player while airborne -- pure speed cue. */
@@ -268,7 +433,11 @@ export class RunnerMode implements GameplayMode {
   }
 
   get statusLine(): string {
-    const g = this.gravityDirection < 0 ? ' gravity:CEILING' : ' gravity:FLOOR';
-    return `RUNNER  obstacles:${this.mechanics.length}  jumps:${this.jumps}  last:${this.lastPatternId}${g}`;
+    const g = this.gravityDirection < 0 ? 'CEILING' : 'FLOOR';
+    const air = this.player.isGrounded ? 'ground' : 'air';
+    return `RUNNER  obstacles:${this.mechanics.length}  jumps:${this.jumps}  ${air}  gravity:${g}  last:${this.lastPatternId}`;
   }
 }
+
+/** Track units one beat of scroll covers -- re-exported for the debug view. */
+export const RUNNER_UNITS_PER_BEAT = beatsToUnits(1);

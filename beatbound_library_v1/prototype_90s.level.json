@@ -42,13 +42,13 @@
       "patterns": [
         {
           "patternId": "RP01",
-          "repeat": 4,
+          "repeat": 2,
           "intensity": 0.4
         },
         {
-          "patternId": "RP03",
-          "repeat": 4,
-          "intensity": 0.55
+          "patternId": "RP16",
+          "repeat": 3,
+          "intensity": 0.45
         }
       ],
       "transitionOut": "RUNNER_TO_RADIAL"
@@ -125,7 +125,7 @@
       "difficulty": 3,
       "patterns": [
         {
-          "patternId": "RP05",
+          "patternId": "RP18",
           "repeat": 3,
           "intensity": 0.8
         }

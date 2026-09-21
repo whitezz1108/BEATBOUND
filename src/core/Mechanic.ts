@@ -103,6 +103,31 @@ export abstract class BaseMechanic implements RuntimeMechanic {
   get activeEndBeat(): number { return this.activationBeat + this.timing.durationBeats; }
   get recoveryEndBeat(): number { return this.activeEndBeat + this.timing.recoveryBeats; }
 
+  /**
+   * Share of the telegraph spent in the *critical* stage -- the urgent tail
+   * where a hazard stops saying "somewhere around here" and starts saying "this
+   * exact spot, now".
+   *
+   * Opt-in and additive. The default of 0 leaves the phase machine exactly as it
+   * was, so no mechanic in any mode changes behaviour. A mechanic that overrides
+   * it gets a fourth visual stage without a new entry in `MechanicPhase`, and
+   * therefore without every other mode having to learn about one.
+   */
+  protected get criticalFraction(): number { return 0; }
+
+  /** Beat the warning turns urgent. Equals `activationBeat` when opted out. */
+  get criticalStartBeat(): number {
+    const fraction = Math.min(1, Math.max(0, this.criticalFraction));
+    return this.activationBeat - this.timing.telegraphBeats * fraction;
+  }
+
+  /** True once the telegraph has entered its urgent tail. */
+  get isCritical(): boolean {
+    return this._phase === 'TELEGRAPH'
+      && this.criticalFraction > 0
+      && this.spawn.clock.absoluteBeat >= this.criticalStartBeat;
+  }
+
   get phase(): MechanicPhase { return this._phase; }
   get isFinished(): boolean { return this._phase === 'FINISHED'; }
   get isDangerous(): boolean { return this._phase === 'ACTIVE'; }

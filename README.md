@@ -12,8 +12,10 @@ testing adding stuff
 npm install
 npm run dev          # open the printed localhost URL, click Start
 npm test             # typecheck + timing checks + camping audit
-npm run level        # bar-by-bar report of a level
+npm run level        # bar-by-bar report of a level, with reaction seconds
 npm run audit        # can any section be beaten standing still?
+npm run runner-check # is every RUNNER obstacle physically clearable?
+npm run fairness     # is every ARENA pattern readable, and can it be camped?
 npm run build        # typecheck + production bundle
 ```
 
@@ -43,7 +45,7 @@ than a shortcut.
 | --- | --- | --- |
 | ARENA | Top-down dodging | **WASD / arrows** move |
 | RUNNER | Auto-run rhythm platforming | **W / ↑ / space** jump (hold = higher), **S / ↓** slide |
-| VERTICAL | Four-lane falling notes | **D F J K** (or **1–4**) |
+| VERTICAL | Six-lane 3D-highway falling notes | **A S D J K L** |
 | RADIAL | Eight-direction notes | **arrows** or **WASD**; diagonals are two keys at once |
 | DUO | Two-player co-op | not implemented — no mechanics in the library yet |
 
@@ -80,8 +82,9 @@ prototype_90s.level.json    S05       2         0/1681       ok (must move)
 ```
 
 This is how the A05 chain and A03 projectile flaws were found and confirmed
-fixed. RUNNER, VERTICAL and RADIAL are skipped — you cannot stand still in them
-by construction.
+fixed — twice: the audit later caught a wall of projectiles that stopped 0.07
+short of the far edge, leaving a permanent safe band along it. RUNNER, VERTICAL
+and RADIAL are skipped — you cannot stand still in them by construction.
 
 `npm run runner-check` answers the RUNNER equivalent: **is every obstacle
 physically clearable?** The runner is the one mode where a pattern can be
@@ -91,16 +94,41 @@ a beat later. It derives each obstacle's danger window from the same constants
 the mechanics use, allows one jump to clear a group (a half-beat "double spike"
 is meant to be one jump), and reports the take-off slack in beats.
 
+It also models R04 platforms: only the leading face damages, so a platform is a
+JUMP obstacle whose top is terrain — a platform at or under the step-up height
+is walked onto and is not an obstacle at all.
+
 ```text
 jump 0.95 beats / 0.32 high · track 0.26 units per beat
-spike window 0.25 beats · wall window 0.42 beats
-  RP08  Half Beat Jumps       4 issue(s)
-    tight  @intensity 0.90  2 obstacles from beat 0.00 to 0.50: only a 0.091-beat take-off window
+spike window 0.21 beats · wall window 0.38 beats
+  RP18  Staircase Up          ok
+  RP21  Platform Leap         ok
 ```
 
 Anything under 0.10 beats of slack (50 ms at 120 BPM) is flagged as tight;
-negative slack fails the build. `npm test` runs the typecheck, the timing test,
-the camping audit and the runner check.
+negative slack fails the build.
+
+`npm run fairness` audits the ARENA library against the fairness system. Two
+questions, both in the player's units:
+
+- **Is every event readable?** Each event's warning — its telegraph plus the
+  hazard's travel at the section's tier — is compared with the seconds a perfect
+  player needs to reach safety. The mechanics clamp themselves against the same
+  helpers at construction, so this is the independent check that the clamps hold
+  across the whole library.
+- **Can the pattern be camped?** The same question `camp-audit` asks of levels,
+  asked of single patterns. Many ARENA patterns are *layer pieces* that only
+  cover part of the arena by design, so this one reports rather than fails;
+  `camp-audit` gates the composed levels, which is where the player meets them.
+
+```text
+reaction floor 0.60s · comfort 0.90s · player radius 0.014
+minimum gap 0.060 field units
+AP09    Rhythm Window       0.80  1.95s   0.60s   ok
+```
+
+`npm test` runs the typecheck, the timing test, the camping audit, the runner
+check and the fairness check.
 
 ```bash
 npm run level                                 # the default arena test level
@@ -223,11 +251,19 @@ radial and ambient values, plus the three polish presets.
 
 A mode change is a context switch — different controls, different camera,
 different read — and it is the one place the game can be unfair without any
-single hazard being unfair. So the last `TUNING.transition.breatherBeats` of a
-section before a mode change simply do not spawn. The pattern is not rewritten;
-its tail is held back, which gives the player a clear runway and a countdown
-banner naming what is arriving. The scene then wipes in the incoming mode's
-colour.
+single hazard being unfair. So the tail of a section before a mode change
+simply does not spawn. The pattern is not rewritten; its tail is held back,
+which gives the player a clear runway and a countdown banner naming what is
+arriving. The scene then wipes in the incoming mode's colour.
+
+Every countdown in the game is the same three seconds, whether it is the
+opening count-in or the mode-change breather. The window is expressed in
+*seconds* (`TUNING.transition.countdownSeconds`) and converted with
+`beatsForSeconds`, with the legacy beat count as a floor so a slow song cannot
+cut it short and a 4-beat floor so a bar-1 RUNNER pattern still gets the scroll
+lead it needs. The banner prints the next mode's real bindings, read from
+`src/core/controls.ts` — the same tables the modes import — so a rebind updates
+the gameplay and the on-screen hint together.
 
 `npm run test:timing` knows about breathers and does not count them as dead air.
 
@@ -235,13 +271,21 @@ colour.
 
 | Mode | Implemented |
 | --- | --- |
-| ARENA | A01 Floor Warning, A02 Safe Tile, A03 Projectile, **A04 Radial Burst**, A05 Chain, A06 Laser, **A07 Rotating Fan**, **A08 Spiral**, **A09 Wave Sweep**, **A10 Ring** |
-| RUNNER | R01 Spike, R02 Gap, R03 Low Wall, R08 Bounce Pad, R09 Gravity Flip |
+| ARENA | A01 Floor Warning, A02 Safe Tile, A03 Projectile, **A04 Rotating Radial Spray**, A05 Chain, A06 Laser, **A07 Rotating Fan**, **A08 Spiral**, **A09 Wave Sweep**, **A10 Ring** |
+| RUNNER | R01 Spike, R02 Gap, R03 Low Wall, **R04 Platform**, R08 Bounce Pad, R09 Gravity Flip |
 | VERTICAL | V01 Tap, V02 Hold, V03 Double, **V04 Drift Hold** |
 | RADIAL | D01 Single, D02 Opposite Double, D06 Clockwise — all across **eight** directions |
 
-All 22 mechanics and all 45 patterns have runtimes, and `npm test` fails if any
-pattern stops scheduling, spawning or retiring cleanly.
+All 23 mechanics and all 65 patterns (ARENA 20, RUNNER 25, VERTICAL 9, RADIAL 11)
+have runtimes, and `npm test` fails if any pattern stops scheduling, spawning or
+retiring cleanly.
+
+R04 Platform is the newest of these and the only one that changes the *shape* of
+the world rather than adding a hazard to it: a block's leading face damages, but
+clear it and the block's top becomes terrain the player can stand on, run along
+and step off. Blocks at or below `TUNING.runner.stepUpHeight` are walked onto
+without an input, so the library can use them as stairs. On the ceiling, in
+inverted gravity, the same block hangs down and is run along underneath.
 
 Directions live in `src/core/direction8.ts`: one table maps N/NE/E/SE/S/SW/W/NW
 to angles, vectors, glyphs, colours and the cardinal keys that enter them. The

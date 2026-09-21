@@ -18,8 +18,15 @@ import type { Renderer } from '../../core/Renderer';
 import { GROUND_Y } from './runnerGeometry';
 
 export const GAP_BASE_WIDTH = 0.13;
-/** Wider than this and a normal jump cannot clear it. */
-const MAX_WIDTH = 0.22;
+/**
+ * Wider than this and a normal jump cannot clear it.
+ *
+ * Exported because it is a *physical* limit rather than a tuning choice: it is
+ * what `maxGapWidth()` allows, and the offline checker has to be able to read
+ * the same number the mechanic clamps itself against instead of hardcoding a
+ * copy that silently drifts away from it.
+ */
+export const GAP_MAX_WIDTH = 0.22;
 
 export class GapMechanic extends ScrollingObstacle implements RunnerTerrain {
   override readonly damageSource = 'OBSTACLE' as const;
@@ -28,7 +35,7 @@ export class GapMechanic extends ScrollingObstacle implements RunnerTerrain {
 
   constructor(spawn: MechanicSpawnContext) {
     super(spawn);
-    this.width = clamp(GAP_BASE_WIDTH * numberOr(this.params.width, 1) * lerp(1, 1.25, this.intensity), 0.06, MAX_WIDTH);
+    this.width = clamp(GAP_BASE_WIDTH * numberOr(this.params.width, 1) * lerp(1, 1.25, this.intensity), 0.06, GAP_MAX_WIDTH);
   }
 
   groundGap(): GroundGap {

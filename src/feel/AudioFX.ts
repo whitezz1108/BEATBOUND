@@ -18,6 +18,7 @@ export type SfxName =
   | 'chain_rattle' | 'chain_whip' | 'chain_impact'
   | 'projectile_charge' | 'projectile_fire' | 'projectile_hit'
   | 'laser_charge' | 'laser_fire'
+  | 'seal_form' | 'seal_charge' | 'seal_break' | 'seal_shatter'
   | 'perfect_dodge' | 'player_hit'
   // Runner
   | 'jump' | 'land' | 'gravity_flip' | 'bounce' | 'runner_fail'
@@ -51,6 +52,13 @@ const CUES: Record<SfxName, Cue> = {
   projectile_hit: { voice: 'noise', freq: 1800, gain: 0.05, length: 0.08 },
   laser_charge: { voice: 'sweep', freq: 240, freq2: 1500, gain: 0.05, length: 0.3 },
   laser_fire: { voice: 'sweep', freq: 1500, freq2: 420, gain: 0.10, length: 0.18 },
+  // A12 Rhythm Breakout. The seal forms low and rises, charges toward the
+  // accent, breaks bright, and scatters as noise -- the four moments of the
+  // encounter, each distinguishable with the music playing over them.
+  seal_form: { voice: 'sweep', freq: 160, freq2: 520, gain: 0.08, length: 0.34 },
+  seal_charge: { voice: 'sweep', freq: 420, freq2: 1250, gain: 0.07, length: 0.26 },
+  seal_break: { voice: 'sweep', freq: 1700, freq2: 220, gain: 0.13, length: 0.32 },
+  seal_shatter: { voice: 'noise', freq: 3200, gain: 0.09, length: 0.26 },
   perfect_dodge: { voice: 'blip', freq: 1320, gain: 0.07, length: 0.10, type: 'sine' },
   player_hit: { voice: 'thump', freq: 180, freq2: 40, gain: 0.14, length: 0.26 },
 

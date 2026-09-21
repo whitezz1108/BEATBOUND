@@ -92,6 +92,25 @@ export class Renderer {
     c.restore();
   }
 
+  /**
+   * Run `draw` rotated by `angle` radians about the field point `(cx, cy)`.
+   *
+   * The callback still draws in ordinary field coordinates, so a rotated body
+   * is the same `fillRect` call wrapped, not a second coordinate system the
+   * caller has to reason about. Rotation is rare (a somersault, a spinning
+   * hazard), which is why it is a wrapper rather than a parameter on
+   * everything.
+   */
+  withRotation(cx: number, cy: number, angle: number, draw: () => void): void {
+    const c = this.ctx;
+    c.save();
+    c.translate(this.px(cx), this.py(cy));
+    c.rotate(angle);
+    c.translate(-this.px(cx), -this.py(cy));
+    draw();
+    c.restore();
+  }
+
   fillRect(r: Rect, style: string, alpha = 1): void {
     const c = this.ctx;
     c.save();
@@ -217,6 +236,24 @@ export class Renderer {
     c.moveTo(this.px(points[0].x), this.py(points[0].y));
     for (let i = 1; i < points.length; i++) c.lineTo(this.px(points[i].x), this.py(points[i].y));
     c.stroke();
+    c.restore();
+  }
+
+  /** Linear-gradient fill of a field-space rect, running top-to-bottom (or left-to-right). */
+  gradientRect(
+    r: Rect, stops: Array<[offset: number, colour: string]>, alpha = 1, horizontal = false,
+  ): void {
+    const c = this.ctx;
+    const x0 = this.px(r.x);
+    const y0 = this.py(r.y);
+    const x1 = horizontal ? this.px(r.x + r.w) : x0;
+    const y1 = horizontal ? y0 : this.py(r.y + r.h);
+    const gradient = c.createLinearGradient(x0, y0, x1, y1);
+    for (const [at, colour] of stops) gradient.addColorStop(at, colour);
+    c.save();
+    c.globalAlpha = this.a(alpha);
+    c.fillStyle = gradient;
+    c.fillRect(x0, y0, this.len(r.w), this.len(r.h));
     c.restore();
   }
 

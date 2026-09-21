@@ -26,6 +26,14 @@ export const SPIKE_BASE_HEIGHT = 0.09;
  * impossible -- see TUNING.runner.jumpBeats.
  */
 export const SPIKE_WIDTH = 0.024;
+/**
+ * How much taller a spike gets at full intensity.
+ *
+ * Exported so the offline checker scales height the same way the mechanic does.
+ * A checker with its own copy of this number is a checker that reports on a
+ * spike nobody will ever meet.
+ */
+export const SPIKE_INTENSITY_SCALE = 1.15;
 
 export class SpikeMechanic extends ScrollingObstacle {
   override readonly damageSource = 'OBSTACLE' as const;
@@ -41,7 +49,7 @@ export class SpikeMechanic extends ScrollingObstacle {
     // in a half-beat double that slice *is* the timing window. Scaling height
     // hard with intensity quietly turns a demanding pattern into a
     // frame-perfect one, so the range is deliberately small.
-    this.height = clamp(SPIKE_BASE_HEIGHT * numberOr(this.params.height, 1) * lerp(1, 1.15, this.intensity), 0.04, 0.16);
+    this.height = clamp(SPIKE_BASE_HEIGHT * numberOr(this.params.height, 1) * lerp(1, SPIKE_INTENSITY_SCALE, this.intensity), 0.04, 0.16);
   }
 
   private body(): Rect {

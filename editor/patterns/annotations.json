@@ -2,87 +2,626 @@
   "version": "1.0.0",
   "comment": "Curated editor metadata for the live pattern library. The generator merges this with beatbound_library_v1/patterns.mvp.json at runtime -- pattern ids, names, difficulties, lengths and events always come from the library (single source of truth); only the design vocabulary below lives here.",
   "meta": {
-    "energyBands": ["LOW", "MID", "HIGH", "PEAK"],
+    "energyBands": [
+      "LOW",
+      "MID",
+      "HIGH",
+      "PEAK"
+    ],
     "recoveryByMode": {
       "comment": "Patterns used for transition tails / recovery windows.",
-      "ARENA": ["AP01", "AP05"],
-      "RUNNER": ["RP01", "RP15"],
-      "VERTICAL": ["VP01", "VP02"],
-      "RADIAL": ["DP01", "DP03"]
+      "ARENA": [
+        "AP01",
+        "AP05"
+      ],
+      "RUNNER": [
+        "RP01",
+        "RP15",
+        "RP25"
+      ],
+      "VERTICAL": [
+        "VP01",
+        "VP02"
+      ],
+      "RADIAL": [
+        "DP01",
+        "DP03"
+      ]
     },
     "teachByMode": {
       "comment": "Patterns used for transition heads / control re-introduction.",
-      "ARENA": ["AP01", "AP05"],
-      "RUNNER": ["RP01", "RP02", "RP15"],
-      "VERTICAL": ["VP01", "VP02", "VP03"],
-      "RADIAL": ["DP01", "DP03"]
+      "ARENA": [
+        "AP01",
+        "AP05"
+      ],
+      "RUNNER": [
+        "RP01",
+        "RP02",
+        "RP15",
+        "RP16"
+      ],
+      "VERTICAL": [
+        "VP01",
+        "VP02",
+        "VP03"
+      ],
+      "RADIAL": [
+        "DP01",
+        "DP03"
+      ]
     },
     "familyOrder": {
       "comment": "Display order of families in the UI, per mode.",
-      "ARENA": ["floor", "safe_tile", "projectile", "chain", "laser", "fan", "radial_gap", "ring", "call_response", "sweep", "spiral", "ring_collapse", "layered_grid", "climax"],
-      "RUNNER": ["basic_jump", "double_jump", "jump_slide", "triple_chain", "bounce", "gap_chain", "bounce_chain", "rapid_jump", "stair", "gravity", "mixed_chain", "climax"],
-      "VERTICAL": ["stair", "sustain", "alternating", "double_beat", "hold_mix", "drift", "drift_zigzag", "mixed_hold", "climax"],
-      "RADIAL": ["cardinal", "clockwise", "diagonal", "clockwise8", "counterclockwise8", "cross", "mixed_direction", "opposite_pairs", "spiral", "star", "climax"]
+      "ARENA": [
+        "floor",
+        "safe_tile",
+        "projectile",
+        "chain",
+        "laser",
+        "fan",
+        "radial_gap",
+        "spiral",
+        "ring_collapse",
+        "sweep"
+      ],
+      "RUNNER": [
+        "basic_jump",
+        "double_jump",
+        "jump_slide",
+        "triple_chain",
+        "bounce",
+        "gap_chain",
+        "bounce_chain",
+        "rapid_jump",
+        "stair",
+        "gravity",
+        "platform_step",
+        "platform_hop",
+        "platform_stair",
+        "platform_ladder",
+        "platform_bridge",
+        "platform_leap",
+        "platform_gravity",
+        "platform_climax",
+        "mixed_chain",
+        "climax"
+      ],
+      "VERTICAL": [
+        "stair",
+        "sustain",
+        "alternating",
+        "double_beat",
+        "hold_mix",
+        "drift",
+        "drift_zigzag",
+        "mixed_hold",
+        "climax"
+      ],
+      "RADIAL": [
+        "cardinal",
+        "clockwise",
+        "diagonal",
+        "clockwise8",
+        "counterclockwise8",
+        "cross",
+        "mixed_direction",
+        "opposite_pairs",
+        "spiral",
+        "star",
+        "climax"
+      ]
     }
   },
   "patterns": {
-    "AP01": { "family": "floor", "energy": "LOW", "groups": ["teach", "radial_alternating"] },
-    "AP02": { "family": "projectile", "energy": "MID", "groups": ["volley"] },
-    "AP03": { "family": "chain", "energy": "MID", "groups": ["chain"] },
-    "AP04": { "family": "laser", "energy": "MID", "groups": ["laser"] },
-    "AP05": { "family": "safe_tile", "energy": "LOW", "groups": ["teach", "recovery"] },
-    "AP06": { "family": "radial_gap", "energy": "MID", "groups": ["radial_out"] },
-    "AP07": { "family": "fan", "energy": "MID", "groups": ["rotating"] },
-    "AP08": { "family": "spiral", "energy": "HIGH", "groups": ["spiral", "radial_out"] },
-    "AP09": { "family": "sweep", "energy": "HIGH", "groups": ["wave", "laser"] },
-    "AP10": { "family": "ring_collapse", "energy": "HIGH", "groups": ["radial_in"] },
-    "AP11": { "family": "call_response", "energy": "MID", "groups": ["radial_alternating"] },
-    "AP12": { "family": "layered_grid", "energy": "HIGH", "groups": ["radial_mixed", "layering"] },
-    "AP13": { "family": "climax", "energy": "PEAK", "groups": ["radial_mixed", "climax"] },
-    "AP14": { "family": "ring", "energy": "MID", "groups": ["radial_out", "radial_in"] },
-    "AP15": { "family": "ring", "energy": "HIGH", "groups": ["radial_out", "radial_in"] },
-    "AP16": { "family": "ring", "energy": "HIGH", "groups": ["radial_out", "rotating"] },
-    "AP17": { "family": "ring", "energy": "HIGH", "groups": ["radial_alternating"] },
-    "AP18": { "family": "spiral", "energy": "HIGH", "groups": ["spiral", "radial_in"] },
-    "AP19": { "family": "ring_collapse", "energy": "MID", "groups": ["radial_in", "wave"] },
-    "AP20": { "family": "climax", "energy": "PEAK", "groups": ["radial_mixed", "climax"] },
-
-    "RP01": { "family": "basic_jump", "energy": "LOW", "groups": ["teach", "recovery"] },
-    "RP02": { "family": "double_jump", "energy": "MID", "groups": ["teach"] },
-    "RP03": { "family": "jump_slide", "energy": "MID", "groups": ["slide"] },
-    "RP04": { "family": "triple_chain", "energy": "MID", "groups": ["chain"] },
-    "RP05": { "family": "bounce", "energy": "MID", "groups": ["platform_chain"] },
-    "RP06": { "family": "gap_chain", "energy": "MID", "groups": ["gap"] },
-    "RP07": { "family": "bounce_chain", "energy": "HIGH", "groups": ["platform_chain"] },
-    "RP08": { "family": "rapid_jump", "energy": "HIGH", "groups": ["dense"] },
-    "RP09": { "family": "stair", "energy": "HIGH", "groups": ["stair_jump"] },
-    "RP10": { "family": "gravity", "energy": "MID", "groups": ["gravity_chain", "transition"] },
-    "RP11": { "family": "gravity", "energy": "PEAK", "groups": ["gravity_chain", "climax"] },
-    "RP12": { "family": "climax", "energy": "PEAK", "groups": ["mixed_chain", "climax"] },
-    "RP13": { "family": "gravity", "energy": "HIGH", "groups": ["gravity_chain"] },
-    "RP14": { "family": "mixed_chain", "energy": "MID", "groups": ["mixed_chain"] },
-    "RP15": { "family": "basic_jump", "energy": "LOW", "groups": ["teach", "recovery"] },
-
-    "VP01": { "family": "stair", "energy": "LOW", "groups": ["teach", "recovery", "single"] },
-    "VP02": { "family": "sustain", "energy": "MID", "groups": ["teach", "hold"] },
-    "VP03": { "family": "alternating", "energy": "MID", "groups": ["alternating"] },
-    "VP04": { "family": "double_beat", "energy": "MID", "groups": ["dense"] },
-    "VP05": { "family": "hold_mix", "energy": "MID", "groups": ["hold", "mixed_hold"] },
-    "VP06": { "family": "drift", "energy": "HIGH", "groups": ["drift"] },
-    "VP07": { "family": "drift_zigzag", "energy": "HIGH", "groups": ["drift", "zigzag"] },
-    "VP08": { "family": "mixed_hold", "energy": "HIGH", "groups": ["hold", "mixed_hold"] },
-    "VP09": { "family": "climax", "energy": "PEAK", "groups": ["dense", "climax"] },
-
-    "DP01": { "family": "cardinal", "energy": "LOW", "groups": ["teach", "recovery", "single"] },
-    "DP02": { "family": "clockwise", "energy": "MID", "groups": ["clockwise"] },
-    "DP03": { "family": "diagonal", "energy": "MID", "groups": ["teach", "diagonal"] },
-    "DP04": { "family": "clockwise8", "energy": "MID", "groups": ["clockwise"] },
-    "DP05": { "family": "counterclockwise8", "energy": "MID", "groups": ["counterclockwise"] },
-    "DP06": { "family": "cross", "energy": "HIGH", "groups": ["cross", "double"] },
-    "DP07": { "family": "mixed_direction", "energy": "HIGH", "groups": ["alternating"] },
-    "DP08": { "family": "opposite_pairs", "energy": "HIGH", "groups": ["double"] },
-    "DP09": { "family": "spiral", "energy": "HIGH", "groups": ["spiral"] },
-    "DP10": { "family": "star", "energy": "HIGH", "groups": ["spiral"] },
-    "DP11": { "family": "climax", "energy": "PEAK", "groups": ["climax"] }
+    "AP01": {
+      "family": "floor",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "footwork"
+      ]
+    },
+    "AP02": {
+      "family": "projectile",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "wall"
+      ]
+    },
+    "AP03": {
+      "family": "chain",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "lane_whip"
+      ]
+    },
+    "AP04": {
+      "family": "chain",
+      "energy": "MID",
+      "groups": [
+        "diagonal",
+        "thin_chain"
+      ]
+    },
+    "AP05": {
+      "family": "safe_tile",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "recovery"
+      ]
+    },
+    "AP06": {
+      "family": "chain",
+      "energy": "MID",
+      "groups": [
+        "corridor",
+        "thin_chain"
+      ]
+    },
+    "AP07": {
+      "family": "chain",
+      "energy": "MID",
+      "groups": [
+        "snake",
+        "thin_chain"
+      ]
+    },
+    "AP08": {
+      "family": "spiral",
+      "energy": "MID",
+      "groups": [
+        "radial_out"
+      ]
+    },
+    "AP09": {
+      "family": "sweep",
+      "energy": "HIGH",
+      "groups": [
+        "wave",
+        "rhythm_window"
+      ]
+    },
+    "AP10": {
+      "family": "radial_gap",
+      "energy": "HIGH",
+      "groups": [
+        "spray",
+        "rotating",
+        "layering"
+      ]
+    },
+    "AP11": {
+      "family": "radial_gap",
+      "energy": "MID",
+      "groups": [
+        "spray",
+        "rotating",
+        "teach"
+      ]
+    },
+    "AP12": {
+      "family": "radial_gap",
+      "energy": "HIGH",
+      "groups": [
+        "spray",
+        "alternating",
+        "layering"
+      ]
+    },
+    "AP13": {
+      "family": "ring_collapse",
+      "energy": "PEAK",
+      "groups": [
+        "ring",
+        "climax"
+      ]
+    },
+    "AP14": {
+      "family": "radial_gap",
+      "energy": "HIGH",
+      "groups": [
+        "spray",
+        "double_time"
+      ]
+    },
+    "AP15": {
+      "family": "safe_tile",
+      "energy": "MID",
+      "groups": [
+        "layering",
+        "wave"
+      ]
+    },
+    "AP16": {
+      "family": "fan",
+      "energy": "HIGH",
+      "groups": [
+        "rotating",
+        "spray",
+        "layering"
+      ]
+    },
+    "AP17": {
+      "family": "fan",
+      "energy": "MID",
+      "groups": [
+        "pendulum",
+        "rotating"
+      ]
+    },
+    "AP18": {
+      "family": "spiral",
+      "energy": "HIGH",
+      "groups": [
+        "ring",
+        "fan",
+        "layering"
+      ]
+    },
+    "AP19": {
+      "family": "sweep",
+      "energy": "HIGH",
+      "groups": [
+        "wave",
+        "shrinking"
+      ]
+    },
+    "AP20": {
+      "family": "laser",
+      "energy": "PEAK",
+      "groups": [
+        "climax",
+        "spray",
+        "laser",
+        "ring"
+      ]
+    },
+    "RP01": {
+      "family": "basic_jump",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "recovery"
+      ]
+    },
+    "RP02": {
+      "family": "double_jump",
+      "energy": "MID",
+      "groups": [
+        "teach"
+      ]
+    },
+    "RP03": {
+      "family": "jump_slide",
+      "energy": "MID",
+      "groups": [
+        "slide"
+      ]
+    },
+    "RP04": {
+      "family": "triple_chain",
+      "energy": "MID",
+      "groups": [
+        "chain"
+      ]
+    },
+    "RP05": {
+      "family": "bounce",
+      "energy": "MID",
+      "groups": [
+        "platform_chain"
+      ]
+    },
+    "RP06": {
+      "family": "gap_chain",
+      "energy": "MID",
+      "groups": [
+        "gap"
+      ]
+    },
+    "RP07": {
+      "family": "bounce_chain",
+      "energy": "HIGH",
+      "groups": [
+        "platform_chain"
+      ]
+    },
+    "RP08": {
+      "family": "rapid_jump",
+      "energy": "HIGH",
+      "groups": [
+        "dense"
+      ]
+    },
+    "RP09": {
+      "family": "stair",
+      "energy": "HIGH",
+      "groups": [
+        "stair_jump"
+      ]
+    },
+    "RP10": {
+      "family": "gravity",
+      "energy": "MID",
+      "groups": [
+        "gravity_chain",
+        "transition"
+      ]
+    },
+    "RP11": {
+      "family": "gravity",
+      "energy": "PEAK",
+      "groups": [
+        "gravity_chain",
+        "climax"
+      ]
+    },
+    "RP12": {
+      "family": "climax",
+      "energy": "PEAK",
+      "groups": [
+        "mixed_chain",
+        "climax"
+      ]
+    },
+    "RP13": {
+      "family": "gravity",
+      "energy": "HIGH",
+      "groups": [
+        "gravity_chain"
+      ]
+    },
+    "RP14": {
+      "family": "mixed_chain",
+      "energy": "MID",
+      "groups": [
+        "mixed_chain"
+      ]
+    },
+    "RP15": {
+      "family": "basic_jump",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "recovery"
+      ]
+    },
+    "VP01": {
+      "family": "stair",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "recovery",
+        "single"
+      ]
+    },
+    "VP02": {
+      "family": "sustain",
+      "energy": "MID",
+      "groups": [
+        "teach",
+        "hold"
+      ]
+    },
+    "VP03": {
+      "family": "alternating",
+      "energy": "MID",
+      "groups": [
+        "alternating"
+      ]
+    },
+    "VP04": {
+      "family": "double_beat",
+      "energy": "MID",
+      "groups": [
+        "dense"
+      ]
+    },
+    "VP05": {
+      "family": "hold_mix",
+      "energy": "MID",
+      "groups": [
+        "hold",
+        "mixed_hold"
+      ]
+    },
+    "VP06": {
+      "family": "drift",
+      "energy": "HIGH",
+      "groups": [
+        "drift"
+      ]
+    },
+    "VP07": {
+      "family": "drift_zigzag",
+      "energy": "HIGH",
+      "groups": [
+        "drift",
+        "zigzag"
+      ]
+    },
+    "VP08": {
+      "family": "mixed_hold",
+      "energy": "HIGH",
+      "groups": [
+        "hold",
+        "mixed_hold"
+      ]
+    },
+    "VP09": {
+      "family": "climax",
+      "energy": "PEAK",
+      "groups": [
+        "dense",
+        "climax"
+      ]
+    },
+    "DP01": {
+      "family": "cardinal",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "recovery",
+        "single"
+      ]
+    },
+    "DP02": {
+      "family": "clockwise",
+      "energy": "MID",
+      "groups": [
+        "clockwise"
+      ]
+    },
+    "DP03": {
+      "family": "diagonal",
+      "energy": "MID",
+      "groups": [
+        "teach",
+        "diagonal"
+      ]
+    },
+    "DP04": {
+      "family": "clockwise8",
+      "energy": "MID",
+      "groups": [
+        "clockwise"
+      ]
+    },
+    "DP05": {
+      "family": "counterclockwise8",
+      "energy": "MID",
+      "groups": [
+        "counterclockwise"
+      ]
+    },
+    "DP06": {
+      "family": "cross",
+      "energy": "HIGH",
+      "groups": [
+        "cross",
+        "double"
+      ]
+    },
+    "DP07": {
+      "family": "mixed_direction",
+      "energy": "HIGH",
+      "groups": [
+        "alternating"
+      ]
+    },
+    "DP08": {
+      "family": "opposite_pairs",
+      "energy": "HIGH",
+      "groups": [
+        "double"
+      ]
+    },
+    "DP09": {
+      "family": "spiral",
+      "energy": "HIGH",
+      "groups": [
+        "spiral"
+      ]
+    },
+    "DP10": {
+      "family": "star",
+      "energy": "HIGH",
+      "groups": [
+        "spiral"
+      ]
+    },
+    "DP11": {
+      "family": "climax",
+      "energy": "PEAK",
+      "groups": [
+        "climax"
+      ]
+    },
+    "RP16": {
+      "family": "platform_step",
+      "energy": "LOW",
+      "groups": [
+        "teach",
+        "platform"
+      ]
+    },
+    "RP17": {
+      "family": "platform_hop",
+      "energy": "MID",
+      "groups": [
+        "platform",
+        "jump"
+      ]
+    },
+    "RP18": {
+      "family": "platform_stair",
+      "energy": "MID",
+      "groups": [
+        "platform",
+        "stair"
+      ]
+    },
+    "RP19": {
+      "family": "platform_ladder",
+      "energy": "HIGH",
+      "groups": [
+        "platform",
+        "half_beat"
+      ]
+    },
+    "RP20": {
+      "family": "platform_bridge",
+      "energy": "MID",
+      "groups": [
+        "platform",
+        "gap_chain"
+      ]
+    },
+    "RP21": {
+      "family": "platform_leap",
+      "energy": "HIGH",
+      "groups": [
+        "platform",
+        "gap_chain",
+        "jump"
+      ]
+    },
+    "RP22": {
+      "family": "platform_gravity",
+      "energy": "MID",
+      "groups": [
+        "platform",
+        "gravity"
+      ]
+    },
+    "RP23": {
+      "family": "platform_gravity",
+      "energy": "HIGH",
+      "groups": [
+        "platform",
+        "gravity",
+        "layering"
+      ]
+    },
+    "RP24": {
+      "family": "platform_climax",
+      "energy": "PEAK",
+      "groups": [
+        "platform",
+        "climax"
+      ]
+    },
+    "RP25": {
+      "family": "platform_step",
+      "energy": "LOW",
+      "groups": [
+        "platform",
+        "recovery",
+        "teach"
+      ]
+    }
   }
 }

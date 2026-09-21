@@ -6,11 +6,22 @@
  * the game data inside src/.
  */
 
+// BASE_URL is '/' under `vite`/`vite preview` and '/BEATBOUND/' on GitHub
+// Pages, so data URLs must be prefixed to work in both places.
+//
+// Read defensively, because this module is also bundled by esbuild into the
+// headless tools (`npm run audit`, `fairness`, `level`, `runner-check`), which
+// run under plain Node where `import.meta.env` does not exist. Vite still
+// substitutes the real base in both dev and build; Node falls back to '/',
+// which is what the tools' fetch shim resolves library paths against anyway.
+const BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+const dataUrl = (path: string) => BASE + path.replace(/^\//, '');
+
 export const DATA = {
-  mechanics: '/mechanics.mvp.json',
-  patterns: '/patterns.mvp.json',
-  levels: '/levels.index.json',
-  defaultLevel: '/arena_test.level.json',
+  mechanics: dataUrl('/mechanics.mvp.json'),
+  patterns: dataUrl('/patterns.mvp.json'),
+  levels: dataUrl('/levels.index.json'),
+  defaultLevel: dataUrl('/arena_test.level.json'),
 } as const;
 
 /** One entry of levels.index.json -- what the level picker lists. */
@@ -40,7 +51,7 @@ export async function loadLevelIndex(): Promise<LevelIndexEntry[]> {
 export function levelUrlFromLocation(search = window.location.search): string {
   const requested = new URLSearchParams(search).get('level');
   if (!requested) return DATA.defaultLevel;
-  return requested.startsWith('/') ? requested : `/${requested}`;
+  return requested.startsWith('/') ? dataUrl(requested) : dataUrl(`/${requested}`);
 }
 
 /** Beats of silence before the start bar, so the player can get ready. */

@@ -92,8 +92,10 @@
       },
       "defaults": {
         "safeAreaCount": 1,
-        "safeAreaSize": 0.25
-      }
+        "safeAreaSize": 0.25,
+        "safeZone": "STATIC"
+      },
+      "notes": "The floor turns hostile except for a refuge. STATIC places the patch once and asks whether the player can reach it; MOVING walks the patch along a closed path and asks whether they can keep up; QUADRANT halves or quarters the arena and rotates which part is safe, so the crossing is made on the pulse. A moving patch may never outrun the player and a rotating one owes a full walk to the next part, both floored by fairness."
     },
     {
       "id": "A03",
@@ -174,15 +176,17 @@
         "timing"
       ],
       "defaults": {
-        "count": 18,
-        "gapCount": 1,
-        "gapArcDeg": 46,
-        "gapAngleDeg": -90,
-        "rotationDeg": 0,
+        "arms": 1,
+        "bulletsPerBurst": 3,
+        "burstArcDeg": 40,
+        "stepDeg": 45,
+        "subdivision": 1,
+        "direction": "CW",
+        "startAngleDeg": -90,
         "origin": "CENTER",
         "speed": 1.0
       },
-      "notes": "Ring of projectiles with one or more safe arcs. gapAngleDeg points at the opening; rotationDeg turns it between repeats so the safe arc travels around the arena."
+      "notes": "A rotating spray: bursts of projectiles fire from the centre (or inward from the rim), each emission rotated by stepDeg from the last. The rotation trend is visible from the first two emissions, so the player predicts the next burst instead of reacting to it. Legacy aliases: gapCount->arms, gapAngleDeg->startAngleDeg, gapArcDeg->burstArcDeg, rotationDeg added to start."
     },
     {
       "id": "A05",
@@ -226,9 +230,18 @@
         ]
       },
       "defaults": {
+        "layout": "LANE",
         "direction": "LEFT_TO_RIGHT",
-        "width": 1.0
-      }
+        "width": 1.0,
+        "thickness": 0.016,
+        "corridorWidth": 0.16,
+        "gap": 0.5,
+        "axis": "VERTICAL",
+        "segments": 3,
+        "amplitude": 0.28,
+        "travel": "FORWARD"
+      },
+      "notes": "A thin chain whip. Line layouts (SLASH, BACKSLASH, CROSS, ZIGZAG, SNAKE, CORRIDOR, POLYLINE) make the chain itself the danger -- dodging is precise positioning off the line. CORRIDOR draws parallel chains around a safe channel floored by the fairness system. LANE is the legacy direction whip: the chain claims one lane of a tiling that covers the arena."
     },
     {
       "id": "A06",
@@ -310,14 +323,16 @@
         "anticipation"
       ],
       "defaults": {
-        "arms": 3,
-        "armArcDeg": 34,
+        "arms": 2,
+        "armArcDeg": 55,
         "startAngleDeg": -90,
         "rotationPerBeatDeg": 45,
         "direction": "CW",
-        "radius": 0.72
+        "radius": 0.72,
+        "innerRadius": 0,
+        "reversalBeats": 0
       },
-      "notes": "Angular arms sweeping around the arena centre. Rotation is per beat, never per frame, so the sweep stays locked to the music."
+      "notes": "Arms reach the centre -- no dead hub -- so the safe zone is the moving wedge between arms and the play is orbiting it on the beat. reversalBeats > 0 turns the fan into a pendulum that sweeps an arc back and forth. Rotation is per beat, never per frame, so the sweep stays musical."
     },
     {
       "id": "A08",
@@ -391,14 +406,19 @@
         "spatial_reading"
       ],
       "defaults": {
+        "mode": "STATIC",
         "axis": "HORIZONTAL",
         "direction": "FORWARD",
         "gapCount": 1,
         "gapWidth": 0.2,
+        "gapPath": [
+          0.5
+        ],
         "thickness": 0.09,
-        "amplitude": 0.0
+        "amplitude": 0.0,
+        "shrinkTo": 0.65
       },
-      "notes": "A wall sweeping across the arena with a gap to slip through. amplitude > 0 makes the wall a travelling sine wave instead of a straight line."
+      "notes": "A wall crossing the arena whose window moves with the music. RHYTHM follows gapPath (one centre per beat) so the window steps on the pulse; SHRINK tightens the window as the wall travels; DOUBLE mirrors a second window. Window width and step speed are floored by fairness."
     },
     {
       "id": "A10",
@@ -438,7 +458,58 @@
         "thickness": 0.07,
         "rotationDeg": 0
       },
-      "notes": "A ring closing in on the centre (COLLAPSE) or pushing out from it (EXPAND), with a safe arc. Pairs well with A04 as a call and response."
+      "notes": "A ring closing in on the centre (COLLAPSE) or pushing out from it (EXPAND), with a safe arc. Pairs well with A04 as a call and response. `variant` picks how the gap behaves across a `ringCount` sequence: BASIC_GAP holds it still, ROTATING_GAP walks it round, NARROWING_GAP shrinks it each ring, ADVANCED_ALTERNATING steps out and back. Gap width and gap-edge travel are both floored by fairness, so no variant can close the circle on the player."
+    },
+    {
+      "id": "A11",
+      "name": "Sector Sweep",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 6,
+        "telegraphBeats": 1.5,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "EIGHTH",
+          "BEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "SNARE"
+        ],
+        "sections": [
+          "CHORUS",
+          "BUILD"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "movement",
+        "spatial_reading",
+        "positioning"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A03",
+          "A04"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "sectorCount": 6,
+        "sweepDirection": "CW",
+        "skipStep": 0,
+        "firstAngleDeg": -90,
+        "startSector": 0,
+        "innerRadius": 0
+      },
+      "notes": "The arena cut into wedges that go off in turn. There is always a safe majority, so the ask is pacing rather than precision: keep circling at the sweep's speed. `sweepDirection` sets CW/CCW, `skipStep` leaves safe wedges between activations, and the sweep may never advance faster than the player can walk the rim -- the step is floored by both reachability and warning, so a fast tempo lengthens the sequence instead of tightening it."
     },
     {
       "id": "D01",
@@ -975,6 +1046,136 @@
         "holdBeats": 4
       },
       "notes": "A hold whose lane moves while it is held. path is a list of [beatOffset, lane] checkpoints; the player has to slide the hold across lanes to trace the melody."
+    },
+    {
+      "id": "R04",
+      "name": "Platform",
+      "mode": "RUNNER",
+      "status": "MVP",
+      "difficulty": 2,
+      "timing": {
+        "durationBeats": 0,
+        "telegraphBeats": 0,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "BEAT"
+        ],
+        "instruments": [
+          "KICK",
+          "SYNTH"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "LOW",
+          "MID"
+        ]
+      },
+      "playerSkills": [
+        "jump_timing",
+        "spatial_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "R01",
+          "R08"
+        ],
+        "avoidWith": []
+      },
+      "defaults": {
+        "surface": "FLOOR",
+        "height": 0.12,
+        "width": 1.0
+      },
+      "notes": "A solid block rising from the running surface. The front face damages; jump onto the top and it becomes terrain -- stand on it, hop between heights, run off the far edge. Platforms at or under the step-up height are walked over automatically. Inverted gravity hangs them from the ceiling."
+    },
+    {
+      "id": "A12",
+      "name": "Rhythm Breakout",
+      "mode": "ARENA",
+      "status": "MVP",
+      "difficulty": 3,
+      "timing": {
+        "durationBeats": 6,
+        "telegraphBeats": 4,
+        "cooldownBeats": 0
+      },
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "BUILD",
+          "ACCENT"
+        ],
+        "instruments": [
+          "KICK",
+          "SNARE",
+          "RISER"
+        ],
+        "sections": [
+          "BUILD",
+          "DROP",
+          "CHORUS",
+          "BRIDGE"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "playerSkills": [
+        "rhythm_input",
+        "timing_precision",
+        "sequence_reading"
+      ],
+      "compatibility": {
+        "goodWith": [
+          "A01",
+          "A02"
+        ],
+        "avoidWith": [
+          "A04",
+          "A07",
+          "A08",
+          "A10",
+          "A11"
+        ]
+      },
+      "defaults": {
+        "variant": "SINGLE_RING",
+        "prepBeats": 4,
+        "sequence": [
+          {
+            "beatOffset": 0,
+            "direction": "LEFT"
+          },
+          {
+            "beatOffset": 1,
+            "direction": "UP"
+          },
+          {
+            "beatOffset": 2,
+            "direction": "RIGHT"
+          },
+          {
+            "beatOffset": 3,
+            "direction": "DOWN"
+          }
+        ],
+        "finalBeatOffset": 4,
+        "releaseBeats": 2,
+        "perfectWindowBeats": 0.12,
+        "goodWindowBeats": 0.24,
+        "maxMisses": 1,
+        "failureMode": "DAMAGE",
+        "startRadius": 0.72,
+        "criticalRadius": 0.13,
+        "thickness": 0.05,
+        "movementScale": 0.6
+      },
+      "notes": "A sealed circular barrier with no gap. The player performs the directional phrase in `sequence` (arrow keys), then breaks the seal on `finalBeatOffset` with SPACE, releasing a shockwave that shatters the ring. Timing is judged in beats like VERTICAL and RADIAL; `perfectWindowMs`/`goodWindowMs` are accepted as an alternative for generated data. A seal that takes more than `maxMisses` step misses can no longer be broken, and an unbroken seal collapses through the player for `failureMode` damage (LIGHT/DAMAGE/HEAVY). Prep is stretched automatically when the tempo would make the encounter unescapable, and step spacing, judging windows and the critical radius are all floored by fairness -- see breakoutPlan.ts. `variant` picks the silhouette, which is real geometry and not just a palette: SINGLE_RING and DOUBLE_RING are circular, HEX_SEAL is a slowly turning hexagon and RUNE_SEAL an octagon. Radii are inradii -- the distance to the nearest wall -- so every silhouette is equally fair at the same numbers."
     }
   ]
 }

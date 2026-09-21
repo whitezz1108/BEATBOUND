@@ -66,6 +66,16 @@ export function isDiagonal(direction: Direction8): boolean {
 }
 
 /**
+ * True when two cardinals sit adjacent on the compass, so holding both enters
+ * a diagonal (N+E -> NE). Opposite cardinals (N+S, E+W) enter no direction at
+ * all: each press stays an ordinary cardinal press of its own.
+ */
+export function isDiagonalPair(a: Direction8, b: Direction8): boolean {
+  const diff = Math.abs(DIRECTION8.indexOf(a) - DIRECTION8.indexOf(b));
+  return diff === 2 || diff === 6; // 6 is the wrap-around: W+N -> NW
+}
+
+/**
  * Parse a direction from pattern data.
  *
  * Accepts the eight names and the legacy four-direction spellings the original
