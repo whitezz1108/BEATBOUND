@@ -48,6 +48,9 @@ from beatbound_audio import config, util, version  # noqa: E402
 from beatbound_audio import melody_analyzer, stem_separator  # noqa: E402
 from beatbound_audio.cache import AudioCache, default_root  # noqa: E402
 from beatbound_audio.director_context import build_director_context  # noqa: E402
+from beatbound_audio.director_context_v2 import (  # noqa: E402
+    build_director_context_v2,
+)
 from beatbound_audio.downbeat import analyze_downbeats  # noqa: E402
 from beatbound_audio.energy_analyzer import analyze_energy  # noqa: E402
 from beatbound_audio.event_builder import build_events, event_counts  # noqa: E402
@@ -125,6 +128,7 @@ def analyze_v2(
     cache_dir: Optional[str] = None,
     legacy_output: Optional[str] = None,
     director_output: Optional[str] = None,
+    director_v2_output: Optional[str] = None,
     quiet: bool = False,
 ) -> tuple[dict, dict]:
     """Run the whole pipeline and write both JSON documents.
@@ -303,9 +307,36 @@ def analyze_v2(
     _write_json(director_path, director)
     stage.mark("director")
 
+    # ---- 12. director context V2 (generation-facing contract) ---------------
+    # Written alongside V1, never instead of it: V1 is the reading aid the
+    # editor UI already renders, V2 is what the level-generation pipeline
+    # consumes. Adding an output cannot invalidate an existing one.
+    director_v2_path = director_v2_output
+    if director_v2_path is None:
+        v2_dir = os.path.dirname(os.path.abspath(output_path))
+        director_v2_path = os.path.join(v2_dir, "director_context_v2.json")
+
+    director_v2 = build_director_context_v2(
+        ctx=ctx,
+        rhythm=rhythm,
+        energy=energy,
+        tonal=tonal,
+        structure=structure,
+        melody=melody,
+        stems=stems,
+        downbeat=downbeat,
+        repetition=repetition,
+        phrasing=phrasing,
+        events=events,
+        global_summary=global_summary,
+    )
+    _write_json(director_v2_path, director_v2)
+    stage.mark("director_v2")
+
     # Cache the finished documents so a re-run is instant.
     cache.write_json(document, "analysis_v2.json")
     cache.write_json(director, "director_context.json")
+    cache.write_json(director_v2, "director_context_v2.json")
     cache.merge_meta(
         analyzerVersion=version.ANALYZER_VERSION,
         settingsSignature=version.SETTINGS_SIGNATURE,
@@ -318,13 +349,14 @@ def analyze_v2(
                 "v2": output_path,
                 "legacy": legacy_path,
                 "director": director_path,
+                "directorV2": director_v2_path,
             },
         },
     )
 
     document["_debugReport"] = _report(
         document, stage, backends, output_path, legacy_path, director_path,
-        director, cache_info,
+        director, cache_info, director_v2_path, director_v2,
     )
     if not quiet:
         print(json.dumps(document["_debugReport"], indent=2, ensure_ascii=False))
@@ -351,14 +383,23 @@ def _report(
     director_path: str,
     director: dict,
     cache_info: dict,
+    director_v2_path: str = "",
+    director_v2: Optional[dict] = None,
 ) -> dict:
     """The prompt's section 21 debug report, printed to stdout."""
     g = document["global"]
     layers = document["layers"]
+    director_v2 = director_v2 or {}
+    v2_diag = director_v2.get("diagnostics", {})
     return {
         "analyzer": f"{version.ANALYZER_NAME} {version.ANALYZER_VERSION}",
         "schemaVersion": version.SCHEMA_VERSION,
-        "outputs": {"v2": output_path, "legacyV1": legacy_path, "director": director_path},
+        "outputs": {
+            "v2": output_path,
+            "legacyV1": legacy_path,
+            "director": director_path,
+            "directorV2": director_v2_path,
+        },
         "durationSec": document["source"]["durationSec"],
         "global": g,
         "counts": {
@@ -374,6 +415,17 @@ def _report(
             "repeatGroups": layers["repetition"]["groupCount"],
             "repeatComparisons": layers["repetition"]["comparisonCount"],
             "directorImportantEvents": len(director.get("important_events", [])),
+            "directorV2Sections": len(director_v2.get("sections", [])),
+            "directorV2Phrases": len(director_v2.get("phrases", [])),
+            "directorV2Anchors": len(director_v2.get("anchors", [])),
+            "directorV2RepeatGroups": len(director_v2.get("repeat_groups", [])),
+        },
+        "generationSafety": {
+            "droppedOutOfRangeEvents": v2_diag.get("dropped_out_of_range_events", 0),
+            "droppedOutOfRangeNotes": v2_diag.get("dropped_out_of_range_notes", 0),
+            "droppedOutOfRangePhraseRefs": v2_diag.get("dropped_out_of_range_phrase_refs", 0),
+            "deduplicatedAnchors": v2_diag.get("deduplicated_anchors", 0),
+            "outputSchemaValid": v2_diag.get("output_schema_valid", False),
         },
         "barPhase": {
             "offsetBeats": layers["barPhase"]["offsetBeats"],
@@ -430,6 +482,11 @@ def main() -> None:
         default=None,
         help="where to write director_context.json (default: beside the output)",
     )
+    parser.add_argument(
+        "--director-v2-output",
+        default=None,
+        help="where to write director_context_v2.json (default: beside the output)",
+    )
     parser.add_argument("--quiet", action="store_true", help="write files, print nothing")
     args = parser.parse_args()
 
@@ -446,6 +503,7 @@ def main() -> None:
             cache_dir=args.cache_dir,
             legacy_output=args.legacy_output,
             director_output=args.director_output,
+            director_v2_output=args.director_v2_output,
             quiet=args.quiet,
         )
     except Exception as exc:  # clean message for the editor server

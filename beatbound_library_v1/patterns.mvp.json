@@ -2321,7 +2321,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         }
       ],
@@ -2376,7 +2376,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2433,7 +2433,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2500,7 +2500,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2568,7 +2568,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2645,7 +2645,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2655,7 +2655,7 @@
           },
           "mechanicId": "R02",
           "params": {
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -2714,7 +2714,7 @@
           },
           "mechanicId": "R08",
           "params": {
-            "launchStrength": 1.0
+            "launchStrength": 1
           }
         },
         {
@@ -2724,7 +2724,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2822,7 +2822,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2832,7 +2832,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -2938,7 +2938,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         }
       ],
@@ -2993,7 +2993,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3057,7 +3057,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0,
+            "height": 1,
             "surface": "CEILING"
           }
         },
@@ -3079,7 +3079,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0,
+            "height": 1,
             "surface": "CEILING"
           }
         },
@@ -3108,7 +3108,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3185,7 +3185,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3215,7 +3215,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3225,7 +3225,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3245,7 +3245,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3312,7 +3312,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0,
+            "height": 1,
             "surface": "CEILING"
           }
         },
@@ -3345,7 +3345,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0,
+            "height": 1,
             "surface": "CEILING"
           }
         },
@@ -3356,7 +3356,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3416,7 +3416,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3466,7 +3466,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3476,7 +3476,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -3545,7 +3545,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         }
       ],
@@ -5078,7 +5078,7 @@
           "params": {
             "height": 0.04,
             "surface": "FLOOR",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5133,7 +5133,7 @@
           "params": {
             "height": 0.12,
             "surface": "FLOOR",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5145,7 +5145,7 @@
           "params": {
             "height": 0.14,
             "surface": "FLOOR",
-            "width": 1.0
+            "width": 1
           }
         }
       ],
@@ -5337,7 +5337,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -5395,7 +5395,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         }
       ],
@@ -5436,7 +5436,7 @@
           },
           "mechanicId": "R02",
           "params": {
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5523,7 +5523,7 @@
           "params": {
             "height": 0.14,
             "surface": "FLOOR",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5555,7 +5555,7 @@
           "params": {
             "height": 0.16,
             "surface": "FLOOR",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5627,7 +5627,7 @@
           "params": {
             "height": 0.14,
             "surface": "CEILING",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5689,7 +5689,7 @@
           "params": {
             "height": 0.14,
             "surface": "CEILING",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5699,7 +5699,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -5730,7 +5730,7 @@
           "params": {
             "height": 0.14,
             "surface": "FLOOR",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5740,7 +5740,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -5814,7 +5814,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -5860,7 +5860,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0
+            "height": 1
           }
         },
         {
@@ -5889,7 +5889,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0,
+            "height": 1,
             "surface": "CEILING"
           }
         },
@@ -5902,7 +5902,7 @@
           "params": {
             "height": 0.14,
             "surface": "CEILING",
-            "width": 1.0
+            "width": 1
           }
         },
         {
@@ -5912,7 +5912,7 @@
           },
           "mechanicId": "R01",
           "params": {
-            "height": 1.0,
+            "height": 1,
             "surface": "CEILING"
           }
         },
@@ -6205,6 +6205,2350 @@
         "maxSimultaneousThreats": 1
       },
       "notes": "Eight inputs including a repeated direction and three half-beats, tighter windows, one forgiven miss and a heavier collapse. The hardest thing the mechanic can ask for that still leaves the seal escapable at every tempo."
+    },
+    {
+      "id": "AP30",
+      "name": "Seal Break: First Step",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 1,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 1,
+        "inputComplexity": 1,
+        "informationLoad": 1
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "INTRO"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 3,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 3,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The first thing the mechanic ever asks for: two arrows, one per strong beat, then SPACE on the bar line. Nothing is timed except that last press, so a player who has never seen a seal can still find the rule inside one bar of reading. Three misses are forgiven, which at two inputs means the encounter cannot be failed at all -- that is deliberate for the first eight seconds of the song. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP31",
+      "name": "Seal Break: Three Ways",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 1,
+        "reaction": 2,
+        "rhythmComplexity": 1,
+        "spatialComplexity": 2,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "INTRO"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.63,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 3,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.63,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 3,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Stage two of the teaching: three of the four cardinals, one per bar, so the phrase itself lasts two bars instead of one. The rhythm is deliberately left alone -- the player is being asked to hold three things in their head, not to read a harder rhythm. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP32",
+      "name": "Seal Break: Four Corners",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD"
+        ],
+        "energy": [
+          "LOW",
+          "MEDIUM"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Stage three, and the first encounter a player can fail. The full clockwise circuit on four consecutive beats -- one input per beat is the densest thing in the teaching section, and it lands exactly where the drums enter. This is the shape the rest of the song is built from. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP33",
+      "name": "Seal Break: Double Tap",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 2,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BUILD"
+        ],
+        "energy": [
+          "MEDIUM"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Same length and same density as Four Corners with the directions arranged as pairs instead of a circuit. Two patterns back to back that differ only in how the arrows are grouped is the cheapest possible lesson in \"the order matters, not the count\". Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP34",
+      "name": "Seal Break: Crescendo",
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "BUILD"
+        ],
+        "sections": [
+          "BUILD"
+        ],
+        "energy": [
+          "MEDIUM"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "A reprise of First Step, transformed on every axis the player can notice: two inputs became four, half notes became quarters, and the encounter moved from the bare vocal into the build. Same idea, played at the speed the music has now reached. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP35",
+      "name": "Seal Break: Arch",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "DROP"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.32,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.64,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.96,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.28,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.32,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.64,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.96,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.28,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The first half-beat in the level, arriving exactly where the drop does. It is a mirror: the offsets are symmetric about beat 3 and the directions read the same backwards, so the phrase is remembered as a shape rather than as five separate things. That is what makes a syncopated phrase fair this early. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP36",
+      "name": "Seal Break: Counter Circuit",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Four Corners walked the other way round. Identical rhythm and identical length to the teaching pattern, so the only new information is that counter-clockwise is a different answer from clockwise -- which is the thing a player who has been coasting on muscle memory needs to be told. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP37",
+      "name": "Seal Break: Stutter Step",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 4,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 1,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.52,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.77,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.02,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.27,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.52,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.77,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.02,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.27,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Six inputs in a four-beat phrase: three doubled cells with a beat of air in front of each. Still the repeat family, so nothing about the vocabulary is new -- only the rate. It is the first encounter in the level where the player has to move their hands rather than their memory. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP38",
+      "name": "Seal Break: Slow Sway",
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "HALF_TIME"
+        ],
+        "sections": [
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Four inputs over two bars, on the vertical axis only. The breakdown is where the bass drops out, so the chart drops out too: half the density of the drop, a single axis, and a whole bar of silence before the accent. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP39",
+      "name": "Seal Break: Call and Answer",
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 3,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Two inputs that ask a question on the horizontal axis and two that answer it on the vertical. The first time the level uses the phrase itself as the unit of meaning rather than the individual arrow. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP40",
+      "name": "Seal Break: Slow Arch",
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "HALF_TIME"
+        ],
+        "sections": [
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.63,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.63,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Three inputs, two beats apart, symmetric about the middle one. The shortest phrase in the level and the slowest, sitting on the last bar of the breakdown so the player is completely idle when the build begins. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP41",
+      "name": "Seal Break: Long Circuit",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "BUILD"
+        ],
+        "sections": [
+          "BREAKDOWN",
+          "BUILD"
+        ],
+        "energy": [
+          "MEDIUM"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.52,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.77,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.02,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.27,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.52,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.77,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.02,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.27,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Six inputs, all on the beat, arriving as the build comes back under the breakdown. The circuit is the same one the teaching section taught; it is simply longer and no longer stops at four, which is the whole of the escalation here. The energy peak at bar 38 lands on the first input. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP42",
+      "name": "Seal Break: Long Echo",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "DROP"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.77,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.02,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.27,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.77,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.02,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.27,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "A three-note call on beats 1-3 and its retrograde on beats 5-7, with beat 4 left empty as the hinge. Six inputs but only three things to remember, because the second half is the first half backwards -- the level teaching the player how to compress a phrase instead of asking them to hold more of it. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP43",
+      "name": "Seal Break: Long Arch",
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "DROP"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 6,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Seven inputs, one per beat, symmetric in time and direction about beat 3. The longest phrase so far and the first that has to be held in memory as a whole; the symmetry is what keeps it inside working memory rather than turning it into a list. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP44",
+      "name": "Seal Break: Machine",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 5,
+        "rhythmComplexity": 5,
+        "spatialComplexity": 1,
+        "inputComplexity": 5,
+        "informationLoad": 4
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.75,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.25,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.75,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.25,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Six inputs on six consecutive half-beats, as three doubled cells. The peak of the second drop is the densest four beats in the level, and it is dense purely in rate: the vocabulary is still the repeat family, so the player is being asked to move faster, not to think harder. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP45",
+      "name": "Seal Break: Pendulum",
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 1,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "HALF_TIME"
+        ],
+        "sections": [
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The second relief, on the axis the first relief did not use. Four inputs, one per beat, no memory load at all -- the point is that the hands keep moving while the music breathes, so the drop back in does not feel like a cold start. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP46",
+      "name": "Seal Break: Slow Circuit",
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 2,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "LOW"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.42,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.84,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The circuit, clockwise from the bottom, at relief density. A reprise of Counter Circuit with the direction order rotated by one -- the same four answers in a different sequence, which is the cheapest way to keep a familiar shape from becoming a reflex. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP47",
+      "name": "Seal Break: Short Echo",
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED"
+        ],
+        "sections": [
+          "BREAKDOWN",
+          "BUILD"
+        ],
+        "energy": [
+          "LOW",
+          "MEDIUM"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.63,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.01,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.63,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.01,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.26,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "LIGHT",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Five inputs: a three-note call and a two-note answer that is its retrograde. The last quiet encounter before the climax, and the only one in the second relief that asks for anything -- it is the ramp back up, arriving as the music starts to rise again at bar 61. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP48",
+      "name": "Seal Break: Surge",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "BUILD"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 6,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Seven inputs: three doubled cells and then a single step into the accent. The rhythm is flat on purpose -- the surge is in the count, not the subdivision -- so that the last bar before the climax is a straight line rather than another thing to decode. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP49",
+      "name": "Seal Break: Full Circuit",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "DROP"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 6,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.47,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.94,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.41,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.88,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.35,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.82,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3.29,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The teaching circuit twice over, eight inputs on eight beats. Nothing in it is new; it is the same four answers the level opened with, held for twice as long. The first encounter of the climax is deliberately the one the player already knows, so the section starts by rewarding them rather than testing them. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP50",
+      "name": "Seal Break: Grand Arch",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 5,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 2,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "DROP"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.75,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.75,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.75,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.25,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 6,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.25,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.71,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.17,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.63,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.09,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.55,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3.01,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3.26,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Nine inputs, symmetric in time about beat 3.5 and a palindrome in direction. The longest mirrored phrase in the level and the only one that puts a half-beat on every interior gap: the player reads the first half, and the second half is already decided. The one-bar energy drop at bar 68 lands on this encounter, so the seal is at its widest exactly when the music steps back. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP51",
+      "name": "Seal Break: Final Chain",
+      "mode": "ARENA",
+      "function": "BOSS",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 5,
+        "rhythmComplexity": 5,
+        "spatialComplexity": 2,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "ACCENT",
+          "DROP"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.75,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3.25,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 6,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.45,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.9,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.35,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.8,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.25,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.75,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3.25,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Ten inputs, and the only pattern in the level that chains four families into one phrase: an alternation, a three-step sweep, a doubled cell, and a four-note run into the accent. It is the last thing the song asks for and it resolves on the last downbeat of the track, with a heavier collapse behind it than anything else so that failing it is unambiguous. Two rounds: the phrase, then its mirror at double speed."
     }
   ]
 }

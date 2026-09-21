@@ -50,9 +50,13 @@ def _read_stem(path: str, sr: int) -> np.ndarray:
 
 
 def _separate_with_python_api(
-    audio_path: str, out_dir: str, *, threads: int = 4
+    audio_path: str, out_dir: str, *, threads: int = 4, sr: int = config.STEM_SR
 ) -> Dict[str, np.ndarray]:
     """Run HTDemucs through the demucs python API.
+
+    Returns mono float32 stems **on the analysis grid** (``sr``). Demucs
+    produces them at its own rate (htdemucs: 44100), so they are resampled here,
+    once, rather than at every consumer.
 
     ``shifts=0`` is not an optimisation -- it is required for determinism.
     Demucs defaults to ``shifts=1``, which pads the mix by up to half a second
@@ -94,6 +98,15 @@ def _separate_with_python_api(
     signals: Dict[str, np.ndarray] = {}
     for i, name in enumerate(model.sources):
         mono = separated[i].mean(dim=0).cpu().numpy().astype(np.float32)
+        # Demucs separates at ``model.samplerate`` (44100 for htdemucs) while
+        # every consumer -- _write_stems, analyze_stems, the melody extractor --
+        # works at config.STEM_SR (22050). Without this resample the samples are
+        # written under a 22050 header they were not produced at, which makes
+        # every stem-derived curve run at *half speed*: the drum/bass/vocal
+        # activity reported for bar N would come from bar N/2 of the real song,
+        # and the structure/phrasing/repetition passes downstream inherit it.
+        if model.samplerate != sr:
+            mono = librosa.resample(mono, orig_sr=model.samplerate, target_sr=sr)
         signals[name] = mono
     return signals
 
@@ -201,7 +214,7 @@ def separate_audio(
 
     if has_api:
         try:
-            signals = _separate_with_python_api(audio_path, "")
+            signals = _separate_with_python_api(audio_path, "", sr=sr)
             mechanism = f"demucs-python {api_note}"
         except Exception as exc:
             error = f"demucs python API failed: {type(exc).__name__}: {exc}"

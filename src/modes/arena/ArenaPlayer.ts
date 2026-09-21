@@ -70,6 +70,15 @@ export class ArenaPlayer {
     this.vx += (dx * this.speed - this.vx) * blend;
     this.vy += (dy * this.speed - this.vy) * blend;
 
+    // A locked encounter is a lock, not a damp. Without this the body would
+    // coast to a halt over the acceleration ramp -- a tenth of a second of
+    // sliding *after* the seal has closed, which reads as the game fighting
+    // the player rather than holding them.
+    if (this.speed <= 0) {
+      this.vx = 0;
+      this.vy = 0;
+    }
+
     this.x = clamp(this.x + this.vx * deltaSeconds, this.radius, 1 - this.radius);
     this.y = clamp(this.y + this.vy * deltaSeconds, this.radius, 1 - this.radius);
 
@@ -88,8 +97,15 @@ export class ArenaPlayer {
     return { x: this.x, y: this.y, r: this.radius };
   }
 
-  /** 0..1 -- how fast the avatar is actually moving. Drives lean and trail. */
+  /**
+   * 0..1 -- how fast the avatar is actually moving. Drives lean and trail.
+   *
+   * Guarded against a zero speed: a locked encounter divides the walk to
+   * nothing, and an unguarded ratio would hand `NaN` to the renderer, which
+   * draws the avatar at `NaN` and silently loses it off the board.
+   */
   get speedFraction(): number {
+    if (this.speed <= 0) return 0;
     return Math.min(1, Math.hypot(this.vx, this.vy) / this.speed);
   }
 

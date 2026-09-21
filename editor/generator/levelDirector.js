@@ -287,8 +287,19 @@ export function direct(music, rules, opts = {}) {
   };
 }
 
-/** Fill one section's placements: transition head + main body + transition tail. */
-function fillSection(s, { headBars, tailBars, index, gameRules, diffRules, transitionRules, modeHistory, seed, breather, beatsPerBar }) {
+/**
+ * Fill one section's placements: transition head + main body + transition tail.
+ *
+ * Exported for the AI-director compiler (editor/generation/compiler.js), which
+ * decides *which* sections exist and what mode/difficulty/function they carry
+ * but deliberately reuses this function for the pattern placement itself --
+ * there is exactly one implementation of "which patterns fill these bars".
+ *
+ * The section is mutated: `s.patterns` is replaced. Callers pass a section
+ * shaped like the director's own (`lengthBars`, `mode`, `function`,
+ * `difficulty`, `energy{mean,peak,rhythmDensity}`, `id`, optional `variant`).
+ */
+export function fillSection(s, { headBars, tailBars, index, gameRules, diffRules, transitionRules, modeHistory, seed, breather, beatsPerBar }) {
   const rng = sectionRng(seed, s.id, s.variant ?? 0);
   const energyBand = bandFor(diffRules, s.energy.mean);
   const baseIntensity = intensityFor(diffRules, {

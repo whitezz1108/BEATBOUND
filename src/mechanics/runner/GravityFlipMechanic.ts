@@ -20,16 +20,32 @@ import { clamp } from '../../core/geometry';
 import { easeIn, easeOutCubic } from '../../feel/Easing';
 import type { Renderer } from '../../core/Renderer';
 import { CEILING_Y, GROUND_Y, trackX } from './runnerGeometry';
+import { SURFACE_COLOUR, SURFACE_TINT, type TrackSurface } from './surface';
 
-const COLOUR = '#8a5fff';
-const EDGE = '#c9bcff';
+/**
+ * A gate is painted in the colour of the surface it *takes you to*, not the one
+ * it is standing on.
+ *
+ * The gate is the moment the player has to know where they will be in two
+ * beats, and the answer is "the other surface". Colouring it by its origin
+ * meant a ceiling-bound gate and a floor-bound gate were the same violet, so
+ * the one frame that has to answer the question answered it with the colour of
+ * where the player already was. The highlight is the same hue lifted, so the
+ * arrow reads as part of the same statement rather than a second one.
+ */
 
 export class GravityFlipMechanic extends BaseMechanic implements RunnerTerrain {
   private readonly scale: number;
+  /** The surface this gate delivers the player to: the colour it is drawn in. */
+  private readonly colour: string;
+  private readonly edge: string;
 
   constructor(spawn: MechanicSpawnContext) {
     super(spawn);
     this.scale = clamp(numberOr(this.params.gravityScale, -1), -2, 2);
+    const to: TrackSurface = this.scale < 0 ? 'CEILING' : 'FLOOR';
+    this.colour = SURFACE_COLOUR[to];
+    this.edge = SURFACE_TINT[to];
   }
 
   gravityScale(): number | null {
@@ -60,12 +76,12 @@ export class GravityFlipMechanic extends BaseMechanic implements RunnerTerrain {
       // Charge rises as the gate approaches the player's lane.
       const charge = easeIn(clamp(1 - (x - 0.22) / 0.9, 0, 1));
       const width = 0.018 + 0.02 * charge;
-      r.fillRect({ x: x - width / 2, y: CEILING_Y, w: width, h: GROUND_Y - CEILING_Y }, COLOUR, 0.2 + 0.4 * charge);
-      r.line(x, CEILING_Y, x, GROUND_Y, EDGE, 2 + 3 * charge, 0.5 + 0.5 * charge);
+      r.fillRect({ x: x - width / 2, y: CEILING_Y, w: width, h: GROUND_Y - CEILING_Y }, this.colour, 0.2 + 0.4 * charge);
+      r.line(x, CEILING_Y, x, GROUND_Y, this.edge, 2 + 3 * charge, 0.5 + 0.5 * charge);
       // Arrows at both ends: this gate moves you between the two surfaces.
-      r.text('⇅', x, CEILING_Y + 0.045, EDGE, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
-      r.text('⇅', x, GROUND_Y - 0.045, EDGE, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
-      if (charge > 0.5) this.feel.telegraph(x, CEILING_Y + Math.random() * (GROUND_Y - CEILING_Y), EDGE, charge);
+      r.text('⇅', x, CEILING_Y + 0.045, this.edge, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
+      r.text('⇅', x, GROUND_Y - 0.045, this.edge, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
+      if (charge > 0.5) this.feel.telegraph(x, CEILING_Y + Math.random() * (GROUND_Y - CEILING_Y), this.edge, charge);
       return;
     }
 
@@ -73,10 +89,10 @@ export class GravityFlipMechanic extends BaseMechanic implements RunnerTerrain {
       const remaining = this.activeEndBeat - beat;
       // A short flash on entry, then a calm tint for the rest of the zone.
       const entry = easeOutCubic(clamp((beat - this.activationBeat) / 0.4, 0, 1));
-      r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, COLOUR, 0.20 * (1 - entry) + 0.07);
+      r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, this.colour, 0.20 * (1 - entry) + 0.07);
       // Countdown so the return to normal gravity is never a surprise.
       const urgency = remaining < 1 ? 0.5 + 0.5 * Math.sin(beat * 18) : 1;
-      r.text(`⇅ ${remaining.toFixed(1)}`, 0.5, 0.5, EDGE, 15, 'center', 0.55 * urgency);
+      r.text(`⇅ ${remaining.toFixed(1)}`, 0.5, 0.5, this.edge, 15, 'center', 0.55 * urgency);
     }
   }
 }

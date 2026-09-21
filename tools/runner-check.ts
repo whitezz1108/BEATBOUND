@@ -48,8 +48,16 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { LevelLoader, type CompiledLevel } from '../src/core/LevelLoader';
-import { UNITS_PER_BEAT } from '../src/mechanics/runner/runnerGeometry';
+import { LevelLoader, type CompiledLevel, type CompiledSection } from '../src/core/LevelLoader';
+import { MechanicRegistry } from '../src/core/MechanicRegistry';
+import { registerRunnerMechanics } from '../src/mechanics/runner/index';
+import {
+  PLAYER_X,
+  SCREEN_CROSSING_BEATS,
+  SCROLL_LEAD_BEATS,
+  UNITS_PER_BEAT,
+  trackX,
+} from '../src/mechanics/runner/runnerGeometry';
 import { SPIKE_BASE_HEIGHT, SPIKE_INTENSITY_SCALE, SPIKE_WIDTH } from '../src/mechanics/runner/SpikeMechanic';
 import { WALL_WIDTH, WALL_CLEARANCE_SCALE } from '../src/mechanics/runner/LowWallMechanic';
 import { GAP_BASE_WIDTH, GAP_MAX_WIDTH } from '../src/mechanics/runner/GapMechanic';
@@ -277,11 +285,12 @@ function levelFiles(): string[] {
 }
 
 /** Fly and audit every course in a level. Returns the issue count. */
-async function checkCourses(files: string[]): Promise<{ fatal: number; warnings: number }> {
+async function checkCourses(files: string[]): Promise<{ fatal: number; warnings: number; levels: CompiledLevel[] }> {
   let fatal = 0;
   let warnings = 0;
   let courses = 0;
   const rows: string[] = [];
+  const levels: CompiledLevel[] = [];
 
   for (const file of files) {
     let level: CompiledLevel;
@@ -296,6 +305,7 @@ async function checkCourses(files: string[]): Promise<{ fatal: number; warnings:
       fatal += 1;
       continue;
     }
+    levels.push(level);
     for (const section of level.sections) {
       if (!section.course) continue;
       courses += 1;
@@ -340,7 +350,7 @@ async function checkCourses(files: string[]): Promise<{ fatal: number; warnings:
   console.log(`\nRUNNER courses -- can the intended route actually be flown?\n`);
   if (courses === 0) {
     console.log('  (no section in the library declares a course)\n');
-    return { fatal, warnings };
+    return { fatal, warnings, levels };
   }
   for (const row of rows) console.log(row);
   console.log(
@@ -348,7 +358,217 @@ async function checkCourses(files: string[]): Promise<{ fatal: number; warnings:
       ? `\n${courses} course(s) fly as planned.\n`
       : `\n${fatal} problem(s) across ${courses} course(s).\n`,
   );
+  return { fatal, warnings, levels };
+}
+
+/**
+ * Entry lead-in (spec §3): when RUNNER becomes live, has its first obstacle
+ * already had its run-up?
+ *
+ * This is the failure a feasibility check structurally cannot see. Every
+ * obstacle in a section can be individually clearable and the section can still
+ * open with a spike already on the player, because the question is not "can
+ * this be dodged" but "was the player given beats in which to read it". A mode
+ * going live and an obstacle being *created* are two separate events, and the
+ * distance between them is what this measures.
+ *
+ * Three assertions, in the order they can fail:
+ *
+ *   1. the mode is live before the first obstacle exists at all. Otherwise
+ *      `ModeManager` parks the spawn in its pending map and delivers it on
+ *      activation -- so the obstacle appears at the player rather than
+ *      travelling to them. This is the bug this check exists to catch.
+ *   2. the obstacle is on screen for its *whole* approach, not part of it, so
+ *      it is legible as a thing that arrived rather than a thing that was
+ *      always there.
+ *   3. the resulting window clears the library's comfort reaction floor.
+ *
+ * The lead-in the loader derives must agree with the lead the runtime registry
+ * gives the same mechanic; a section whose data says four beats while the
+ * implementation asks for four from a different source can drift apart without
+ * anything else noticing, so the drift is checked directly.
+ */
+interface EntryFinding {
+  file: string;
+  sectionId: string;
+  detail: string;
+  fatal: boolean;
+}
+
+/**
+ * The first beat in a section that asks the player to do something, and how
+ * much lead its mechanic needs to exist beforehand.
+ *
+ * Everything counts, including pads and gravity portals: those are `FREE` in
+ * the feasibility model because they demand no input, but a flip portal is the
+ * single most readability-critical thing in the mode, so "free" must not be
+ * mistaken for "does not need to be seen".
+ */
+function firstDemand(
+  section: CompiledSection,
+  beatsPerBar: number,
+  registry: MechanicRegistry,
+): { beat: number; label: string; spawnLead: number } | null {
+  if (section.course) {
+    // A course is built as one world, created `leadInBeats` before its first
+    // beat. The content that has to be readable is therefore its terrain, and
+    // its first beat is where the reading starts.
+    return {
+      beat: section.course.startBeat,
+      label: 'course terrain',
+      spawnLead: section.course.leadInBeats,
+    };
+  }
+
+  let best: { beat: number; label: string; spawnLead: number } | null = null;
+  for (const placement of section.placements) {
+    for (const event of placement.pattern.events) {
+      const beat = (placement.startBar - 1 + event.at.bar - 1) * beatsPerBar
+        + (event.at.beat - 1) + (event.at.offsetBeats ?? 0);
+      if (best !== null && beat >= best.beat) continue;
+      best = { beat, label: event.mechanicId, spawnLead: registry.spawnLeadBeats(event.mechanicId) };
+    }
+  }
+  return best;
+}
+
+function checkEntry(
+  files: string[],
+  levels: CompiledLevel[],
+  registry: MechanicRegistry,
+): { fatal: number; warnings: number } {
+  let fatal = 0;
+  let warnings = 0;
+  let entries = 0;
+  const rows: string[] = [];
+
+  for (let i = 0; i < levels.length; i++) {
+    const level = levels[i];
+    const file = files[i] ?? level.definition.id;
+    const beatsPerBar = level.tempo.beatsPerBar;
+    const bpm = level.song.bpm;
+
+    for (let s = 0; s < level.sections.length; s++) {
+      const section = level.sections[s];
+      if (section.mode !== 'RUNNER') continue;
+      // A RUNNER section that follows another RUNNER section is not an entry:
+      // the mode is already live and already has terrain on screen. Only the
+      // swap *into* the mode has to pay for a run-up.
+      const previous = level.sections[s - 1];
+      if (previous && previous.mode === 'RUNNER') continue;
+
+      const demand = firstDemand(section, beatsPerBar, registry);
+      if (demand === null) continue;
+      entries += 1;
+
+      const startBeat = (section.startBar - 1) * beatsPerBar;
+      const modeLiveBeat = startBeat - section.leadInBeats;
+      const spawnBeat = demand.beat - demand.spawnLead;
+      const visibleBeats = demand.beat - modeLiveBeat;
+      const reactionSeconds = (visibleBeats * 60) / bpm;
+      const label = `${file} / ${section.id}`;
+      const findings: EntryFinding[] = [];
+
+      if (modeLiveBeat > spawnBeat + 1e-6) {
+        findings.push({
+          file, sectionId: section.id, fatal: true,
+          detail: `${demand.label} at beat ${demand.beat.toFixed(2)} is created at ${spawnBeat.toFixed(2)}, `
+            + `but RUNNER does not go live until ${modeLiveBeat.toFixed(2)} -- it is delivered on activation, `
+            + `already at x=${trackX(demand.beat, modeLiveBeat).toFixed(3)} (player at ${PLAYER_X})`,
+        });
+      }
+      if (visibleBeats < SCREEN_CROSSING_BEATS - 1e-6) {
+        findings.push({
+          file, sectionId: section.id, fatal: true,
+          detail: `${demand.label} at beat ${demand.beat.toFixed(2)} has ${visibleBeats.toFixed(2)} beats of approach `
+            + `from the mode going live; a full crossing is ${SCREEN_CROSSING_BEATS.toFixed(2)}`,
+        });
+      }
+      if (reactionSeconds < TUNING.fairness.comfortReactionSeconds) {
+        findings.push({
+          file, sectionId: section.id, fatal: false,
+          detail: `${demand.label} gives ${reactionSeconds.toFixed(2)}s of warning at ${bpm} BPM `
+            + `(comfort floor ${TUNING.fairness.comfortReactionSeconds}s)`,
+        });
+      }
+
+      for (const f of findings) {
+        if (f.fatal) fatal += 1; else warnings += 1;
+        rows.push(`  ${f.fatal ? 'UNREADABLE' : 'note      '} ${label}`);
+        rows.push(`      ${f.detail}`);
+      }
+      if (findings.length === 0) {
+        rows.push(
+          `  ok         ${label.padEnd(52)}`
+          + `${demand.label} @${demand.beat.toFixed(2)} · live ${section.leadInBeats.toFixed(1)} beats early · `
+          + `${visibleBeats.toFixed(2)} beats / ${reactionSeconds.toFixed(2)}s of approach`,
+        );
+      }
+    }
+  }
+
+  console.log(`\nRUNNER entry -- does the mode get a run-up when it becomes live? (spec §3)\n`);
+  console.log(
+    `screen crossing ${SCREEN_CROSSING_BEATS.toFixed(2)} beats · scroll lead ${SCROLL_LEAD_BEATS} beats\n`,
+  );
+  if (entries === 0) {
+    console.log('  (no level in the library enters RUNNER from another mode)\n');
+    return { fatal, warnings };
+  }
+  for (const row of rows) console.log(row);
+  console.log(
+    fatal === 0
+      ? `\n${entries} RUNNER entry(ies) give the player a full approach.\n`
+      : `\n${fatal} unreadable RUNNER entry(ies).\n`,
+  );
   return { fatal, warnings };
+}
+
+/**
+ * The data and the runtime must agree on how much lead a scrolled mechanic
+ * needs, because they are read by different code at different times:
+ * `PatternScheduler` asks the registry (runtime), while `LevelLoader` derives a
+ * section's lead-in from the library (data). If only one of them says four, the
+ * mode goes live too late or the obstacle is created too early, and the entry
+ * check above reports a symptom rather than the cause.
+ */
+function checkScrollLead(registry: MechanicRegistry): { fatal: number } {
+  const rows: string[] = [];
+  let fatal = 0;
+
+  if (SCROLL_LEAD_BEATS < SCREEN_CROSSING_BEATS) {
+    fatal += 1;
+    rows.push(
+      `  SCROLL LEAD ${SCROLL_LEAD_BEATS} beats is shorter than the ${SCREEN_CROSSING_BEATS.toFixed(2)}-beat crossing: `
+      + 'a scrolled mechanic would be created part-way across the screen',
+    );
+  }
+
+  const runnerPatterns = [...loader.patternLibrary.values()].filter((p) => p.mode === 'RUNNER');
+  const ids = new Set<string>();
+  for (const pattern of runnerPatterns) for (const e of pattern.events) ids.add(e.mechanicId);
+
+  for (const id of [...ids].sort()) {
+    const library = loader.mechanics.mechanics.find((m) => m.id === id);
+    const effective = registry.spawnLeadBeats(id);
+    const declared = library?.timing.spawnLeadBeats ?? 0;
+    const telegraph = library?.timing.telegraphBeats ?? 0;
+    const ok = effective >= SCROLL_LEAD_BEATS;
+    if (!ok) fatal += 1;
+    rows.push(
+      `  ${ok ? 'ok  ' : 'FAIL'} ${id.padEnd(5)} telegraph ${telegraph} · library spawn lead ${declared} `
+      + `· effective ${effective}`,
+    );
+  }
+
+  console.log(`\nRUNNER scroll lead -- do the data and the runtime agree? (spec §3)\n`);
+  for (const row of rows) console.log(row);
+  console.log(
+    fatal === 0
+      ? `\nEvery scrolled RUNNER mechanic declares the ${SCROLL_LEAD_BEATS}-beat lead its implementation asks for.\n`
+      : `\n${fatal} scroll-lead disagreement(s).\n`,
+  );
+  return { fatal };
 }
 
 async function main(): Promise<void> {
@@ -415,8 +635,22 @@ async function main(): Promise<void> {
   );
 
   const courses = await checkCourses(levelFiles());
+  // The registry is built exactly as the game builds it, so `checkEntry` and
+  // `checkScrollLead` see the lead the running game would use rather than a
+  // second copy of the number that happens to live in this tool.
+  const registry = new MechanicRegistry();
+  // Library first: `register` warns when it cannot find the definition it is
+  // registering, and an empty map here would print six warnings that say
+  // nothing about the check.
+  registry.loadLibrary(loader.mechanics);
+  registerRunnerMechanics(registry);
+  const scrollLead = checkScrollLead(registry);
+  const entry = checkEntry(levelFiles(), courses.levels, registry);
   const procedural = checkProcedural();
-  process.exit(impossible === 0 && courses.fatal === 0 && procedural.fatal === 0 ? 0 : 1);
+  process.exit(
+    impossible === 0 && courses.fatal === 0 && entry.fatal === 0
+      && scrollLead.fatal === 0 && procedural.fatal === 0 ? 0 : 1,
+  );
 }
 
 /**

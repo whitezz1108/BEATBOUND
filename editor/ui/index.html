@@ -104,6 +104,56 @@
           <button id="tr-apply" class="btn primary">Apply Changes</button>
         </div>
       </div>
+
+      <!-- V2 generation: AI director -> blueprint -> compiled, validated level.
+           Sits below the section/transition editors and is always available,
+           because it is the one panel that works with nothing selected. -->
+      <div id="v2-panel" class="editor">
+        <h3>AI Level Director <span>v2</span></h3>
+
+        <div class="v2-status" id="v2-status"></div>
+
+        <div class="row">
+          <label>Preset
+            <select id="v2-preset"></select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Primary mode
+            <select id="v2-primary"></select>
+          </label>
+          <label>Difficulty <b id="v2-diff-label">3</b>
+            <input id="v2-difficulty" type="range" min="1" max="5" step="1" value="3" />
+          </label>
+        </div>
+        <div class="row">
+          <label>Secondary modes</label>
+        </div>
+        <div id="v2-allowed" class="v2-modes"></div>
+        <div class="row">
+          <label>Primary-mode share <b id="v2-ratio-label">0.60</b>
+            <input id="v2-ratio" type="range" min="0" max="1" step="0.05" value="0.6" />
+          </label>
+        </div>
+        <div class="row">
+          <label>Seed
+            <input id="v2-seed" type="number" min="1" value="1" class="num" />
+          </label>
+          <label class="chk"><input id="v2-dry-run" type="checkbox" /> dry run (write nothing)</label>
+        </div>
+
+        <div class="panel-actions">
+          <button id="v2-generate" class="btn primary">⚡ AI GENERATE</button>
+          <button id="v2-manifest" class="btn" disabled>Manifest</button>
+        </div>
+        <div id="v2-progress" class="v2-progress hidden">
+          <div class="v2-bar"><span></span></div>
+          <div id="v2-progress-text" class="v2-progress-text"></div>
+        </div>
+
+        <h4>Progress</h4>
+        <pre id="v2-log" class="v2-log">not run yet</pre>
+      </div>
     </aside>
   </main>
 

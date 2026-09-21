@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/editor/level-blueprint-v2.schema.json",
+  "title": "BeatBound Level Blueprint V2",
+  "description": "The Level Director's output and the deterministic compiler's input. A blueprint says what the level should *be* -- which mode carries which bars, at what difficulty, with which pattern families and which musical moments to hit. It deliberately contains no mechanic events, no coordinates and no timing arithmetic: those are the compiler's job, because a model must never be the physics engine, the parser or the source of truth. Bar ranges are half-open [start_bar, end_bar_exclusive) and must tile the song exactly as director_context_v2 does. Every field here is validated and normalized before compilation, and the validators always override the model.",
+  "type": "object",
+  "required": ["schema_version", "generator", "song", "request", "global", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "beatbound_level_blueprint_v2" },
+
+    "generator": {
+      "type": "object",
+      "description": "Provenance of the blueprint. `kind` distinguishes an AI-directed plan from the rule-based fallback, so a level's origin is never ambiguous.",
+      "required": ["kind", "model", "prompt_version", "created_from"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "enum": ["ai_director", "rule_based", "manual"] },
+        "model": { "type": ["string", "null"], "description": "Model id, or null for a non-AI plan. Never a key, endpoint or credential." },
+        "prompt_version": { "type": ["string", "null"] },
+        "created_from": { "type": "string", "enum": ["director_context_v2", "legacy_analysis", "manual"] }
+      }
+    },
+
+    "song": {
+      "type": "object",
+      "required": ["id", "title", "audio", "bpm", "timeSignature", "barCount", "durationSec"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "audio": { "type": "string", "minLength": 1 },
+        "bpm": { "type": "number", "exclusiveMinimum": 0 },
+        "timeSignature": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "barCount": { "type": "integer", "minimum": 1 },
+        "durationSec": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+
+    "request": {
+      "type": "object",
+      "description": "The constraints the blueprint was asked to satisfy, echoed back so the result can be checked against the ask rather than against a guess.",
+      "required": ["primary_mode", "allowed_modes", "target_difficulty", "primary_mode_ratio", "seed"],
+      "additionalProperties": false,
+      "properties": {
+        "primary_mode": { "type": "string", "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+        "allowed_modes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+          "minItems": 1
+        },
+        "target_difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "primary_mode_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "seed": { "type": "integer" }
+      }
+    },
+
+    "global": {
+      "type": "object",
+      "description": "The plan at song scale: one paragraph a human can disagree with, plus the difficulty arc the sections must realise.",
+      "required": ["intent", "arc", "difficulty_curve"],
+      "additionalProperties": false,
+      "properties": {
+        "intent": { "type": "string", "minLength": 1 },
+        "arc": { "type": "string", "minLength": 1 },
+        "difficulty_curve": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1, "maximum": 5 }
+        }
+      }
+    },
+
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/section" }
+    },
+
+    "sync_points": {
+      "type": "array",
+      "description": "Musical moments the plan promises to land on. Checked against the director context's anchors, so a plan cannot claim a sync the music does not offer.",
+      "items": {
+        "type": "object",
+        "required": ["bar", "anchor_type", "why"],
+        "additionalProperties": false,
+        "properties": {
+          "bar": { "type": "integer", "minimum": 1 },
+          "anchor_type": {
+            "type": "string",
+            "enum": [
+              "section_boundary", "phrase_boundary", "energy_rise", "energy_drop", "energy_peak",
+              "strong_beat", "strong_onset", "large_pitch_jump", "melody_rise", "melody_fall",
+              "melody_peak", "vocal_entry", "vocal_exit"
+            ]
+          },
+          "why": { "type": "string" }
+        }
+      }
+    },
+
+    "notes": {
+      "type": "array",
+      "description": "Anything the director wants a human reviewer to know -- including what it chose not to do.",
+      "items": { "type": "string" }
+    }
+  },
+
+  "$defs": {
+    "section": {
+      "type": "object",
+      "required": ["id", "start_bar", "end_bar_exclusive", "mode", "function", "difficulty", "intensity", "rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "start_bar": { "type": "integer", "minimum": 1 },
+        "end_bar_exclusive": { "type": "integer", "minimum": 2 },
+        "mode": { "type": "string", "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+        "function": {
+          "type": "string",
+          "description": "Musical-dramatic role. The runtime only requires a string; this enum is what the director is offered so the vocabulary stays stable.",
+          "enum": ["INTRO", "BUILD", "PEAK", "SUSTAIN", "BREAKDOWN", "RELEASE", "OUTRO", "TRANSITION"]
+        },
+        "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "pattern_families": {
+          "type": "array",
+          "description": "Preferred pattern families. The compiler picks concrete patterns from these, so the director never has to know the library by heart.",
+          "items": { "type": "string" }
+        },
+        "pattern_ids": {
+          "type": "array",
+          "description": "Explicit pattern choices, when the director has a reason to name them. Every id is checked against the library and the section's mode.",
+          "items": { "type": "string" }
+        },
+        "energy_band": { "type": "string", "enum": ["LOW", "MID", "HIGH", "PEAK"] },
+        "course": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "description": "RUNNER only. Either an authored phrase list or a procedural spec; the compiler passes it through and the runtime's LevelLoader validates it.",
+              "required": ["phraseBeats"],
+              "additionalProperties": false,
+              "properties": {
+                "phraseBeats": { "type": "number", "exclusiveMinimum": 0 },
+                "seed": { "type": "integer" },
+                "phrases": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["archetype"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "archetype": { "type": "string" },
+                      "role": { "type": "string", "enum": ["INTRO", "REPEAT", "VARIATION", "CLIMAX", "RELEASE"] },
+                      "motif": { "type": "string" },
+                      "beats": { "type": "number", "exclusiveMinimum": 0 },
+                      "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+                      "verbs": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                },
+                "generate": {
+                  "type": "object",
+                  "required": ["beats", "seed"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "beats": { "type": "number", "exclusiveMinimum": 0 },
+                    "seed": { "type": "integer" },
+                    "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "phraseBeats": { "type": "number", "exclusiveMinimum": 0 }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "transition_out": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["kind", "reason"],
+              "additionalProperties": false,
+              "properties": {
+                "kind": { "type": "string", "minLength": 1, "description": "The runtime's transitionOut id; null on the last section." },
+                "reason": { "type": "string", "minLength": 1 },
+                "breather_beats": {
+                  "type": ["number", "null"],
+                  "description": "Advisory only. The runtime computes the real breather as max(transition.breatherBeats, beatsForSeconds(countdownSeconds)); the compiler checks feasibility against that."
+                },
+                "scene": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["effect"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "effect": {
+                        "type": "string",
+                        "enum": ["cameraZoom", "cameraPan", "paletteShift", "particles", "wipe", "bgChange", "envMovement", "lightFlash"]
+                      },
+                      "params": { "type": "object" },
+                      "durationBeats": { "type": "number", "exclusiveMinimum": 0 }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

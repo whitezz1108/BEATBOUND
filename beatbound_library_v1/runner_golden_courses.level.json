@@ -1,0 +1,220 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "runner_golden_courses",
+    "title": "Runner Golden Courses",
+    "audio": "audio/editor/test_song.wav",
+    "bpm": 120,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "R-C1",
+      "startBar": 1,
+      "lengthBars": 5,
+      "mode": "RUNNER",
+      "function": "INTRO",
+      "difficulty": 1,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 101,
+        "phrases": [
+          {
+            "archetype": "GROOVE",
+            "role": "INTRO",
+            "motif": "teach",
+            "beats": 4,
+            "intensity": 0.25,
+            "verbs": ["MEDIUM_JUMP", "GROUND_RUN", "MEDIUM_JUMP", "GROUND_RUN"]
+          },
+          {
+            "archetype": "WAVE",
+            "role": "REPEAT",
+            "motif": "teach",
+            "beats": 4,
+            "intensity": 0.3,
+            "verbs": ["HIGH_JUMP", "GROUND_RUN", "MEDIUM_JUMP", "GROUND_RUN"]
+          },
+          {
+            "archetype": "BOUNCE",
+            "role": "REPEAT",
+            "motif": "teach",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": ["SHORT_JUMP", "GROUND_RUN", "DOUBLE_HOP", "GROUND_RUN"]
+          },
+          {
+            "archetype": "WAVE",
+            "role": "VARIATION",
+            "motif": "teach",
+            "beats": 4,
+            "intensity": 0.4,
+            "verbs": ["MEDIUM_JUMP", "SHORT_JUMP", "GROUND_RUN", "MEDIUM_JUMP"]
+          },
+          {
+            "archetype": "RELEASE",
+            "role": "RELEASE",
+            "motif": "teach",
+            "beats": 4,
+            "intensity": 0.2,
+            "verbs": ["RELEASE_RUN", "MEDIUM_JUMP", "GROUND_RUN"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "R-C2",
+      "startBar": 6,
+      "lengthBars": 8,
+      "mode": "RUNNER",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 202,
+        "phrases": [
+          {
+            "archetype": "GROOVE",
+            "role": "INTRO",
+            "motif": "flow",
+            "beats": 4,
+            "intensity": 0.4,
+            "verbs": ["MEDIUM_JUMP", "MEDIUM_JUMP", "GROUND_RUN", "MEDIUM_JUMP"]
+          },
+          {
+            "archetype": "WAVE",
+            "role": "REPEAT",
+            "motif": "flow",
+            "beats": 4,
+            "intensity": 0.45,
+            "verbs": ["HIGH_JUMP", "GROUND_RUN", "HIGH_JUMP", "GROUND_RUN"]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "VARIATION",
+            "motif": "climb",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": ["STAIRCASE_UP", "DROP"]
+          },
+          {
+            "archetype": "GAP_RUN",
+            "role": "VARIATION",
+            "motif": "gap",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": ["GAP_JUMP", "GAP_JUMP", "LONG_GAP"]
+          },
+          {
+            "archetype": "FLIP",
+            "role": "CLIMAX",
+            "motif": "invert",
+            "beats": 8,
+            "intensity": 0.55,
+            "verbs": ["GRAVITY_FLIP_UP", "CEILING_HOP", "CEILING_RUN", "CEILING_HOP", "GRAVITY_FLIP_DOWN"]
+          },
+          {
+            "archetype": "BOUNCE",
+            "role": "VARIATION",
+            "motif": "pulse",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": ["QUICK_HOP", "DOUBLE_HOP", "QUICK_HOP", "GROUND_RUN"]
+          },
+          {
+            "archetype": "RELEASE",
+            "role": "RELEASE",
+            "motif": "flow",
+            "beats": 4,
+            "intensity": 0.3,
+            "verbs": ["RELEASE_RUN", "MEDIUM_JUMP", "GROUND_RUN"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "R-C3",
+      "startBar": 14,
+      "lengthBars": 9,
+      "mode": "RUNNER",
+      "function": "CLIMAX",
+      "difficulty": 5,
+      "patterns": [],
+      "transitionOut": null,
+      "course": {
+        "phraseBeats": 4,
+        "seed": 303,
+        "phrases": [
+          {
+            "archetype": "BOUNCE",
+            "role": "INTRO",
+            "motif": "burst",
+            "beats": 4,
+            "intensity": 0.5,
+            "verbs": ["QUICK_HOP", "DOUBLE_HOP", "QUICK_HOP", "GROUND_RUN"]
+          },
+          {
+            "archetype": "CLIMB_AND_DROP",
+            "role": "VARIATION",
+            "motif": "climb",
+            "beats": 4,
+            "intensity": 0.55,
+            "verbs": ["STAIRCASE_UP", "DROP_AND_JUMP"]
+          },
+          {
+            "archetype": "GAP_RUN",
+            "role": "VARIATION",
+            "motif": "gap",
+            "beats": 4,
+            "intensity": 0.6,
+            "verbs": ["LONG_GAP", "GAP_JUMP", "LONG_GAP"]
+          },
+          {
+            "archetype": "FLIP",
+            "role": "CLIMAX",
+            "motif": "invert",
+            "beats": 8,
+            "intensity": 0.65,
+            "verbs": ["GRAVITY_FLIP_UP", "CEILING_HOP", "CEILING_RUN", "CEILING_HOP", "INVERTED_PLATFORM_CHAIN", "GRAVITY_FLIP_DOWN"]
+          },
+          {
+            "archetype": "BURST",
+            "role": "CLIMAX",
+            "motif": "burst",
+            "beats": 4,
+            "intensity": 0.7,
+            "verbs": ["DOUBLE_HOP", "TRIPLE_HOP", "LAND_AND_IMMEDIATE_REJUMP", "QUICK_HOP"]
+          },
+          {
+            "archetype": "CORRIDOR",
+            "role": "CLIMAX",
+            "motif": "corridor",
+            "beats": 4,
+            "intensity": 0.75,
+            "verbs": ["TOP_BOTTOM_CORRIDOR", "TIGHT_VERTICAL_WINDOW"]
+          },
+          {
+            "archetype": "BURST",
+            "role": "CLIMAX",
+            "motif": "burst",
+            "beats": 4,
+            "intensity": 0.8,
+            "verbs": ["SYNCOPATED_HOPS", "HIGH_LOW_ALTERNATION", "DOUBLE_HOP"]
+          },
+          {
+            "archetype": "RELEASE",
+            "role": "RELEASE",
+            "motif": "burst",
+            "beats": 4,
+            "intensity": 0.35,
+            "verbs": ["RELEASE_RUN", "MEDIUM_JUMP", "GROUND_RUN"]
+          }
+        ]
+      }
+    }
+  ]
+}

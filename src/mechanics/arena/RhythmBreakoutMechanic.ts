@@ -13,10 +13,31 @@
  * -----------------------
  * Every other radial hazard in ARENA (A04, A07, A08, A10) asks a *spatial*
  * question: find the opening, be standing in it. This one deliberately removes
- * that answer. Movement is still live -- the avatar is not frozen, because a
- * game that takes the controls away mid-song feels broken rather than tense --
- * but no position on the board is safe, so the only way out is through the
- * rhythm. That is what makes it read as a set piece instead of as another ring.
+ * that answer. No position on the board is safe, so the only way out is through
+ * the rhythm. That is what makes it read as a set piece instead of as another
+ * ring.
+ *
+ * WHY THE SEAL FOLLOWS THE PLAYER
+ * -------------------------------
+ * The seal is closed around the *body*, not around the middle of the board.
+ * Every radial in this file -- the band, the teeth, the outline, the interior
+ * wash, the shatter fragments, the prompt row, the burst, the collapse -- reads
+ * its centre from `anchor`, which is the player's live position, and nothing
+ * reads `ARENA_CENTRE`. The arena centre appears in exactly one place: as the
+ * seed for `focusX`/`focusY`, so that an encounter which is never focused (a
+ * headless audit, or the frame before the mode's first update) still has a
+ * defined centre.
+ *
+ * That is what makes "no gap" fair rather than merely inescapable. A ring that
+ * closed on a fixed point would demand a *walk* before the player could even
+ * start reading it, and the walk would be priced into the prep window at the
+ * speed of the slowest corner. A ring that closes on the player has no walk to
+ * pay for: the player is already inside it, so prep is purely "time to read the
+ * seal", and a level can author it as short as it likes.
+ *
+ * It also settles the question of where the encounter *is*. There is one
+ * answer, it is wherever the player is standing, and the directional UI, the
+ * particles and the shockwave all agree on it by construction.
  *
  * FAILURE IS A COLLISION, NOT A RULE
  * ----------------------------------
@@ -52,7 +73,7 @@ import {
 import { SEAL_SKINS, SealBarrier, type SealPhase } from './SealBarrier';
 import { bandShapes, circumradiusFor, spinAt, type SealShape } from './sealGeometry';
 import {
-  renderEncounterLabel, renderPlayerCharge, renderPromptRow, slotPosition,
+  renderEncounterLabel, renderMovementLock, renderPlayerCharge, renderPromptRow, slotPosition,
 } from './breakoutUI';
 
 type Outcome = 'PENDING' | 'BROKEN' | 'FAILED';
@@ -64,6 +85,9 @@ const FAILURE_DAMAGE: Record<BreakoutFailureMode, DamageSource> = {
   DAMAGE: 'COLLISION',
   HEAVY: 'OBSTACLE',
 };
+
+/** Below this the movement scale is a lock, not a damp. */
+const MOVEMENT_LOCK_EPSILON = 0.05;
 
 const SEAL_COLOUR = '#9d7bff';
 const BREAK_COLOUR = '#f7d774';
@@ -90,6 +114,14 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
   private finalChangedBeat = 0;
   /** One-shot latch for the "the next beat is the hit" cue. */
   private readyCued = false;
+  /**
+   * What the seal is closed around: the player.
+   *
+   * Seeded at the arena centre so an encounter that is never focused -- a
+   * headless audit, or the one frame before the mode's first update -- still
+   * has a defined centre, and then driven by `focusOn` every frame the mode
+   * runs. Everything geometric below reads this and nothing reads ARENA_CENTRE.
+   */
   private focusX = ARENA_CENTRE.x;
   private focusY = ARENA_CENTRE.y;
   /** Verdicts waiting for the mode to fold into the run's note tally. */
@@ -148,9 +180,46 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     return this.capturesInput(beat) ? this.plan.movementScale : 1;
   }
 
+  /**
+   * The seal holds the arena for the whole *authored* phrase, not for the
+   * nominal duration the library declares.
+   *
+   * A12's library entry is sized for the default six-beat phrase; a level that
+   * charts a four-bar encounter is sealed in for four bars. Both ends move: the
+   * prep window is stretched at load time by the fairness clamp, and the seal
+   * only lets go of the player `releaseBeats` after the accent. A dead-air
+   * check reading the nominal numbers would call the back half of every long
+   * encounter silent while the player is still sealed inside it.
+   */
+  override get presenceWindow(): { from: number; to: number } {
+    return {
+      from: this.activationBeat - this.plan.prepBeats,
+      to: this.finalBeat + this.plan.releaseBeats,
+    };
+  }
+
   focusOn(x: number, y: number): void {
     this.focusX = x;
     this.focusY = y;
+  }
+
+  /**
+   * True: this encounter's hazard is built around the player, not the arena.
+   *
+   * The headless audits model a motionless player standing at a sampled
+   * position. For an ordinary ring that means comparing the ring's fixed
+   * geometry against the body; for a seal it means the ring *moves with* the
+   * body, so the only meaningful comparison is against a body at the seal's own
+   * centre. Declaring it here is what lets `camp-audit` ask the right question
+   * instead of reporting a corner the seal never reaches.
+   *
+   * See `isPlayerAnchored` in `core/capabilities.ts` for the reading side.
+   */
+  readonly playerAnchored = true;
+
+  /** Where the seal is closed around right now. */
+  get anchor(): { x: number; y: number } {
+    return { x: this.focusX, y: this.focusY };
   }
 
   pressDirection(direction: BreakoutDirection, beat: number): void {
@@ -158,7 +227,7 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     const result = this.sequence.press(direction, beat);
     if (!result) return;
     // +1: the row the particle lands on includes the SPACE slot at its end.
-    const at = slotPosition(result.index, this.sequence.length + 1);
+    const at = slotPosition(result.index, this.sequence.length + 1, this.anchor);
     if (result.verdict === 'MISS') this.cueStepMiss(at);
     else this.cueStepHit(at, result.verdict);
   }
@@ -232,12 +301,12 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
       // The seal locking on. Loud enough to be an event, not an attack.
       this.feel.sfx('seal_form');
       this.feel.impact('MEDIUM', {
-        x: ARENA_CENTRE.x, y: ARENA_CENTRE.y, colour: SEAL_COLOUR, shockwave: true, particles: false,
+        x: this.focusX, y: this.focusY, colour: SEAL_COLOUR, shockwave: true, particles: false,
       });
     }
     if (to === 'ACTIVE') {
       this.feel.sfx('laser_charge', 0.45);
-      this.feel.emit(ARENA_CENTRE.x, ARENA_CENTRE.y, {
+      this.feel.emit(this.focusX, this.focusY, {
         count: 14, speed: 0.5, colour: SEAL_COLOUR, size: 0.006, life: 0.5, shape: 'spark',
       });
     }
@@ -292,8 +361,10 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     this.outcomeBeat = beat;
     this.judgements.push('MISS');
     this.feel.sfx('miss');
+    // The collapse happens *on* the player, so the impact reads from where they
+    // are standing rather than from the middle of the board.
     this.feel.impact('MEDIUM', {
-      x: ARENA_CENTRE.x, y: ARENA_CENTRE.y, colour: MISS_COLOUR, particles: false,
+      x: this.focusX, y: this.focusY, colour: MISS_COLOUR, particles: false,
     });
   }
 
@@ -376,6 +447,7 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     if (this.radiusAt(beat) <= 0.005) return [];
     return bandShapes(
       this.shape, this.circumradiusAt(beat), this.plan.thickness, spinAt(this.shape, beat),
+      this.anchor,
     );
   }
 
@@ -389,6 +461,7 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     // hit-stop freezes the seal along with everything else while collision
     // keeps reading the real one.
     this.barrier.set({
+      centre: this.anchor,
       radius: this.circumradiusAt(beat),
       spin: spinAt(this.shape, beat),
       phase: this.sealPhase(beat),
@@ -408,14 +481,17 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
       this.outcome === 'BROKEN' ? 'SEAL BROKEN' : 'RHYTHM SEAL',
       this.outcome === 'BROKEN' ? BREAK_COLOUR : this.breakable ? SEAL_COLOUR : MISS_COLOUR,
       reveal * 0.8,
+      this.anchor,
       this.tally,
     );
-    // One row, dance-game style: the arrows, the judgement track beneath
-    // them, and the SPACE target at its far end are a single widget.
+    // One row, dance-game style: the arrows and the SPACE target at their far
+    // end are a single widget -- and it hangs off the player, so the phrase
+    // reads as *theirs*. There is no judgement track under it: the direction
+    // presses are untimed, so the accent is the row's only clock.
     renderPromptRow(r, {
+      anchor: this.anchor,
       steps: this.sequence.steps,
       beat,
-      goodBeats: this.plan.goodBeats,
       startBeat: this.activationBeat,
       finalBeat: this.finalBeat,
       reveal,
@@ -435,6 +511,10 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     if (this.phase === 'SCHEDULED' || this.phase === 'FINISHED') return;
 
     if (this.outcome === 'PENDING') {
+      // A locked encounter has to say so, or a frozen avatar reads as a bug.
+      if (this.plan.movementScale <= MOVEMENT_LOCK_EPSILON) {
+        renderMovementLock(r, this.focusX, this.focusY, this.lockReveal(beat), beat);
+      }
       renderPlayerCharge(r, this.focusX, this.focusY, this.charge(beat), beat);
       return;
     }
@@ -469,5 +549,18 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     if (this.outcome === 'FAILED') return clamp(1 - (beat - this.outcomeBeat) / 0.6, 0, 1);
     if (beat < this.activationBeat) return clamp(this.telegraphProgress(beat) * 2.5, 0, 1);
     return 1;
+  }
+
+  /**
+   * The movement lock's fade.
+   *
+   * Held through the whole encounter, including the collapse: the player is
+   * still rooted while the seal is coming down on them, and dropping the cue at
+   * that moment would be the one instant the player most needs to know why they
+   * cannot run.
+   */
+  private lockReveal(beat: number): number {
+    if (this.outcome === 'FAILED') return clamp(1 - (beat - this.outcomeBeat) / 0.6, 0, 1);
+    return this.revealAlpha(beat);
   }
 }

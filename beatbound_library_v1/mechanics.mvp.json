@@ -658,6 +658,7 @@
    "timing": {
     "durationBeats": 0,
     "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
     "cooldownBeats": 0
    },
    "musicTags": {
@@ -699,6 +700,7 @@
    "timing": {
     "durationBeats": 0,
     "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
     "cooldownBeats": 0
    },
    "musicTags": {
@@ -740,6 +742,7 @@
    "timing": {
     "durationBeats": 0,
     "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
     "cooldownBeats": 0
    },
    "musicTags": {
@@ -779,6 +782,7 @@
    "timing": {
     "durationBeats": 0,
     "telegraphBeats": 0.25,
+    "spawnLeadBeats": 4,
     "cooldownBeats": 0
    },
    "musicTags": {
@@ -823,6 +827,7 @@
    "timing": {
     "durationBeats": 4,
     "telegraphBeats": 1,
+    "spawnLeadBeats": 4,
     "cooldownBeats": 2
    },
    "musicTags": {
@@ -1056,6 +1061,7 @@
    "timing": {
     "durationBeats": 0,
     "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
     "cooldownBeats": 0
    },
    "musicTags": {

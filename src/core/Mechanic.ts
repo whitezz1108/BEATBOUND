@@ -65,6 +65,21 @@ export interface RuntimeMechanic {
   readonly damageSource: DamageSource;
   readonly phase: MechanicPhase;
   readonly isFinished: boolean;
+  /**
+   * The beats this mechanic occupies the player's attention for.
+   *
+   * Almost always the nominal telegraph-to-danger window, which is why the
+   * default reads it straight off `timing`. It is a separate question, though:
+   * the window the *library* declares is the window the mechanic was authored
+   * for, and a mechanic that stretches its own build-up at load time -- or that
+   * holds the arena for a phrase longer than its nominal duration -- occupies
+   * more of the song than the definition says.
+   *
+   * Nothing in the game reads this; it exists so that tools asking "is the
+   * player doing anything in this bar?" can ask the mechanic that is actually
+   * running rather than the JSON it was built from.
+   */
+  readonly presenceWindow: { from: number; to: number };
   update(u: MechanicUpdate): void;
   /** Damaging shapes *right now*. Empty unless the mechanic is dangerous. */
   hazards(): Shape[];
@@ -102,6 +117,10 @@ export abstract class BaseMechanic implements RuntimeMechanic {
   get telegraphStartBeat(): number { return this.activationBeat - this.timing.telegraphBeats; }
   get activeEndBeat(): number { return this.activationBeat + this.timing.durationBeats; }
   get recoveryEndBeat(): number { return this.activeEndBeat + this.timing.recoveryBeats; }
+
+  get presenceWindow(): { from: number; to: number } {
+    return { from: this.telegraphStartBeat, to: this.activeEndBeat };
+  }
 
   /**
    * Share of the telegraph spent in the *critical* stage -- the urgent tail

@@ -7,7 +7,7 @@
  * means, and a pattern author only ever writes degrees.
  */
 
-import type { Sector } from '../../core/geometry';
+import type { Sector, Vec2 } from '../../core/geometry';
 import { normalizeAngle } from '../../core/geometry';
 
 export const ARENA_CENTRE = { x: 0.5, y: 0.5 };
@@ -22,15 +22,26 @@ export function radToDeg(radians: number): number {
   return (radians * 180) / Math.PI;
 }
 
-export function polarToField(angleRadians: number, radius: number): { x: number; y: number } {
+/**
+ * Field point at `radius` from `centre`, along `angleRadians`.
+ *
+ * The centre is a parameter rather than a constant because not every radial
+ * figure in the arena is centred on the arena. A12's seal is centred on the
+ * *player* (see RhythmBreakoutMechanic), and it draws and damages from the same
+ * polar maths every other radial mechanic uses -- so the maths has to be told
+ * which centre it is working around rather than assuming.
+ */
+export function polarToField(
+  angleRadians: number, radius: number, centre: Vec2 = ARENA_CENTRE,
+): { x: number; y: number } {
   return {
-    x: ARENA_CENTRE.x + Math.cos(angleRadians) * radius,
-    y: ARENA_CENTRE.y + Math.sin(angleRadians) * radius,
+    x: centre.x + Math.cos(angleRadians) * radius,
+    y: centre.y + Math.sin(angleRadians) * radius,
   };
 }
 
-export function fieldToAngle(x: number, y: number): number {
-  return Math.atan2(y - ARENA_CENTRE.y, x - ARENA_CENTRE.x);
+export function fieldToAngle(x: number, y: number, centre: Vec2 = ARENA_CENTRE): number {
+  return Math.atan2(y - centre.y, x - centre.x);
 }
 
 /**
@@ -63,6 +74,8 @@ export function spreadGaps(firstCentre: number, count: number): number[] {
   return Array.from({ length: n }, (_, i) => firstCentre + i * step);
 }
 
-export function sector(rInner: number, rOuter: number, a0: number, a1: number): Sector {
-  return { cx: ARENA_CENTRE.x, cy: ARENA_CENTRE.y, rInner, rOuter, a0, a1 };
+export function sector(
+  rInner: number, rOuter: number, a0: number, a1: number, centre: Vec2 = ARENA_CENTRE,
+): Sector {
+  return { cx: centre.x, cy: centre.y, rInner, rOuter, a0, a1 };
 }

@@ -6,17 +6,20 @@
   "description": "BeatBound - data-driven multi-mode rhythm game runtime",
   "scripts": {
     "dev": "vite",
-    "editor": "node editor/server/server.mjs",
+    "editor": "node --env-file-if-exists=.env editor/server/server.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test:timing": "esbuild tools/sync-test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/sync-test.mjs --log-level=warning && node node_modules/.cache/beatbound/sync-test.mjs",
     "level": "esbuild tools/level-report.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/level-report.mjs --log-level=warning && node node_modules/.cache/beatbound/level-report.mjs",
     "audit": "esbuild tools/camp-audit.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/camp-audit.mjs --log-level=warning && node node_modules/.cache/beatbound/camp-audit.mjs",
-    "test": "npm run typecheck && npm run test:timing && npm run audit && npm run runner-check && npm run fairness",
+    "test": "npm run typecheck && npm run test:timing && npm run audit && npm run runner-check && npm run fairness && npm run test:editor",
     "runner-check": "esbuild tools/runner-check.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/runner-check.mjs --log-level=warning && node node_modules/.cache/beatbound/runner-check.mjs",
     "course-dump": "esbuild tools/course-dump.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/course-dump.mjs --log-level=warning && node node_modules/.cache/beatbound/course-dump.mjs",
-    "fairness": "esbuild tools/fairness-check.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/fairness-check.mjs --log-level=warning && node node_modules/.cache/beatbound/fairness-check.mjs"
+    "fairness": "esbuild tools/fairness-check.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/beatbound/fairness-check.mjs --log-level=warning && node node_modules/.cache/beatbound/fairness-check.mjs",
+    "test:editor": "node --test \"editor/tests/*.test.mjs\"",
+    "llm-check": "node --env-file-if-exists=.env editor/generation/check-llm.mjs",
+    "generate": "node --env-file-if-exists=.env editor/generation/cli.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.21.5",

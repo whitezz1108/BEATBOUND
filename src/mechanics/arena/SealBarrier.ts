@@ -33,6 +33,13 @@
  * band with their own velocity and spin, keeping the flat edges a polygon had
  * -- because a seal that fades out cannot carry the moment a seal that breaks
  * can.
+ *
+ * WHAT THE SEAL IS CLOSED AROUND
+ * ------------------------------
+ * The centre arrives with every state push and is not assumed. A seal is a
+ * cage around a *body*, so it is drawn around the body's position, not the
+ * arena's -- see `SealState.centre`. The shatter freezes that centre, because
+ * debris belongs to the place it came from.
  */
 
 import type { Renderer } from '../../core/Renderer';
@@ -97,6 +104,15 @@ export const SEAL_SKINS = {
 export type SealSkinName = keyof typeof SEAL_SKINS;
 
 export interface SealState {
+  /**
+   * What the seal is closed around.
+   *
+   * The seal belongs to the player, not to the arena: it is drawn around the
+   * body it is holding, so the same point the hazard is built from is the point
+   * the picture is built from. A seal centred on the arena while the player
+   * stands somewhere else is a seal that is not enclosing anybody.
+   */
+  centre: Vec2;
   /** Circumradius of the hazard band, in field units. */
   radius: number;
   /** Rotation of the silhouette, radians. */
@@ -124,8 +140,18 @@ interface Fragment {
 }
 
 export class SealBarrier {
-  private state: SealState = { radius: 0, spin: 0, phase: 'DORMANT', pressure: 0, charge: 0 };
+  private state: SealState = {
+    centre: ARENA_CENTRE, radius: 0, spin: 0, phase: 'DORMANT', pressure: 0, charge: 0,
+  };
   private fragments: Fragment[] = [];
+  /**
+   * Where the seal was when it broke.
+   *
+   * Frozen at the shatter, because debris is thrown from a place, not carried
+   * around. A player who keeps walking after the break should leave the pieces
+   * behind them.
+   */
+  private fragmentCentre: Vec2 = ARENA_CENTRE;
   /** Seconds since the shatter, for the flash that rides on top of it. */
   private shatterAge = Infinity;
 
@@ -136,6 +162,8 @@ export class SealBarrier {
 
   get phase(): SealPhase { return this.state.phase; }
   get radius(): number { return this.state.radius; }
+  /** Where the seal is closed around right now. */
+  get centre(): Vec2 { return this.state.centre; }
 
   set(state: SealState): void {
     this.state = state;
@@ -166,6 +194,7 @@ export class SealBarrier {
    * that quietly disappeared.
    */
   shatter(circumradius: number, spin: number, rng: () => number): void {
+    this.fragmentCentre = this.state.centre;
     const count = this.skin.fragments;
     const step = (Math.PI * 2) / count;
     this.fragments = Array.from({ length: count }, (_, i) => {
@@ -200,7 +229,7 @@ export class SealBarrier {
   // ---- the intact seal ---------------------------------------------------
 
   private renderBand(r: Renderer, beat: number): void {
-    const { radius, spin, phase, pressure, charge } = this.state;
+    const { centre, radius, spin, phase, pressure, charge } = this.state;
     if (radius <= 0.001) return;
 
     const critical = phase === 'CRITICAL' || phase === 'COLLAPSE';
@@ -215,8 +244,8 @@ export class SealBarrier {
     // The enclosed space darkens as the walls come in -- the room shrinking,
     // rather than a number going up.
     const wash = 0.05 + 0.16 * pressure + 0.06 * charge;
-    this.fillInterior(r, radius, spin, wash * 0.45);
-    r.glow(ARENA_CENTRE.x, ARENA_CENTRE.y, radius * 1.05, this.skin.ring, wash * 0.5);
+    this.fillInterior(r, centre, radius, spin, wash * 0.45);
+    r.glow(centre.x, centre.y, radius * 1.05, this.skin.ring, wash * 0.5);
 
     // Concentric bands. Only the first is the hazard; the others trail it.
     for (let band = 0; band < this.skin.bands; band++) {
@@ -226,47 +255,52 @@ export class SealBarrier {
       const fill = bandAlpha * (0.55 + 0.25 * pulse);
       if (round) {
         r.fillAnnulusSector(
-          ARENA_CENTRE.x, ARENA_CENTRE.y,
+          centre.x, centre.y,
           Math.max(0, bandRadius - this.thickness / 2), bandRadius + this.thickness / 2,
           0, Math.PI * 2, colour, fill,
         );
       } else {
         for (const sample of bandSamples(this.skin.shape, bandRadius, spin)) {
-          r.fillPolygon(segmentQuad(this.skin.shape, sample, this.thickness, bandRadius, spin), colour, fill);
+          r.fillPolygon(
+            segmentQuad(this.skin.shape, sample, this.thickness, bandRadius, spin, centre), colour, fill,
+          );
         }
       }
-      this.strokeOutline(r, bandRadius, spin, this.thickness / 2, this.skin.edge, bandAlpha * 0.6);
-      this.strokeOutline(r, bandRadius, spin, -this.thickness / 2, this.skin.edge, bandAlpha * 0.8);
+      this.strokeOutline(r, centre, bandRadius, spin, this.thickness / 2, this.skin.edge, bandAlpha * 0.6);
+      this.strokeOutline(r, centre, bandRadius, spin, -this.thickness / 2, this.skin.edge, bandAlpha * 0.8);
     }
 
-    this.renderTeeth(r, radius, spin, pulse, alpha, critical);
+    this.renderTeeth(r, centre, radius, spin, pulse, alpha, critical);
 
     // Forming reads as the seal locking into place: spokes converge inward.
-    if (forming) this.renderFormingSpokes(r, radius, spin, pressure);
+    if (forming) this.renderFormingSpokes(r, centre, radius, spin, pressure);
     if (critical) {
-      r.glow(ARENA_CENTRE.x, ARENA_CENTRE.y, radius * 1.3, this.skin.energy, 0.10 + 0.14 * pulse);
+      r.glow(centre.x, centre.y, radius * 1.3, this.skin.energy, 0.10 + 0.14 * pulse);
     }
   }
 
   /** The safe space inside the seal, in the seal's own shape. */
-  private fillInterior(r: Renderer, radius: number, spin: number, alpha: number): void {
+  private fillInterior(r: Renderer, centre: Vec2, radius: number, spin: number, alpha: number): void {
     const inner = radius - this.thickness / 2;
     if (inner <= 0.001) return;
     if (isRound(this.skin.shape)) {
-      r.fillCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, inner, this.skin.ring, alpha);
+      r.fillCircle(centre.x, centre.y, inner, this.skin.ring, alpha);
       return;
     }
-    r.fillPolygon(outlinePoints(this.skin.shape, radius, spin, -this.thickness / 2), this.skin.ring, alpha);
+    r.fillPolygon(
+      outlinePoints(this.skin.shape, radius, spin, -this.thickness / 2, centre), this.skin.ring, alpha,
+    );
   }
 
   private strokeOutline(
-    r: Renderer, radius: number, spin: number, offset: number, colour: string, alpha: number,
+    r: Renderer, centre: Vec2, radius: number, spin: number, offset: number,
+    colour: string, alpha: number,
   ): void {
     if (isRound(this.skin.shape)) {
-      r.strokeCircle(ARENA_CENTRE.x, ARENA_CENTRE.y, Math.max(0, radius + offset), colour, 2, alpha);
+      r.strokeCircle(centre.x, centre.y, Math.max(0, radius + offset), colour, 2, alpha);
       return;
     }
-    const points = outlinePoints(this.skin.shape, radius, spin, offset);
+    const points = outlinePoints(this.skin.shape, radius, spin, offset, centre);
     r.polyline([...points, points[0]], colour, 2, alpha);
   }
 
@@ -280,25 +314,28 @@ export class SealBarrier {
    * every one of them aims at the player, and none of them ever stops.
    */
   private renderTeeth(
-    r: Renderer, radius: number, spin: number, pulse: number, alpha: number, critical: boolean,
+    r: Renderer, centre: Vec2, radius: number, spin: number, pulse: number,
+    alpha: number, critical: boolean,
   ): void {
     const length = this.thickness * (0.55 + 0.35 * pulse) * (critical ? 1.35 : 1);
     for (let i = 0; i < this.skin.teeth; i++) {
       const angle = spin + (i / this.skin.teeth) * Math.PI * 2;
       const inner = radiusAt(this.skin.shape, radius, angle, spin) - this.thickness / 2;
-      const from = polarToField(angle, Math.max(0.01, inner));
-      const to = polarToField(angle, Math.max(0.005, inner - length));
+      const from = polarToField(angle, Math.max(0.01, inner), centre);
+      const to = polarToField(angle, Math.max(0.005, inner - length), centre);
       r.line(from.x, from.y, to.x, to.y, this.skin.edge, critical ? 2 : 1, alpha * (0.35 + 0.35 * pulse));
     }
   }
 
-  private renderFormingSpokes(r: Renderer, radius: number, spin: number, pressure: number): void {
+  private renderFormingSpokes(
+    r: Renderer, centre: Vec2, radius: number, spin: number, pressure: number,
+  ): void {
     const t = easeOutCubic(clamp(pressure, 0, 1));
     for (let i = 0; i < 8; i++) {
       const angle = spin + (i / 8) * Math.PI * 2;
       const at = radiusAt(this.skin.shape, radius, angle, spin);
-      const from = polarToField(angle, at + 0.1 * (1 - t));
-      const to = polarToField(angle, at);
+      const from = polarToField(angle, at + 0.1 * (1 - t), centre);
+      const to = polarToField(angle, at, centre);
       r.line(from.x, from.y, to.x, to.y, this.skin.energy, 2, 0.35 * (1 - t));
     }
   }
@@ -307,22 +344,25 @@ export class SealBarrier {
 
   private renderFragments(r: Renderer): void {
     const half = this.thickness / 2;
+    const centre = this.fragmentCentre;
     for (const f of this.fragments) {
       const fade = 1 - f.age / f.life;
       const a0 = f.angle - f.half;
       const a1 = f.angle + f.half;
       const quad: Vec2[] = [
-        polarToField(a0, Math.max(0, f.r0 - half)),
-        polarToField(a1, Math.max(0, f.r1 - half)),
-        polarToField(a1, f.r1 + half),
-        polarToField(a0, f.r0 + half),
+        polarToField(a0, Math.max(0, f.r0 - half), centre),
+        polarToField(a1, Math.max(0, f.r1 - half), centre),
+        polarToField(a1, f.r1 + half, centre),
+        polarToField(a0, f.r0 + half, centre),
       ];
       r.fillPolygon(quad, this.skin.ring, 0.85 * fade);
       r.polyline([quad[3], quad[2]], this.skin.edge, 2, 0.7 * fade);
       // A streak trailing back toward where the band was, so the pieces read
       // as thrown outward rather than as simply floating apart.
-      const tip = polarToField(f.angle, (f.r0 + f.r1) / 2 + half);
-      const tail = polarToField(f.angle, Math.max(0.02, (f.r0 + f.r1) / 2 - half - f.speed * 0.08));
+      const tip = polarToField(f.angle, (f.r0 + f.r1) / 2 + half, centre);
+      const tail = polarToField(
+        f.angle, Math.max(0.02, (f.r0 + f.r1) / 2 - half - f.speed * 0.08), centre,
+      );
       r.line(tail.x, tail.y, tip.x, tip.y, this.skin.energy, 2, 0.3 * fade);
     }
   }
@@ -330,6 +370,7 @@ export class SealBarrier {
   private renderShatterFlash(r: Renderer): void {
     if (this.shatterAge > 0.35) return;
     const t = 1 - this.shatterAge / 0.35;
-    r.glow(ARENA_CENTRE.x, ARENA_CENTRE.y, 0.2 + 0.5 * (1 - t), this.skin.energy, 0.5 * t);
+    const { x, y } = this.fragmentCentre;
+    r.glow(x, y, 0.2 + 0.5 * (1 - t), this.skin.energy, 0.5 * t);
   }
 }

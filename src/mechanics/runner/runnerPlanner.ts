@@ -213,6 +213,14 @@ interface PlanState {
   beat: number;
   /** How many flips the phrase has already performed, for GRAVITY_ZIGZAG. */
   flips: number;
+  /**
+   * The beat the current grounded stretch began on, if the player has just
+   * landed. Absent means "has been running since before the plan started".
+   *
+   * Only `drop()` reads this, and only to refuse a fall that departs on the
+   * beat the player touched down -- see the note there.
+   */
+  groundedSince?: number;
 }
 
 interface VerbResult {
@@ -376,6 +384,67 @@ function roof(
     surface,
     floating: true,
   };
+}
+
+/**
+ * Height of the hazard a jump is planned *over*, from the phrase's intensity.
+ *
+ * Threat belongs to the verb, not to the intensity. `LONG_JUMP` is documented as
+ * MID threat and `LONG_GAP` as HIGH; while both gated their hazard behind
+ * `intensity > 0.55`, a phrase below that line asked for the *shape* of a threat
+ * and got an empty beat -- the mode's whole library ran at a few hazards per
+ * minute, so there was nothing to fail and a course read as a jump animation
+ * rather than as pressure to be survived. Intensity now scales how tall the
+ * hazard is, which is what "harder" should mean: the same idea, a cleaner arc
+ * required, never a beat that quietly became nothing.
+ *
+ * The ceiling is far below `jumpHeight`, and the hazard sits at the apex where
+ * clearance is greatest, so even the top of the range is a spike a full-hold
+ * jump sails over.
+ */
+function overHazardLevel(intensity: number, floor: number, ceiling: number): number {
+  const t = Math.max(0, Math.min(1, intensity));
+  return floor + t * (ceiling - floor);
+}
+
+/**
+ * Build corridor hops until the phrase's budget runs out.
+ *
+ * The corridor verbs used to build a fixed number of hops whatever room they
+ * were given, and then size one roof and one walkway to that fixed count. When
+ * the phrase's budget cut the verb short, the hops that survived ended early
+ * while the roof still ran to where the verb would have ended -- a lid past the
+ * end of its own corridor, which the player flies into on the next hop. Building
+ * only what fits means the geometry the verb emits is the geometry the player
+ * meets, and a corridor cut off by the bar line stays a corridor rather than
+ * becoming a wall.
+ *
+ * `endBeat` is the phrase's own end, so a corridor can never spend beats the
+ * phrase did not give it and `planPhrase` never has to trim one.
+ */
+function corridorHops(
+  state: PlanState,
+  archetype: string,
+  hold: number,
+  endBeat: number,
+  wanted: number,
+  kind: MotionVerb,
+): { segments: TrajectorySegment[]; next: PlanState } {
+  const segments: TrajectorySegment[] = [];
+  let current = state;
+  for (let i = 0; i < wanted; i++) {
+    // `kind` so the hop is named after the corridor it belongs to. Left to
+    // derive its own name, `verbForHop` saw a flat hop with a short hold and
+    // called it `PLATFORM_HOP_CHAIN` -- so a course dump showed a corridor as a
+    // platform chain followed by two long jumps, and the one verb whose whole
+    // point is that the floor and ceiling define the route together was the one
+    // verb the dump never mentioned.
+    const result = hop(current, archetype, { hold, kind, note: 'hop inside the corridor' });
+    if (current.beat + verbCost(result) > endBeat + 1e-6) break;
+    segments.push(...result.segments);
+    current = result.next;
+  }
+  return { segments, next: current };
 }
 
 /** A hazard the arc is designed to clear. */
@@ -599,7 +668,7 @@ function hop(
   };
   return {
     segments: [segment],
-    next: { ...state, level: endLevel, beat: landBeat },
+    next: { ...state, level: endLevel, beat: landBeat, groundedSince: landBeat },
   };
 }
 
@@ -689,14 +758,38 @@ function drop(
   toLevel: number,
   note?: string,
 ): VerbResult {
+  // A fall is the one verb the player does not *choose* the start of. A jump
+  // begins on the input, so landing and re-jumping on the same beat is two
+  // actions the player performs; a fall begins because the ledge ended, so a
+  // fall that starts on the beat the player landed on is not two actions at
+  // all -- the terrain never held them. `CourseWorld.clipFalls` ends a surface
+  // where the plan says the player leaves it by falling, so that landing slab is
+  // cut at the exact beat it was emitted to catch them: the course then asks for
+  // a surface that is no longer there, and the traversal check reports
+  // `NO_SUPPORT` on the beat the plan calls a landing.
+  //
+  // `groundedSince` ages out on its own. It is the beat the current grounded
+  // stretch began, so once the player has been running longer than the settle
+  // the subtraction goes negative and the run is free -- no clearing needed, and
+  // a descent built from consecutive falls settles only the first of them.
+  const settle = Math.max(
+    0,
+    (state.groundedSince ?? -Infinity) + LANDING_SETTLE_BEATS - state.beat,
+  );
+  const segments: TrajectorySegment[] = [];
+  let from = state;
+  if (settle > 1e-6) {
+    segments.push(runSegment(state, settle, archetype, 'settle after the landing'));
+    from = { ...state, beat: state.beat + settle };
+  }
   // Never below the surface the player is running on: "down" past the base line
   // is through the floor, not onto it.
   const level = Math.max(0, Math.min(toLevel, MAX_LEVEL));
-  const depth = Math.max(0, state.level - level);
+  const depth = Math.max(0, from.level - level);
   const beats = Math.max(0.2, dropBeats(depth));
-  const startY = feetAt(state.surface, state.level);
-  const endY = feetAt(state.surface, level);
-  const landBeat = state.beat + beats;
+  const startY = feetAt(from.surface, from.level);
+  const endY = feetAt(from.surface, level);
+  const landBeat = from.beat + beats;
   const demands: TerrainDemandAny[] = [];
   pushSlab(demands, slab(state.surface, landBeat, level));
   // A fall lands on solid track, and it has to *say so*.
@@ -708,25 +801,26 @@ function drop(
   // the player falls out of the world exactly where the plan says they land. The
   // `force` slab is the landing, made explicit.
   pushSlab(demands, slab(state.surface, landBeat, level, minLandingWidth() / UNITS_PER_BEAT, true, true));
+  segments.push({
+    verb: 'DROP',
+    archetype,
+    startBeat: from.beat,
+    beats,
+    surface: from.surface,
+    startFeetY: startY,
+    endFeetY: endY,
+    runY: endY,
+    airborne: true,
+    airBeats: beats,
+    apex: 0,
+    lands: true,
+    demands,
+    hazards: [],
+    note,
+  });
   return {
-    segments: [{
-      verb: 'DROP',
-      archetype,
-      startBeat: state.beat,
-      beats,
-      surface: state.surface,
-      startFeetY: startY,
-      endFeetY: endY,
-      runY: endY,
-      airborne: true,
-      airBeats: beats,
-      apex: 0,
-      lands: true,
-      demands,
-      hazards: [],
-      note,
-    }],
-    next: { ...state, level, beat: landBeat },
+    segments,
+    next: { ...from, level, beat: landBeat, groundedSince: landBeat },
   };
 }
 
@@ -783,9 +877,11 @@ function planVerb(
     case 'MEDIUM_JUMP':
       return hop(state, archetype, { hold: HOLD.MEDIUM, note: 'half-hold' });
     case 'LONG_JUMP':
+      // Always over something: the verb's name is a claim about the *flight*,
+      // and a flight with nothing under it is a `MEDIUM_JUMP` held longer.
       return hop(state, archetype, {
-        over: heavy ? { kind: 'SPIKE', level: 0.09 } : undefined,
-        note: 'full hold',
+        over: { kind: 'SPIKE', level: overHazardLevel(intensity, 0.07, 0.12) },
+        note: 'full hold over a spike',
       });
     case 'HIGH_JUMP':
       return hop(state, archetype, { rise: HIGH_LEVEL, landOnSlab: true, lands: true, kind: 'HIGH_JUMP', note: 'up onto a slab' });
@@ -836,7 +932,15 @@ function planVerb(
     case 'GAP_JUMP':
       return hop(state, archetype, { gap: true, note: 'jump the hole' });
     case 'LONG_GAP':
-      return hop(state, archetype, { gap: true, over: heavy ? { kind: 'SPIKE', level: 0.08 } : undefined, note: 'hole near the arc limit' });
+      // The hole is the primary threat and the spike sits inside it, so the
+      // spike stays lower than a `LONG_JUMP`'s: two threats stacked at full
+      // height would ask for one arc to answer both, which is the shape a
+      // phrase should have to *earn* rather than get from a single verb.
+      return hop(state, archetype, {
+        gap: true,
+        over: { kind: 'SPIKE', level: overHazardLevel(intensity, 0.055, 0.10) },
+        note: 'hole near the arc limit',
+      });
 
     // ---- vertical -------------------------------------------------------
     case 'DOUBLE_JUMP_MOUNT': {
@@ -1105,15 +1209,22 @@ function planVerb(
       // cap bites, the corridor gets tighter rather than taller, and the jump
       // inside it gets shorter -- which is exactly the read a tight corridor is
       // supposed to have.
-      const walk = CORRIDOR_WALK;
-      const headroom = corridorHeadroom(walk, CORRIDOR_CLEARANCE);
-      const hold = holdForApex(headroom - BODY_HEIGHT - CORRIDOR_APEX_MARGIN);
       const out: TrajectorySegment[] = [];
       let current = state;
       const walkStart = state.beat;
-      const toWalk = hop(current, archetype, { rise: walk, landOnSlab: true, lands: true, note: 'onto the walkway' });
+      const toWalk = hop(current, archetype, { rise: CORRIDOR_WALK, landOnSlab: true, lands: true, note: 'onto the walkway' });
       out.push(...toWalk.segments);
       current = toWalk.next;
+      // The walkway is the level the entry hop *landed on*, not the constant it
+      // asked for. Entering a corridor from ground that is already raised -- a
+      // second corridor in the same phrase, or a walkway the previous verb left
+      // behind -- puts the floor at `state.level + CORRIDOR_WALK`, while a roof
+      // measured from the constant sits a whole `state.level` too low. That is
+      // headroom the jump inside the corridor then spends, and the player's head
+      // meets the roof on the way up.
+      const walkLevel = levelOf(out[out.length - 1]);
+      const headroom = corridorHeadroom(walkLevel, CORRIDOR_CLEARANCE);
+      const hold = holdForApex(headroom - BODY_HEIGHT - CORRIDOR_APEX_MARGIN);
       // The roof begins where the *entry hop ends*, not where the corridor does.
       //
       // The entry is a full jump, and its apex is `jumpHeight` -- far above a
@@ -1123,19 +1234,21 @@ function planVerb(
       // door is a ceiling. The corridor proper starts after that landing, and so
       // does its roof.
       const roofStart = current.beat;
-      for (let i = 0; i < 2; i++) {
-        const r = hop(current, archetype, { hold, note: 'hop inside the corridor' });
-        out.push(...r.segments);
-        current = r.next;
-      }
+      const hops = corridorHops(current, archetype, hold, state.beat + budget, 2, 'TOP_BOTTOM_CORRIDOR');
+      out.push(...hops.segments);
+      current = hops.next;
       // The walkway is laid *under the whole corridor*, not just under the
       // landing that opened it. Each hop inside the corridor lands back on the
       // walkway, so a walkway that stops one beat in leaves the second and third
       // hops landing on nothing -- the player drops to the floor line through a
       // platform drawn under them. One slab spanning the corridor is also what
       // the thing *is*: a corridor's floor, not a series of stepping stones.
-      pushSlab(out[0].demands, slab(current.surface, (walkStart + current.beat) / 2, walk, current.beat - walkStart, true, true));
-      pushSlab(out[0].demands, roof(current.surface, (roofStart + current.beat) / 2, walk + headroom, current.beat - roofStart));
+      pushSlab(out[0].demands, slab(current.surface, (walkStart + current.beat) / 2, walkLevel, current.beat - walkStart, true, true));
+      // A corridor whose hops did not fit has no roof to hang: a lid with no
+      // floor under it is a ceiling to fly into, not a corridor.
+      if (current.beat > roofStart + 1e-6) {
+        pushSlab(out[0].demands, roof(current.surface, (roofStart + current.beat) / 2, walkLevel + headroom, current.beat - roofStart));
+      }
       return { segments: out, next: current };
     }
     case 'TIGHT_VERTICAL_WINDOW': {
@@ -1145,24 +1258,28 @@ function planVerb(
       // when even that overshoots, which is the planner saying "this roof is too
       // low" -- so the roof is set from the physics rather than from a round
       // number.
-      const walk = CORRIDOR_WALK;
-      const headroom = corridorHeadroom(walk, TIGHT_CLEARANCE);
-      const hold = holdForApex(headroom - BODY_HEIGHT - CORRIDOR_APEX_MARGIN);
       const out: TrajectorySegment[] = [];
       let current = state;
       const walkStart = state.beat;
-      const up = hop(current, archetype, { rise: walk, landOnSlab: true, lands: true, note: 'into the window' });
+      const up = hop(current, archetype, { rise: CORRIDOR_WALK, landOnSlab: true, lands: true, note: 'into the window' });
       out.push(...up.segments);
       current = up.next;
+      // The window's floor is where the entry hop landed, not the constant it
+      // asked for -- see `TOP_BOTTOM_CORRIDOR`.
+      const walkLevel = levelOf(out[out.length - 1]);
+      const headroom = corridorHeadroom(walkLevel, TIGHT_CLEARANCE);
+      const hold = holdForApex(headroom - BODY_HEIGHT - CORRIDOR_APEX_MARGIN);
       const roofStart = current.beat;
-      const through = hop(current, archetype, { hold, note: 'duck through' });
+      const through = corridorHops(current, archetype, hold, state.beat + budget, 1, 'TIGHT_VERTICAL_WINDOW');
       out.push(...through.segments);
       current = through.next;
       // Same as `TOP_BOTTOM_CORRIDOR`: the walkway spans the whole window, so
       // the hop that ducks through it lands on the window's floor rather than
       // past the end of it, and the roof starts after the entry jump.
-      pushSlab(out[0].demands, slab(current.surface, (walkStart + current.beat) / 2, walk, current.beat - walkStart, true, true));
-      pushSlab(out[0].demands, roof(current.surface, (roofStart + current.beat) / 2, walk + headroom, current.beat - roofStart));
+      pushSlab(out[0].demands, slab(current.surface, (walkStart + current.beat) / 2, walkLevel, current.beat - walkStart, true, true));
+      if (current.beat > roofStart + 1e-6) {
+        pushSlab(out[0].demands, roof(current.surface, (roofStart + current.beat) / 2, walkLevel + headroom, current.beat - roofStart));
+      }
       return { segments: out, next: current };
     }
 
@@ -1450,7 +1567,13 @@ function planPhrase(
       // step above where the trajectory really ends, and the player teleports
       // upward at the verb boundary.
       const last = segments[segments.length - 1];
-      state = { ...state, beat: state.beat + consumed, surface: last.surface, level: levelOf(last) };
+      state = {
+        ...state,
+        beat: state.beat + consumed,
+        surface: last.surface,
+        level: levelOf(last),
+        groundedSince: groundedSinceOf(last),
+      };
       break;
     }
     state = { ...result.next, beat: state.beat + consumed };
@@ -1556,7 +1679,15 @@ export function planCourse(spec: CourseSpec, options: PlanOptions): Trajectory {
     phrases.push(planned);
     beat += planned.beats;
     const last = planned.segments[planned.segments.length - 1];
-    if (last) state = { surface: last.surface, level: levelOf(last), beat, flips: 0 };
+    if (last) {
+      state = {
+        surface: last.surface,
+        level: levelOf(last),
+        beat,
+        flips: 0,
+        groundedSince: groundedSinceOf(last),
+      };
+    }
   }
   return flattenTrajectory(phrases);
 }
@@ -1564,6 +1695,18 @@ export function planCourse(spec: CourseSpec, options: PlanOptions): Trajectory {
 /** Rise above its own surface of the feet at the end of a segment. */
 function levelOf(segment: TrajectorySegment): number {
   return segment.surface === 'FLOOR' ? FLOOR_Y - segment.endFeetY : segment.endFeetY - CEILING_Y_CONST;
+}
+
+/**
+ * The beat the grounded stretch a segment ends in began on.
+ *
+ * A segment that landed started one at its own landing; a segment that was
+ * already running has been grounded since it started. Carried into the next
+ * `PlanState` wherever a phrase rebuilds one from its last segment, so the
+ * settle rule in `drop()` survives a phrase boundary and a trimmed verb.
+ */
+function groundedSinceOf(segment: TrajectorySegment): number {
+  return segment.airborne ? segment.startBeat + segment.beats : segment.startBeat;
 }
 
 /**

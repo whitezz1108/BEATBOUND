@@ -25,6 +25,7 @@ import { registerRunnerMechanics } from '../src/mechanics/runner';
 import { registerVerticalMechanics } from '../src/mechanics/vertical';
 import { registerRadialMechanics } from '../src/mechanics/radial';
 import { circleIntersectsShape, type Shape } from '../src/core/geometry';
+import { isPlayerAnchored } from '../src/core/capabilities';
 import type { RuntimeMechanic } from '../src/core/Mechanic';
 import type { SongPlayer } from '../src/core/AudioEngine';
 import { DATA, loadLevelIndex } from '../src/config';
@@ -105,20 +106,42 @@ function auditSection(level: CompiledLevel, section: CompiledSection): SectionRe
     clock.update();
 
     const shapes: Shape[] = [];
+    // Player-anchored hazards are collected separately, and tested against a
+    // body standing at the hazard's own centre rather than at a grid position.
+    //
+    // The seal is closed around the body, so "would this hit a player standing
+    // at (x, y)?" has the same answer at every (x, y) -- the ring is always
+    // around the player being asked about. Testing it at its own centre is
+    // therefore not an approximation, it is the exact question. The alternative
+    // -- comparing the seal's geometry at the arena centre against a body out
+    // in a corner -- answers something the game never asks, and would report a
+    // section built entirely from seals as campable everywhere the seal is not.
+    const anchored: Array<{ at: { x: number; y: number }; shapes: Shape[] }> = [];
     for (const m of live) {
       m.update({ beat, deltaSeconds: level.tempo.beatsToTime(step), secondsPerBeat: level.tempo.secondsPerBeatAt(beat) });
-      shapes.push(...m.hazards());
+      const own = m.hazards();
+      if (own.length === 0) continue;
+      if (isPlayerAnchored(m)) anchored.push({ at: m.anchor, shapes: own });
+      else shapes.push(...own);
     }
+    // One test per anchored hazard, reused by every standing position.
+    const anchoredHit = anchored.some((a) =>
+      a.shapes.some((s) => circleIntersectsShape({ x: a.at.x, y: a.at.y, r: PLAYER_RADIUS }, s)));
     for (let i = live.length - 1; i >= 0; i--) {
       if (live[i].isFinished) live.splice(i, 1);
     }
-    if (shapes.length === 0) continue;
+    if (shapes.length === 0 && !anchoredHit) continue;
 
     for (let gy = 0; gy < GRID; gy++) {
       const y = clampToField(gy / (GRID - 1));
       for (let gx = 0; gx < GRID; gx++) {
         const index = gy * GRID + gx;
         if (beat < invulnerableUntil[index]) continue;
+        if (anchoredHit) {
+          hits[index] += 1;
+          invulnerableUntil[index] = beat + INVULNERABLE_BEATS;
+          continue;
+        }
         const x = clampToField(gx / (GRID - 1));
         const body = { x, y, r: PLAYER_RADIUS };
         for (const shape of shapes) {

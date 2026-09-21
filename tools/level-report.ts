@@ -143,6 +143,16 @@ function printSection(
     (section.transitionOut ? `  -> ${section.transitionOut}` : ''),
   );
 
+  // A course section has no placements by construction -- its terrain comes
+  // from the planned trajectory -- so the pattern machinery below would report
+  // it as an empty section. It is the *opposite* of empty: the trajectory is
+  // the content. Print it as phrases instead, in the same shape the pattern
+  // rows use, so a RUNNER level reads as a course rather than as dead air.
+  if (section.course) {
+    printCourse(level, section.course, fromBar);
+    return;
+  }
+
   const layout = section.placements
     .map((p) => `${p.pattern.id}@${p.startBar}`)
     .join(' ');
@@ -178,6 +188,77 @@ function printSection(
     );
   }
   if (rows.every((r) => r.bar < fromBar)) console.log('  (no events at or after the requested bar)');
+}
+
+/**
+ * A RUNNER course, phrase by phrase.
+ *
+ * The interesting column is `bar.beat`, and it is absolute: a phrase starts on
+ * the bar line it was authored on, so a course whose phrases drift off the bar
+ * lines is visible here as a column that no longer lands on whole bars. The
+ * verb list is the *planned* one -- what the planner actually built from the
+ * authored verbs, after budgeting and trimming -- because that, not the authored
+ * list, is what the player meets.
+ */
+function printCourse(
+  level: CompiledLevel,
+  course: NonNullable<CompiledLevel['sections'][number]['course']>,
+  fromBar: number,
+): void {
+  const beatsPerBar = level.tempo.beatsPerBar;
+  const phrases = course.trajectory.phrases;
+  // Measured from the first phrase to the end of the last, not `endBeat` minus
+  // `startBeat`: those bracket the *planned* span and a course that was trimmed
+  // to fit its section ends earlier than the section does.
+  const first = phrases[0]?.startBeat ?? course.startBeat;
+  const beats = phrases.reduce((n, p) => Math.max(n, p.startBeat + p.beats - first), 0);
+  const firstBar = Math.floor(first / beatsPerBar) + 1;
+  console.log(
+    `  course:   ${phrases.length} phrase(s) · ${fmt(beats)} beats · ` +
+    `scroll lead ${fmt(course.leadInBeats)} beats`,
+  );
+
+  const perBar: number[] = [];
+  for (let bar = firstBar; bar < firstBar + Math.ceil(beats / beatsPerBar); bar++) {
+    const lo = (bar - 1) * beatsPerBar;
+    perBar.push(phrases.filter((p) => p.startBeat < lo + beatsPerBar && p.startBeat + p.beats > lo).length);
+  }
+  const empty = perBar.filter((n) => n === 0).length;
+  console.log(
+    `  bar map:  ${perBar.map((n) => (n === 0 ? '.' : n > 9 ? '+' : String(n))).join(' ')}` +
+    `${empty > 0 ? `   <-- ${empty} empty bar(s)` : ''}`,
+  );
+  console.log(`  ${'bar.beat'.padEnd(9)}${'time'.padEnd(8)}${'role'.padEnd(10)}${'archetype'.padEnd(18)}${'motif'.padEnd(9)}verbs`);
+
+  let lastBar = -1;
+  for (const phrase of phrases) {
+    const bar = Math.floor(phrase.startBeat / beatsPerBar) + 1;
+    if (bar < fromBar) continue;
+    if (lastBar !== -1 && bar !== lastBar) console.log(`  ${'-'.repeat(74)}`);
+    lastBar = bar;
+    const beatInBar = (phrase.startBeat % beatsPerBar) + 1;
+    const seconds = level.tempo.beatsToTime(phrase.startBeat);
+    // Consecutive repeats of the same verb collapse to `VERB xN`, so a phrase
+    // that is one idea played four times reads as that rather than as noise.
+    const verbs: string[] = [];
+    for (const segment of phrase.segments) {
+      const last = verbs[verbs.length - 1];
+      const base = last?.split(' x')[0];
+      if (base === segment.verb) verbs[verbs.length - 1] = `${base} x${Number(last.split(' x')[1] ?? 1) + 1}`;
+      else verbs.push(segment.verb);
+    }
+    console.log(
+      `  ${`${bar}.${fmt(beatInBar)}`.padEnd(9)}` +
+      `${`${seconds.toFixed(1)}s`.padEnd(8)}` +
+      `${phrase.role.padEnd(10)}` +
+      `${phrase.archetype.padEnd(18)}` +
+      `${phrase.motif.padEnd(9)}` +
+      `${verbs.join(' -> ')}`,
+    );
+  }
+  if (phrases.every((p) => Math.floor(p.startBeat / beatsPerBar) + 1 < fromBar)) {
+    console.log('  (no phrases at or after the requested bar)');
+  }
 }
 
 /**

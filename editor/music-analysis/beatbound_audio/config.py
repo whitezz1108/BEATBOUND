@@ -64,6 +64,10 @@ DIRECTOR_STRONG_BEAT_SPACING_BARS = 1   # min spacing between kept strong_beat e
 DIRECTOR_STRONG_ONSET_SPACING_BEATS = 2 # min spacing between kept strong_onset events
 DIRECTOR_EVENT_BUDGET = 250             # hard ceiling for important_events
 
+# ---- director context V2 (generation-facing) ---------------------------------
+DIRECTOR_V2_ANCHOR_BUDGET = 200         # hard ceiling for anchors
+DIRECTOR_V2_ANCHOR_MERGE_BEATS = 0.25   # same-type anchors closer than this merge
+
 # ---- events (prompt section 12) --------------------------------------------
 MAX_EVENTS = 4000
 STRONG_ONSET_MIN = 0.55

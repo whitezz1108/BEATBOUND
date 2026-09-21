@@ -41,7 +41,7 @@ import type { GameMode } from '../../core/types';
 import { CEILING_Y, GROUND_Y, PLAYER_X, UNITS_PER_BEAT } from '../../mechanics/runner/runnerGeometry';
 import { BODY_HEIGHT, beatsToUnits } from '../../mechanics/runner/runnerPhysics';
 import { resolveProbe, xOverGap, type TerrainProbe } from '../../mechanics/runner/terrainProbe';
-import { surfaceForGravity, surfaceOf, type TrackSurface } from '../../mechanics/runner/surface';
+import { SURFACE_COLOUR, surfaceForGravity, surfaceOf, type TrackSurface } from '../../mechanics/runner/surface';
 import { TUNING } from '../../tuning';
 import type { GameplayMode, ModeContext } from '../GameplayMode';
 import { RunnerPlayer } from './RunnerPlayer';
@@ -49,6 +49,62 @@ import { renderRunnerDebug, type DebugPhrase } from './RunnerDebug';
 
 /** How close the feet must be to a pad's face for it to fire. */
 const PAD_CAPTURE = 0.03;
+
+/**
+ * The two skies. Which way is down is the fact the player has to re-establish
+ * after every inversion, so the environment answers it as well as the track
+ * does: the field behind a floor run is a cold navy, behind a ceiling run a
+ * violet, and the whole backdrop changes side with the gravity.
+ */
+const SKY_FLOOR = '#0b0f18';
+const SKY_CEILING = '#150d1c';
+
+/** The mass of both running surfaces. One colour, both sides, always. */
+const TRACK_BODY = '#141b29';
+
+/**
+ * The band of the field a phrase mark may use.
+ *
+ * It is the dead space between the two routes -- above the floor's platforms and
+ * below the ceiling's -- and it is the *only* band of the screen that is never a
+ * surface. A mark there cannot be mistaken for a standable face.
+ */
+const MARK_TOP = CEILING_Y + 0.12;
+const MARK_BOTTOM = GROUND_Y - 0.12;
+
+/**
+ * The phrase mark's colour: the one hue the backdrop is allowed, shared with the
+ * drift dashes.
+ *
+ * It is deliberately *not* a per-motif colour. Six motif hues used to wash the
+ * background, and before that the floor itself; both were the same mistake in
+ * two places -- a recurring hue the player has to decide whether to act on, and
+ * cannot. The backdrop's whole vocabulary is now one blue-grey plus the sky, so
+ * every colour left on screen is one the player can do something about.
+ */
+const MARK_COLOUR = '#8fa6d8';
+
+/**
+ * How far off the running plane the nearest skyline layer is allowed to come.
+ *
+ * 1.5x the player's standing height (see `BODY_HEIGHT` in runnerPhysics). Below
+ * that the backdrop overlaps the player's own silhouette as they run, and a
+ * block behind the player at the height of their head reads as a ceiling
+ * whether or not it can be collided with.
+ */
+const SKYLINE_CLEAR = BODY_HEIGHT * 1.5;
+
+/**
+ * What a course says about the phrase in play.
+ *
+ * The debug view's fields, plus the beat the phrase begins on -- the only thing
+ * the backdrop still asks of a phrase. Read through a duck-typed `phraseAt`, so
+ * the mode still knows nothing about courses -- a mechanic either answers the
+ * question or it does not.
+ */
+interface PhraseReadout extends DebugPhrase {
+  startBeat: number;
+}
 
 export class RunnerMode implements GameplayMode {
   readonly mode: GameMode = 'RUNNER';
@@ -71,8 +127,8 @@ export class RunnerMode implements GameplayMode {
   private debug = false;
   /** Rolling record of where the player actually was, for the debug view. */
   private readonly breadcrumbs: Array<{ x: number; y: number }> = [];
-  /** Last phrase the course reported, for the debug view (spec §63). */
-  private phrase: DebugPhrase | null = null;
+  /** Last phrase the course reported: the debug view's read, plus the backdrop's. */
+  private phrase: PhraseReadout | null = null;
 
   constructor(private readonly ctx: ModeContext) {}
 
@@ -200,9 +256,9 @@ export class RunnerMode implements GameplayMode {
    * here, so the mode still knows nothing about courses: a mechanic either
    * answers the question or it does not.
    */
-  private currentPhrase(): DebugPhrase | null {
+  private currentPhrase(): PhraseReadout | null {
     for (const m of this.mechanics) {
-      const owner = m as { phraseAt?: (beat: number) => DebugPhrase | null };
+      const owner = m as { phraseAt?: (beat: number) => PhraseReadout | null };
       if (typeof owner.phraseAt !== 'function') continue;
       const phrase = owner.phraseAt(this.ctx.clock.absoluteBeat);
       if (phrase) return phrase;
@@ -330,10 +386,10 @@ export class RunnerMode implements GameplayMode {
   render(r: Renderer): void {
     const beat = this.ctx.clock.visualBeat;
     const flipped = this.gravityDirection < 0;
-    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, flipped ? '#0d0a18' : '#0b0f18');
+    r.fillRect({ x: 0, y: 0, w: 1, h: 1 }, flipped ? SKY_CEILING : SKY_FLOOR);
 
     r.withFieldClip(() => {
-      this.renderParallax(r, beat);
+      this.renderBackdrop(r, beat);
       this.renderTrack(r, beat);
       for (const m of this.mechanics) m.render(r);
       this.renderSpeedStreaks(r, beat);
@@ -360,20 +416,131 @@ export class RunnerMode implements GameplayMode {
     });
   }
 
-  /** Layered background scrolling at fractions of track speed. */
-  private renderParallax(r: Renderer, beat: number): void {
-    const shades = ['#0e1524', '#121a2c', '#161f34'];
+  /**
+   * The backdrop: everything the player is not allowed to read as geometry.
+   *
+   * The layers below are ordered by distance, and each is confined to what it can
+   * safely do. The phrase mark is the farthest thing on screen and lives in the
+   * dead band between the routes. The skyline hangs a fixed distance off the
+   * running plane and is faded out before it reaches it. The drift dashes are the
+   * nearest, and they carry the one piece of information the background is
+   * allowed to state as fact: which way the world is pulling.
+   *
+   * None of them may use a surface colour, and none of them may use a colour of
+   * its own. That is the whole contract between the two layers -- a colour the
+   * player has learned means "you can land here" is never spent on anything they
+   * cannot, and a colour that changes every four beats teaches them to stop
+   * reading colour altogether.
+   */
+  private renderBackdrop(r: Renderer, beat: number): void {
+    this.renderPhraseMark(r, beat);
+    this.renderSkyline(r, beat);
+    this.renderGravityDrift(r, beat);
+  }
+
+  /**
+   * Where the current phrase begins, as one hairline.
+   *
+   * This is all that is left of the phrase's visual identity, and it is on
+   * purpose. A motif used to be a *colour*: first a band along the running
+   * surface, then a wash behind the level. Both asked the player to spend
+   * attention on a hue that never changed what they should do -- and the second
+   * one still repainted the screen up to six times a minute, which is the same
+   * noise at lower volume.
+   *
+   * What survives is the part that is actually information: the downbeat of a
+   * new phrase is a real event, it lands on a beat, and it is worth one mark.
+   * The mark states *when*, never *which*, so it needs no palette at all.
+   */
+  private renderPhraseMark(r: Renderer, beat: number): void {
+    const phrase = this.phrase;
+    if (!phrase) return;
+    const x = PLAYER_X + (phrase.startBeat - beat) * UNITS_PER_BEAT;
+    if (x <= -0.02 || x >= 1.02) return;
+    r.line(x, MARK_TOP, x, MARK_BOTTOM, MARK_COLOUR, 1.5, 0.22);
+  }
+
+  /**
+   * The parallax skyline, hanging off the running plane rather than standing on
+   * it.
+   *
+   * The old layers were rows of blocks whose bottom edge sat exactly *on* the
+   * live surface, aligned with real geometry and lit from the same direction, so
+   * the decoration stood on the floor in the same posture as a platform and read
+   * as something to jump. They now start a fixed distance above the plane, shrink
+   * and dim with depth, and fade to nothing at the bottom, so there is no edge
+   * anywhere near the surface to mistake for one.
+   *
+   * The layer with the fastest scroll is the nearest, so it is the largest,
+   * the brightest and the closest to the plane -- and because the whole skyline
+   * is measured from the *live* surface, an inversion turns the backdrop over
+   * with the world.
+   */
+  private renderSkyline(r: Renderer, beat: number): void {
+    const dir = this.gravityDirection > 0 ? -1 : 1;
+    const surface = this.gravityDirection > 0 ? GROUND_Y : CEILING_Y;
+    const shades = ['#141d31', '#1a2440', '#22304f'];
+    const fastest = Math.max(...TUNING.runner.parallax);
     TUNING.runner.parallax.forEach((factor, layer) => {
-      const spacing = 0.34 - layer * 0.07;
+      // `parallax` is ordered slowest-first, and scroll speed *is* depth: the
+      // fastest layer is the nearest one, so it is the largest, the brightest
+      // and the closest to the plane. Everything below is derived from that one
+      // number rather than from the array index, so the two can never drift
+      // apart into a layer that scrolls like a backdrop and is lit like a ledge.
+      const near = factor / fastest;
+      const spacing = 0.24 + near * 0.1;
       const offset = ((beat * UNITS_PER_BEAT * factor) % spacing + spacing) % spacing;
-      const height = 0.1 + layer * 0.07;
+      const height = 0.05 + near * 0.05;
+      // How far the base of this layer sits off the running plane. `SKYLINE_CLEAR`
+      // is 1.5x the player's standing height: far enough that nothing in the
+      // backdrop can be inside the player's own silhouette while they run, which
+      // is what makes a block read as scenery instead of as an obstacle.
+      const back = SKYLINE_CLEAR + (1 - near) * 0.06;
+      const base = surface + dir * back;
+      const alpha = 0.2 + near * 0.22;
+      const top = dir < 0 ? base - height : base;
+      const body = { y: top, w: spacing * 0.42, h: height };
+      // Fade out toward the running plane, so a layer ends in the dark rather
+      // than at a line the player could read as an edge to land on.
+      const stops: Array<[number, string]> = dir < 0
+        ? [[0, shades[layer]], [0.55, shades[layer]], [1, 'transparent']]
+        : [[0, 'transparent'], [0.45, shades[layer]], [1, shades[layer]]];
       for (let x = -offset; x < 1.05; x += spacing) {
-        const top = this.gravityDirection > 0 ? GROUND_Y - height : CEILING_Y;
-        r.fillRect({ x, y: top, w: spacing * 0.45, h: height }, shades[layer], 0.55);
+        r.gradientRect({ ...body, x }, stops, alpha);
       }
     });
   }
 
+  /**
+   * Which way the world is pulling, as motion.
+   *
+   * The track already says it with colour and the flip gate says it with an
+   * arrow, but both are statements about the *world*; this is the only cue that
+   * is a statement about the player -- the field itself streaming past them in
+   * the direction they are about to fall. Cheap, and it inverts with gravity.
+   */
+  private renderGravityDrift(r: Renderer, beat: number): void {
+    const dir = this.gravityDirection;
+    const surface = dir > 0 ? GROUND_Y : CEILING_Y;
+    for (let i = 0; i < 7; i++) {
+      const phase = (beat * 1.5 + i * 0.31) % 1;
+      const y = surface - dir * (0.08 + phase * 0.34);
+      if (y < CEILING_Y || y > GROUND_Y) continue;
+      const x = 0.06 + ((i * 0.137 + beat * 0.02) % 1) * 0.88;
+      r.line(x, y, x, y + dir * 0.03, MARK_COLOUR, 1, 0.16 * (1 - phase));
+    }
+  }
+
+  /**
+   * The two running surfaces, and the rhythm ruler laid along the live one.
+   *
+   * The floor and the ceiling are one body colour, one edge colour and one
+   * thickness each, all frame, every frame. Nothing in the level may recolour
+   * either of them: the hue is `SURFACE_COLOUR` for the surface, which is also
+   * the colour every slab's landing face is drawn in, so a bright blue line
+   * means "gravity puts you here" and never anything else. Which of the two is
+   * bright is the whole gravity read.
+   */
   private renderTrack(r: Renderer, beat: number): void {
     const flipped = this.gravityDirection < 0;
     // The *live* surface is bright; the inactive one is a ghost. This is the
@@ -381,12 +548,15 @@ export class RunnerMode implements GameplayMode {
     const groundAlpha = flipped ? 0.3 : 1;
     const ceilingAlpha = flipped ? 1 : 0.3;
 
-    r.fillRect({ x: 0, y: GROUND_Y, w: 1, h: 1 - GROUND_Y }, '#141b29', groundAlpha);
-    r.line(0, GROUND_Y, 1, GROUND_Y, '#3f6fd8', flipped ? 1.5 : 3, groundAlpha);
-    r.fillRect({ x: 0, y: 0, w: 1, h: CEILING_Y }, '#141b29', ceilingAlpha);
-    r.line(0, CEILING_Y, 1, CEILING_Y, '#8a5fff', flipped ? 3 : 1.5, ceilingAlpha);
+    r.fillRect({ x: 0, y: GROUND_Y, w: 1, h: 1 - GROUND_Y }, TRACK_BODY, groundAlpha);
+    r.line(0, GROUND_Y, 1, GROUND_Y, SURFACE_COLOUR.FLOOR, flipped ? 1.5 : 3, groundAlpha);
+    r.fillRect({ x: 0, y: 0, w: 1, h: CEILING_Y }, TRACK_BODY, ceilingAlpha);
+    r.line(0, CEILING_Y, 1, CEILING_Y, SURFACE_COLOUR.CEILING, flipped ? 3 : 1.5, ceilingAlpha);
 
     // Beat ticks scrolling with the track: a visible metronome on the surface.
+    // They are drawn *into* the body of the live surface, below its edge, so
+    // they read as a ruler on the ground rather than as marks standing on it --
+    // which is the whole difference between rhythm feedback and an obstacle.
     const beatsPerBar = this.ctx.clock.beatsPerBar;
     const surface = this.gravityDirection > 0 ? GROUND_Y : CEILING_Y;
     const dir = this.gravityDirection > 0 ? 1 : -1;

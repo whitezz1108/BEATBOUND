@@ -124,11 +124,14 @@ def stub_full_backends(monkeypatch):
     """
     from beatbound_audio import melody_analyzer, stem_separator
 
-    def fake_separate(audio_path, out_dir, *, threads=4):
+    def fake_separate(audio_path, out_dir, *, threads=4, sr=22050):
+        # Mirrors the real ``_separate_with_python_api`` contract: stems come
+        # back on the analysis grid, so the stub must accept and honour ``sr``
+        # rather than assuming 22050.
         import librosa
 
-        _y, _sr = librosa.load(audio_path, sr=22050, mono=True)
-        return _fake_stems(len(_y) / 22050.0)
+        _y, _sr = librosa.load(audio_path, sr=sr, mono=True)
+        return _fake_stems(len(_y) / float(sr), sr=sr)
 
     monkeypatch.setattr(stem_separator, "demucs_available", lambda: (True, "stub"))
     monkeypatch.setattr(stem_separator, "_separate_with_python_api", fake_separate)
@@ -201,3 +204,16 @@ def load_director(out_dir: str) -> dict:
 
     with open(os.path.join(out_dir, "director_context.json"), "r", encoding="utf-8") as fh:
         return json.load(fh)
+
+
+def load_director_v2(out_dir: str) -> dict:
+    """The director_context_v2.json a ``run_v2`` call into ``out_dir`` produced."""
+    import json
+
+    with open(os.path.join(out_dir, "director_context_v2.json"), "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def project_root() -> str:
+    """The repository root, for locating ``editor/schemas``."""
+    return os.path.dirname(os.path.dirname(_MUSIC_ANALYSIS))

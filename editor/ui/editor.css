@@ -74,22 +74,43 @@ body {
 }
 .field input[type="text"] { width: 210px; }
 
-/* ---- workspace ---- */
+/* ---- workspace ----
+   Stacked, not side by side: the timeline is a wide, short strip across the
+   top, and the editors sit underneath it at full width. A song is 100+ bars
+   long and a handful of sections tall, so the horizontal axis is the one worth
+   spending the window on -- a tall narrow column wasted most of it. */
 #workspace {
   flex: 1;
   display: flex;
+  flex-direction: column;
   min-height: 0;
 }
+/* The timeline is a strip, not a canvas: it takes only the height it needs and
+   the editors below get everything else. */
 #timeline-panel {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   min-width: 0;
   padding: 10px 12px;
   gap: 8px;
   position: relative;
 }
-#timeline-canvas { flex: 1; min-height: 0; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+/* A fixed, short strip. The drawing code reads clientWidth/clientHeight and
+   lays out from LANE_TOP, so it adapts to the height without changes. */
+#timeline-canvas {
+  flex: 0 0 150px;
+  /* Without this the flex automatic minimum (canvas backing-store aspect
+     ratio, 2:1 out of the box) inflates the strip to width/2 on wide
+     screens and shoves the editors below off-screen. */
+  min-height: 0;
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
 #wave-canvas { width: 100%; height: 64px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
 
 #song-strip { display: flex; gap: 10px; align-items: center; }
@@ -108,14 +129,29 @@ body {
   text-align: center;
 }
 
-/* ---- edit panel ---- */
+/* ---- edit panel ----
+   Full width under the timeline. The editors inside flow into as many columns
+   as fit, so the panel's height is spent on content rather than on a fixed
+   narrow column. */
 #edit-panel {
-  width: 380px;
+  flex: 1 1 auto;
+  max-height: 52vh;
   background: var(--panel);
-  border-left: 1px solid var(--line);
-  padding: 12px;
+  border-top: 1px solid var(--line);
+  padding: 12px 14px;
   overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0 22px;
 }
+/* Each editor keeps a readable measure instead of stretching across a 4K
+   window; the panel wraps them into columns. */
+#edit-panel > .editor { flex: 1 1 340px; max-width: 560px; min-width: 300px; }
+#edit-panel > #panel-empty { flex: 1 1 100%; }
+/* The V2 panel is wider: it has mode chips and a log to lay out. */
+#edit-panel > #v2-panel { flex: 1 1 380px; max-width: 620px; }
+
 #panel-empty { color: var(--dim); padding: 20px 6px; }
 .editor h3 { font-size: 15px; margin-bottom: 10px; }
 .editor h3 span { color: var(--accent); }
@@ -252,6 +288,90 @@ body {
   margin: 6px 0 2px;
   min-height: 13px;
 }
+
+/* ---- V2 generation panel ---- */
+/* In the stacked layout the panels sit side by side inside #edit-panel, so the
+   V2 panel is separated by a vertical rule rather than a horizontal one. */
+#v2-panel { border-left: 1px solid var(--line); padding-left: 22px; }
+#v2-panel h3 span { font-size: 11px; letter-spacing: 1px; }
+
+/* Status rows: what the pipeline needs, and whether it has it. */
+.v2-status { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.v2-status .v2-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 11px Consolas, monospace;
+  color: var(--dim);
+}
+.v2-status .v2-line b { color: var(--text); font-weight: 400; }
+.v2-status .v2-line.ok::before { content: '●'; color: var(--ok); }
+.v2-status .v2-line.warn::before { content: '●'; color: #ffb86b; }
+.v2-status .v2-line.miss::before { content: '○'; color: var(--err); }
+
+/* Mode checkboxes -- one chip per mode the chosen preset allows. */
+.v2-modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.v2-modes label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font: 11px Consolas, monospace;
+  color: var(--dim);
+  cursor: pointer;
+}
+.v2-modes label input { accent-color: var(--accent); }
+.v2-modes label.on { border-color: var(--accent); color: var(--text); }
+.v2-modes label.locked { opacity: 0.55; cursor: default; }
+.v2-modes label .pin { color: var(--accent); font-size: 9px; }
+
+/* Generation takes minutes, so the panel has to look like it is working.
+   An indeterminate bar: the pipeline reports stages, not a percentage, and a
+   fake percentage would be a lie about how far along it is. */
+.v2-progress { margin-top: 10px; }
+.v2-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.v2-bar span {
+  display: block;
+  height: 100%;
+  width: 34%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: v2-sweep 1.5s ease-in-out infinite;
+}
+@keyframes v2-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(390%); }
+}
+.v2-progress-text {
+  margin-top: 5px;
+  font: 11px Consolas, monospace;
+  color: var(--accent);
+}
+/* The button keeps its size while busy so the panel does not jump. */
+#v2-generate.busy { cursor: progress; }
+
+.v2-log {
+  max-height: 200px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  font: 11px/1.5 Consolas, monospace;
+  color: var(--dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.v2-log .ok { color: var(--ok); }
+.v2-log .err { color: var(--err); }
+.v2-log .stage { color: var(--accent); }
 
 /* consistency warnings from the server (tuning mirror mismatch etc.) */
 #consistency-warn {

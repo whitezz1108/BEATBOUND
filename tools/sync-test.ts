@@ -355,11 +355,13 @@ async function checkEveryLevel(): Promise<void> {
     // Breakout has a single activation but holds the whole arena for three
     // bars either side of it. Counting only activations would call those bars
     // dead while the player is sealed inside a closing barrier.
+    // The window is asked of the running mechanic, not of the JSON: a mechanic
+    // that stretches its own build-up, or holds the arena for a longer phrase
+    // than the library declares, occupies more of the song than its definition
+    // says. See `RuntimeMechanic.presenceWindow`.
     const activeBars = new Set<number>();
     for (const spawn of spawns) {
-      const timing = spawn.definition.timing;
-      const from = spawn.activationBeat - (timing.telegraphBeats ?? 0);
-      const to = spawn.activationBeat + (timing.durationBeats ?? 0);
+      const { from, to } = spawn.mechanic.presenceWindow;
       for (let bar = Math.floor(from / beatsPerBar) + 1; bar <= Math.floor(to / beatsPerBar) + 1; bar++) {
         activeBars.add(bar);
       }

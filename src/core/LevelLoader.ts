@@ -335,6 +335,7 @@ export class LevelLoader {
       // Patterns are laid end to end inside the section, in declaration order.
       let cursorBar = definition.startBar;
       let maxTelegraph = 0;
+      let maxSpawnLead = 0;
 
       for (const spec of definition.patterns) {
         const pattern = this.patterns.get(spec.patternId);
@@ -347,9 +348,27 @@ export class LevelLoader {
         }
         for (const event of pattern.events) {
           const mech = this.mechanicLibrary?.mechanics.find((m) => m.id === event.mechanicId);
-          if (mech) maxTelegraph = Math.max(maxTelegraph, mech.timing.telegraphBeats);
+          if (!mech) continue;
+          maxTelegraph = Math.max(maxTelegraph, mech.timing.telegraphBeats);
+          maxSpawnLead = Math.max(maxSpawnLead, mech.timing.spawnLeadBeats ?? 0);
         }
       }
+
+      // How early the mode has to be live for the section's first mechanic to be
+      // readable at all. These are two different needs and not interchangeable:
+      // a *telegraph* is a warning drawn on screen and needs the mode live for
+      // `telegraphBeats`; a *scroll-in* is a warning that happens by the
+      // mechanic travelling towards the player, needs no telegraph at all
+      // (every RUNNER obstacle declares zero, for exactly this reason), and
+      // needs the mode live for `spawnLeadBeats` instead.
+      //
+      // The one-bar cap below is a musicality rule -- a mode swap should not
+      // start more than a bar early -- and it applies to the telegraph, which
+      // is a presentation choice. It must *not* cut into the scroll-in: an
+      // obstacle that has to be on screen for four beats is not on screen for
+      // three, and capping it there is precisely the bug where a mode activates
+      // with its first obstacle already at the player.
+      const leadInBeats = Math.max(Math.min(maxTelegraph, beatsPerBar), maxSpawnLead);
 
       // A course replaces the pattern timeline for this section. It is planned
       // here, at load, so a course that cannot be planned fails loudly.
@@ -365,8 +384,7 @@ export class LevelLoader {
         endBar: definition.startBar + definition.lengthBars,
         placements,
         course,
-        // Never lead in by more than a bar: a mode swap should stay musical.
-        leadInBeats: course ? course.leadInBeats : Math.min(maxTelegraph, beatsPerBar),
+        leadInBeats: course ? course.leadInBeats : leadInBeats,
         transitionOut: definition.transitionOut ?? null,
         nextMode: next?.mode ?? null,
         // The breather is a *second* requirement (a full three-second

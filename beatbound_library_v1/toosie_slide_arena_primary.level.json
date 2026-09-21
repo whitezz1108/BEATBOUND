@@ -98,14 +98,14 @@
     {
       "id": "S05",
       "startBar": 49,
-      "lengthBars": 8,
+      "lengthBars": 7,
       "mode": "ARENA",
       "function": "COMBINE",
       "difficulty": 4,
       "patterns": [
         { "patternId": "AP22", "repeat": 1, "intensity": 0.70 },
-        { "patternId": "AP05", "repeat": 1, "intensity": 0.50 },
-        { "patternId": "AP09", "repeat": 1, "intensity": 0.55 }
+        { "patternId": "AP03", "repeat": 1, "intensity": 0.62 },
+        { "patternId": "AP05", "repeat": 1, "intensity": 0.50 }
       ],
       "transitionOut": "ARENA_TO_VERTICAL",
       "scene": {
@@ -117,7 +117,7 @@
     },
     {
       "id": "S06",
-      "startBar": 57,
+      "startBar": 56,
       "lengthBars": 4,
       "mode": "VERTICAL",
       "function": "VARIATION",
@@ -136,17 +136,17 @@
     },
     {
       "id": "S07",
-      "startBar": 61,
-      "lengthBars": 16,
+      "startBar": 60,
+      "lengthBars": 17,
       "mode": "ARENA",
       "function": "CLIMAX",
       "difficulty": 5,
       "patterns": [
-        { "patternId": "AP26", "repeat": 1, "intensity": 0.72 },
+        { "patternId": "AP05", "repeat": 1, "intensity": 0.62 },
         { "patternId": "AP06", "repeat": 1, "intensity": 0.78 },
-        { "patternId": "AP20", "repeat": 1, "intensity": 0.85 },
-        { "patternId": "AP29", "repeat": 1, "intensity": 0.90 },
-        { "patternId": "AP03", "repeat": 1, "intensity": 0.95 }
+        { "patternId": "AP26", "repeat": 1, "intensity": 0.85 },
+        { "patternId": "AP20", "repeat": 1, "intensity": 0.88 },
+        { "patternId": "AP29", "repeat": 1, "intensity": 0.95 }
       ],
       "transitionOut": null,
       "scene": {

@@ -460,6 +460,43 @@ export class CourseWorld {
     return null;
   }
 
+  // ---- what is actually geometry ----------------------------------------
+
+  /**
+   * The beat ranges of a slab that are *geometry*, rather than a redrawing of
+   * the base line.
+   *
+   * A slab placed on its surface's base line is not terrain, it is the floor.
+   * The base line is solid wherever the course has no hole -- `resolveProbe`
+   * falls back to it -- so such a slab changes no collision, cannot be jumped
+   * onto (the player is already standing at its height) and cannot be jumped
+   * under. Nothing in the game can tell it apart from the ground it duplicates.
+   *
+   * The renderer is the only thing that could, and did: it drew one brick of
+   * body colour with a bright edge per landing, so a course read as a row of
+   * blocks laid along the floor instead of as one running surface. Asking this
+   * question instead of drawing them is the whole fix, and it is asked here, on
+   * the world, because "is this piece real" is a fact about the course rather
+   * than a decision for a paint call.
+   *
+   * The exception is the one case where a base-line slab is *not* the floor:
+   * where it covers a hole. There it is a plate bridging the pit, it is real
+   * terrain the player can stand on over nothing, and the part of it over the
+   * pit is exactly the part that is not already drawn. That part is what comes
+   * back; every other base-line slab comes back empty.
+   */
+  visibleSpans(slab: WorldSlab): Array<{ startBeat: number; endBeat: number }> {
+    if (!isBaseLineSlab(slab)) return [{ startBeat: slab.startBeat, endBeat: slab.endBeat }];
+    const spans: Array<{ startBeat: number; endBeat: number }> = [];
+    for (const gap of this.gaps) {
+      if (gap.surface !== slab.surface) continue;
+      const start = Math.max(slab.startBeat, gap.startBeat);
+      const end = Math.min(slab.endBeat, gap.endBeat);
+      if (end - start > 1e-6) spans.push({ startBeat: start, endBeat: end });
+    }
+    return spans.sort((a, b) => a.startBeat - b.startBeat);
+  }
+
   /** Spatial retirement: the course lives until its last beat has scrolled past. */
   isFinishedAt(beat: number): boolean {
     return beat > this.endBeat + 1.5;
@@ -576,4 +613,21 @@ export function blockFaceOf(slab: WorldSlab, surface: TrackSurface): number {
   return surface === 'FLOOR'
     ? Math.max(slab.faceY, slab.backY)
     : Math.min(slab.faceY, slab.backY);
+}
+
+/** World y of a surface's base line -- the ground the course runs along. */
+export function baseYOf(surface: TrackSurface): number {
+  return surface === 'FLOOR' ? FLOOR_Y : CEILING_Y_CONST;
+}
+
+/**
+ * True when a slab sits *on* its surface's base line, so the player running the
+ * base line is already standing on it.
+ *
+ * Read through `standFaceOf` rather than off `faceY`, so a slab that was placed
+ * at the base line but anchored the other way still answers honestly. See
+ * `CourseWorld.visibleSpans` for what follows from this.
+ */
+export function isBaseLineSlab(slab: WorldSlab): boolean {
+  return Math.abs(standFaceOf(slab, slab.surface) - baseYOf(slab.surface)) < 1e-6;
 }

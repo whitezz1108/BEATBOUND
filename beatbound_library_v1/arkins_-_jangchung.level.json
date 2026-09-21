@@ -1,0 +1,347 @@
+{
+  "version": "1.0.0",
+  "editor": {
+    "seed": 5,
+    "analysisSource": "arkins_-_jangchung.mp3",
+    "blueprintVersion": "beatbound_level_blueprint_v2",
+    "compilerVersion": "2.0.0",
+    "generator": "ai_director",
+    "intent": "The song is a two-plateau climb with a soft floor. Bars 1-7 are drums and bass with almost no vocals or melody; the vocal arrives at bar 9 and the first break falls at bar 16; bars 24-31 build back into a 17-bar climax at bars 32-48 (combined intensity 0.63-0.73, drums pinned at 1.0, onset density 0.9-1.0, melody 0.93-0.97) that does not really let go until the bar-62 valley; a second plateau holds bars 49-88 before the track collapses to near silence at bar 95 and decays to nothing by bar 105. The level follows that shape rather than a uniform ramp: ARENA owns the teaching intro, both builds, the climax and the quiet outro; VERTICAL takes the melody-dominant plateau where a six-lane chart can actually track the line (melody sits at 0.99-1.00 from bar 51 to bar 73); RUNNER carries the last rhythm-driven block where drums and bass are the only remaining layers. Difficulty peaks once, at the climax, and is spent well before the song is.",
+    "syncPoints": [
+      {
+        "bar": 1,
+        "anchor_type": "section_boundary",
+        "why": "The song and the level begin together; the director context places a section_boundary (and phrase_boundary, and a strong_beat) at bar 1 beat 1."
+      },
+      {
+        "bar": 9,
+        "anchor_type": "vocal_entry",
+        "why": "The vocal enters at bar 9 beat 1.6 - the first new layer after seven bars of drums and bass, and the moment the level stops teaching and starts building."
+      },
+      {
+        "bar": 16,
+        "anchor_type": "energy_drop",
+        "why": "The energy_drop anchor at bar 16 marks the fall out of the drum-led groove; bar 17's combined intensity drops to 0.392 and drums go from 1.0 to 0.30. This is where the breakdown section begins."
+      },
+      {
+        "bar": 31,
+        "anchor_type": "energy_rise",
+        "why": "The energy_rise anchor at bar 31 beat 5 is the downbeat of bar 32, and it is the only rise anchor in the first half - the ramp that pays for the climax."
+      },
+      {
+        "bar": 32,
+        "anchor_type": "phrase_boundary",
+        "why": "phrase_004 starts here and is the only phrase flagged is_climax_candidate; combined intensity jumps 0.314 -> 0.630 in one bar. The ARENA peak section starts on this boundary."
+      },
+      {
+        "bar": 49,
+        "anchor_type": "phrase_boundary",
+        "why": "phrase_005 boundary: the plateau is still loud (combined 0.734) but the character changes from percussive climax to continuous melody, so the mode switch to VERTICAL lands exactly here."
+      },
+      {
+        "bar": 62,
+        "anchor_type": "melody_peak",
+        "why": "The strongest melody_peak in the analysis (strength 1.0), doubled by a large_pitch_jump at the same instant, and it sits on the deepest valley of the plateau (combined 0.227). It is the one place in section 06 where the chart should visibly accent."
+      },
+      {
+        "bar": 65,
+        "anchor_type": "energy_peak",
+        "why": "The rebuild out of the bar-62 valley reaches full strength here (anchor strength 1.0, bar curve 0.858). It is the second crest of the plateau and the point where the VERTICAL section returns to full density."
+      },
+      {
+        "bar": 73,
+        "anchor_type": "section_boundary",
+        "why": "The analyser records the section_boundary at bar 73 beat 5, i.e. the downbeat of bar 74, where the director context's second section starts. The RUNNER section begins on it."
+      },
+      {
+        "bar": 77,
+        "anchor_type": "energy_peak",
+        "why": "The strongest bar of the second structural section (combined intensity 0.742, self-reported highest-intensity checkpoint at bar 78 follows immediately). It opens the RUNNER groove at full pressure."
+      },
+      {
+        "bar": 89,
+        "anchor_type": "phrase_boundary",
+        "why": "phrase_007 starts here and the melody falls from 1.00 to 0.01 in one bar - the texture thins to drums and bass only, so the level strips back with it."
+      },
+      {
+        "bar": 94,
+        "anchor_type": "energy_drop",
+        "why": "The energy_drop anchor at bar 94 beat 5 is the downbeat of bar 95, where combined intensity falls 0.532 -> 0.065 and the track all but stops. The outro section starts here."
+      }
+    ]
+  },
+  "song": {
+    "id": "arkins_-_jangchung",
+    "title": "Arkins - Jangchung",
+    "audio": "audio/editor/arkins_-_jangchung.mp3",
+    "bpm": 129.2,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "section_01",
+      "startBar": 1,
+      "lengthBars": 7,
+      "mode": "ARENA",
+      "function": "INTRO",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP05",
+          "repeat": 3,
+          "intensity": 0.8
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.8
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bars 1-7 are the sparsest available material with a real pulse: drums sit at 1.0 and bass at 0.72-0.78, but vocals are 0.001-0.0013 and melody 0.009-0.010 across the whole stretch, so combined intensity is a flat ~0.60 with no events above a low-priority strong_onset. phrase_001 is labelled 'opening' with the lowest relative_intensity of the first half (0.357). The player is cold here, so this is a single-threat teaching section at difficulty 1, ending exactly on the bar-8 phrase/strong-beat boundary."
+    },
+    {
+      "id": "section_02",
+      "startBar": 8,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "BUILD",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "AP25",
+          "repeat": 2,
+          "intensity": 0.8
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "The vocal enters at bar 9 (vocal_entry anchor, bar 9 beat 1.6) and the vocal stem jumps from 0.001 to 0.18-0.24, while drums stay at 1.0. Combined intensity climbs from a bar-8 local valley of 0.564 to 0.651 at bar 11 and holds there through bar 15. phrase_002 has relative_intensity 0.5 and a stable trend. This is the first true groove, so difficulty steps to 2 and the section accumulates pressure as a BUILD rather than peaking, which sets up the deliberate break at bar 16."
+    },
+    {
+      "id": "section_03",
+      "startBar": 16,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "BREAKDOWN",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP09",
+          "repeat": 4,
+          "intensity": 0.5
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 16 is marked is_release and the anchor list carries an energy_drop at bar 16; combined intensity falls 0.546 -> 0.392 -> 0.403 and drums collapse from 1.0 to 0.29-0.30 while vocals take over at 0.70-0.82 and melody at 0.60-0.65. phrase_003 is flagged is_recovery_candidate with relative_intensity 0.214. Nothing in the mix asks for pressure here, so the level deliberately lets go: difficulty 1, wide spacing, no build."
+    },
+    {
+      "id": "section_04",
+      "startBar": 24,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "BUILD",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP01",
+          "repeat": 4,
+          "intensity": 0.58
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Drums return at bar 24 (0.30 -> 0.53, flagged is_build) and the curve rises to 0.586 at bar 25 before decaying to a valley at bar 31 (combined 0.314, is_release, is_local_valley). The energy_rise anchor sits at bar 31 beat 5, which is the downbeat of bar 32, so the section is written as a ramping build: it earns the climax rather than pre-empting it. Phrase amplitudes are modest (bar 32 jumps 0.314 -> 0.630, the largest single-bar jump in the first half), which is exactly the telegraph the player needs."
+    },
+    {
+      "id": "section_05",
+      "startBar": 32,
+      "lengthBars": 17,
+      "mode": "ARENA",
+      "function": "PEAK",
+      "difficulty": 5,
+      "patterns": [
+        {
+          "patternId": "AP18",
+          "repeat": 4,
+          "intensity": 0.97
+        },
+        {
+          "patternId": "AP06",
+          "repeat": 1,
+          "intensity": 0.97
+        },
+        {
+          "patternId": "AP05",
+          "repeat": 1,
+          "intensity": 0.97
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.97
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.47
+        }
+      ],
+      "transitionOut": "ARENA_TO_VERTICAL",
+      "scene": {
+        "effects": [
+          {
+            "effect": "paletteShift",
+            "params": {
+              "target": "modePalette"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 186,
+      "rationale": "Bars 32-48 are the loudest sustained block in the song: combined intensity 0.63 at bar 32 rising to 0.69-0.73 for bars 33-48, drums 1.0, onset density 0.90-1.00, melody 0.93-0.97, vocals absent. phrase_004 is the only phrase flagged is_climax_candidate (relative_intensity 0.929, recommended_density 0.847) and it carries the high-priority energy_peak anchors at bars 34, 36, 37, 42 and 45. Difficulty 5 lives here and nowhere else in the level."
+    },
+    {
+      "id": "section_06",
+      "startBar": 49,
+      "lengthBars": 25,
+      "mode": "VERTICAL",
+      "function": "SUSTAIN",
+      "difficulty": 4,
+      "patterns": [
+        {
+          "patternId": "VP03",
+          "repeat": 4,
+          "intensity": 0.94
+        },
+        {
+          "patternId": "VP01",
+          "repeat": 4,
+          "intensity": 0.94
+        },
+        {
+          "patternId": "VP09",
+          "repeat": 3,
+          "intensity": 0.94
+        },
+        {
+          "patternId": "VP02",
+          "repeat": 1,
+          "intensity": 0.94
+        },
+        {
+          "patternId": "VP04",
+          "repeat": 1,
+          "intensity": 0.94
+        },
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.57
+        }
+      ],
+      "transitionOut": "VERTICAL_TO_RUNNER",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraPan",
+            "params": {
+              "direction": "followMode"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "particles",
+            "params": {
+              "burst": "boundaryCrossing"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 286,
+      "rationale": "Bars 49-54 hold the plateau (combined 0.735, 0.754, 0.727, 0.725, 0.709, 0.733), then the texture releases from bar 55 and bottoms out at a bar-62 valley of 0.227 before rebuilding through bars 63-64 to a second peak at bars 65-73. What makes this block different from the climax is that melody is pinned at 0.99-1.00 for almost its whole length (bars 51-73) while onset density is comparatively moderate, and phrase_005 carries the melody_peak and large_pitch_jump pair at bar 62. A six-lane chart is the one mode in the catalogue that can actually follow a continuous melodic line, so the mode switches here and the difficulty steps down from 5 to 4 so the climax stays the peak."
+    },
+    {
+      "id": "section_07",
+      "startBar": 74,
+      "lengthBars": 15,
+      "mode": "RUNNER",
+      "function": "PEAK",
+      "difficulty": 4,
+      "patterns": [
+        {
+          "patternId": "RP10",
+          "repeat": 4,
+          "intensity": 0.96
+        },
+        {
+          "patternId": "RP25",
+          "repeat": 3,
+          "intensity": 0.96
+        },
+        {
+          "patternId": "RP08",
+          "repeat": 1,
+          "intensity": 0.96
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "The second structural section starts here (section_boundary anchor recorded at bar 73 beat 5, the downbeat of bar 74). Bars 74-88 are the most relentless non-vocal block in the song: drums 0.99-1.0, bass 0.58-0.74, onset density ~0.90, combined intensity 0.72-0.76 with a high-priority energy_peak at bar 77, and melody pinned at 1.00. phrase_006 is flagged is_transition_candidate with recommended_density 0.739. Its energy is carried by rhythm rather than pitch contour, which is what a runner terrain section is for, so the mode switches again and the section is marked PEAK at difficulty 4 (metadata-only scaling for RUNNER, see notes)."
+    },
+    {
+      "id": "section_08",
+      "startBar": 89,
+      "lengthBars": 5,
+      "mode": "RUNNER",
+      "function": "SUSTAIN",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "RP05",
+          "repeat": 1,
+          "intensity": 0.79
+        },
+        {
+          "patternId": "RP25",
+          "repeat": 1,
+          "intensity": 0.47
+        }
+      ],
+      "transitionOut": "RUNNER_TO_ARENA",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraZoom",
+            "params": {
+              "zoom": 1.15,
+              "ease": "easeOutBack"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 366,
+      "rationale": "The phrase_boundary at bar 89 starts phrase_007 and the melody falls from 1.00 to 0.010 within one bar - the texture is stripped to drums (1.0) and bass (0.75) with combined intensity flat at 0.61-0.62. It is a short holding groove, not a release: no anchor at these bars is an energy_drop until bar 94, and the bar curve shows no release flag. Five bars (20 beats) is enough room for the outgoing mode change that follows, so it stays at difficulty 3 as a bridge between the groove plateau and the collapse."
+    },
+    {
+      "id": "section_09",
+      "startBar": 94,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "OUTRO",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP25",
+          "repeat": 3,
+          "intensity": 0.34
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "From bar 95 the song collapses: combined intensity 0.532 at bar 94 (is_release) then 0.065, 0.042, 0.043, 0.066, 0.106, 0.071, 0.136, 0.127, 0.127, 0.061 and 0.001 at bar 105, with only a residual vocal (0.13-0.38) and no drums or bass. The energy_drop anchor sits at bar 94 beat 5, so the outro section starts on bar 94. This resolves rather than challenges: difficulty 1, sparse ARENA, with the final large_pitch_jump / melody_fall at bar 105 as the last thing on screen. The section ends at bar 106, the exclusive end of the song."
+    }
+  ]
+}

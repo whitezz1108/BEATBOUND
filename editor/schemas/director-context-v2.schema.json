@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beatbound.local/editor/director-context-v2.schema.json",
+  "title": "BeatBound Director Context V2",
+  "description": "The generation-facing compression of one music_analysis_v2 analysis. It is the only music document the level-generation pipeline reads: a Level Director (LLM or rule-based) and the deterministic compiler consume it to decide what the level does, while the runtime-level schema and the real validators remain the source of truth for what the level may contain. It describes what the music does -- never what the game should do. Null always means 'not reliably estimated'. Every timestamped value is clamped to 0 <= t <= source.duration_sec; anything outside is dropped and counted in diagnostics rather than mapped onto a boundary bar. Bars are half-open [start_bar, end_bar_exclusive), snapped to the constant beat grid, ordered, non-overlapping and contiguous. Generated deterministically: no wall-clock values, so the same audio and settings produce byte-identical JSON.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "source",
+    "timing",
+    "music_profile",
+    "sections",
+    "phrases",
+    "bar_curve",
+    "anchors",
+    "repeat_groups",
+    "melody",
+    "sync_checkpoints",
+    "reliability",
+    "diagnostics"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "beatbound_director_context_v2" },
+
+    "source": {
+      "type": "object",
+      "description": "Identity and duration of the analyzed audio. duration_sec is the clamp bound for every timestamp in this document.",
+      "required": ["song_id", "audio_file", "duration_sec", "analysis_version", "analysis_schema_version", "source_hash", "audio_hash"],
+      "additionalProperties": false,
+      "properties": {
+        "song_id": { "type": "string", "minLength": 1 },
+        "audio_file": { "type": "string", "minLength": 1 },
+        "duration_sec": { "type": "number", "exclusiveMinimum": 0 },
+        "analysis_version": { "type": "string" },
+        "analysis_schema_version": { "type": "integer" },
+        "source_hash": { "type": "string", "description": "16 hex -- byte-stable, feeds level.analysisSource." },
+        "audio_hash": { "type": "string", "description": "64 hex -- the cache key." }
+      }
+    },
+
+    "timing": {
+      "type": "object",
+      "description": "The constant grid. Analysis bars are runtime bars; the grid never moves, so the bar phase below is advisory only.",
+      "required": ["bpm", "bpm_confidence", "meter", "meter_confidence", "beats_per_bar", "bar_count", "beat_count", "bar_phase_offset_beats", "bar_phase_confidence", "bars"],
+      "additionalProperties": false,
+      "properties": {
+        "bpm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "bpm_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "meter": { "type": "string", "pattern": "^[0-9]+/[0-9]+$" },
+        "meter_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "beats_per_bar": { "type": "integer", "minimum": 1 },
+        "bar_count": { "type": "integer", "minimum": 0 },
+        "beat_count": { "type": "integer", "minimum": 0 },
+        "bar_phase_offset_beats": { "type": ["integer", "null"], "minimum": 0 },
+        "bar_phase_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "bars": {
+          "type": "array",
+          "description": "One entry per bar, 1-based and gapless. The last bar's end may fall short of source.duration_sec when the song's final bar is partial: the level ends on the last whole bar, so bar-aligned ranges are kept.",
+          "items": {
+            "type": "object",
+            "required": ["bar", "start", "end"],
+            "additionalProperties": false,
+            "properties": {
+              "bar": { "type": "integer", "minimum": 1 },
+              "start": { "type": "number", "minimum": 0 },
+              "end": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+
+    "music_profile": {
+      "type": "object",
+      "description": "Song-level descriptors. key/scale are null when the detector was not confident enough to publish them.",
+      "required": ["overall_energy", "dynamic_range", "brightness", "rhythmic_density", "melodic_density", "key", "scale", "confidence_notes"],
+      "additionalProperties": false,
+      "properties": {
+        "overall_energy": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "dynamic_range": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "brightness": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "rhythmic_density": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "melodic_density": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "key": { "type": ["string", "null"] },
+        "scale": { "type": ["string", "null"], "enum": ["major", "minor", null] },
+        "confidence_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "sections": {
+      "type": "array",
+      "description": "Ordered, contiguous, non-overlapping half-open bar ranges covering the whole song.",
+      "items": { "$ref": "#/$defs/section" }
+    },
+
+    "phrases": {
+      "type": "array",
+      "description": "Bar-aligned phrases, each contained inside exactly one section and sorted by start_bar.",
+      "items": { "$ref": "#/$defs/phrase" }
+    },
+
+    "bar_curve": {
+      "type": "array",
+      "description": "One compact record per bar -- the director's primary control signal. combined_intensity is the documented weighted blend over the metrics that exist.",
+      "items": { "$ref": "#/$defs/barRow" }
+    },
+
+    "anchors": {
+      "type": "array",
+      "description": "Deduplicated, ranked musical moments worth synchronizing gameplay to, sorted by time_sec. Out-of-range events are dropped before this list is built, never remapped.",
+      "items": { "$ref": "#/$defs/anchor" }
+    },
+
+    "repeat_groups": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repeatGroup" }
+    },
+
+    "melody": {
+      "type": "object",
+      "required": ["available", "backend", "input_source", "confidence", "note_count", "note_density", "pitch_range_semitones", "peaks"],
+      "additionalProperties": false,
+      "properties": {
+        "available": { "type": "boolean" },
+        "backend": { "type": ["string", "null"] },
+        "input_source": { "type": ["string", "null"], "enum": ["other", "vocals", "mix", null] },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "note_count": { "type": "integer", "minimum": 0 },
+        "note_density": { "type": ["number", "null"], "minimum": 0 },
+        "pitch_range_semitones": { "type": ["integer", "null"], "minimum": 0 },
+        "peaks": {
+          "type": "array",
+          "description": "The highest in-range notes, for a director that wants a melodic hook to accent.",
+          "items": {
+            "type": "object",
+            "required": ["time_sec", "bar", "pitch_midi"],
+            "additionalProperties": false,
+            "properties": {
+              "time_sec": { "type": "number", "minimum": 0 },
+              "bar": { "type": "integer", "minimum": 1 },
+              "pitch_midi": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+
+    "sync_checkpoints": {
+      "type": "array",
+      "description": "Deterministic manual-sync landmarks for playtest verification.",
+      "items": {
+        "type": "object",
+        "required": ["bar", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "bar": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+
+    "reliability": {
+      "type": "object",
+      "description": "Per-signal confidence tier. 'unknown' means the signal was absent, which is different from 'low'.",
+      "required": ["tempo", "meter", "bar_phase", "structure", "melody", "stem_separation", "warnings"],
+      "additionalProperties": false,
+      "properties": {
+        "tempo": { "$ref": "#/$defs/tier" },
+        "meter": { "$ref": "#/$defs/tier" },
+        "bar_phase": { "$ref": "#/$defs/tier" },
+        "structure": { "$ref": "#/$defs/tier" },
+        "melody": { "$ref": "#/$defs/tier" },
+        "stem_separation": { "$ref": "#/$defs/tier" },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "diagnostics": {
+      "type": "object",
+      "description": "Generation-safety accounting. Dropped counts are the honest record of what the clamp removed; they are zero for clean analyses.",
+      "required": [
+        "dropped_out_of_range_events",
+        "dropped_out_of_range_notes",
+        "dropped_out_of_range_phrase_refs",
+        "dropped_out_of_range_sections",
+        "dropped_out_of_range_phrases",
+        "deduplicated_anchors",
+        "sections_range_adjusted",
+        "phrases_clipped_to_section",
+        "timeline_window_count",
+        "input_schema_valid",
+        "output_schema_valid"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "dropped_out_of_range_events": { "type": "integer", "minimum": 0 },
+        "dropped_out_of_range_notes": { "type": "integer", "minimum": 0 },
+        "dropped_out_of_range_phrase_refs": { "type": "integer", "minimum": 0 },
+        "dropped_out_of_range_sections": { "type": "integer", "minimum": 0 },
+        "dropped_out_of_range_phrases": { "type": "integer", "minimum": 0 },
+        "deduplicated_anchors": { "type": "integer", "minimum": 0 },
+        "sections_range_adjusted": { "type": "integer", "minimum": 0 },
+        "phrases_clipped_to_section": { "type": "integer", "minimum": 0 },
+        "timeline_window_count": { "type": "integer", "minimum": 0 },
+        "input_schema_valid": { "type": "boolean" },
+        "output_schema_valid": { "type": "boolean" },
+        "validation_problems": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Present only when output_schema_valid is false."
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "tier": { "type": "string", "enum": ["high", "medium", "low", "unknown"] },
+
+    "intensityClass": { "type": ["string", "null"], "enum": ["low", "medium", "high", "peak", null] },
+
+    "section": {
+      "type": "object",
+      "required": ["section_id", "start_bar", "end_bar_exclusive", "start_sec", "end_sec", "energy", "rhythm", "stems", "melody", "repeat"],
+      "additionalProperties": false,
+      "properties": {
+        "section_id": { "type": "string", "minLength": 1 },
+        "start_bar": { "type": "integer", "minimum": 1 },
+        "end_bar_exclusive": { "type": "integer", "minimum": 2 },
+        "start_sec": { "type": "number", "minimum": 0 },
+        "end_sec": { "type": "number", "minimum": 0 },
+        "energy": {
+          "type": "object",
+          "required": ["mean", "peak", "trend"],
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "peak": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "trend": { "type": ["string", "null"], "enum": ["rising", "falling", "stable", null] }
+          }
+        },
+        "rhythm": {
+          "type": "object",
+          "required": ["onset_density", "kick_activity", "snare_activity", "high_percussion_activity"],
+          "additionalProperties": false,
+          "properties": {
+            "onset_density": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "kick_activity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "snare_activity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "high_percussion_activity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+          }
+        },
+        "stems": {
+          "type": "object",
+          "required": ["drums", "bass", "vocals", "other"],
+          "additionalProperties": false,
+          "properties": {
+            "drums": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "bass": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "vocals": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "other": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+          }
+        },
+        "melody": {
+          "type": "object",
+          "required": ["activity", "density", "contour"],
+          "additionalProperties": false,
+          "properties": {
+            "activity": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Fraction of pitch frames carrying a detected pitch -- 'is a melody present here', not a loudness."
+            },
+            "density": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "contour": { "type": ["string", "null"] }
+          }
+        },
+        "repeat": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["group_id", "occurrence", "total_occurrences", "similarity"],
+              "additionalProperties": false,
+              "properties": {
+                "group_id": { "type": "string" },
+                "occurrence": { "type": "integer", "minimum": 1 },
+                "total_occurrences": { "type": "integer", "minimum": 2 },
+                "similarity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    "phrase": {
+      "type": "object",
+      "required": ["phrase_id", "section_id", "start_bar", "end_bar_exclusive", "bar_count", "start_sec", "end_sec", "confidence", "position_label", "energy", "dominant_layers", "melody_contour", "important_event_times", "anchors", "design_features"],
+      "additionalProperties": false,
+      "properties": {
+        "phrase_id": { "type": ["string", "null"] },
+        "section_id": { "type": "string", "minLength": 1 },
+        "start_bar": { "type": "integer", "minimum": 1 },
+        "end_bar_exclusive": { "type": "integer", "minimum": 2 },
+        "bar_count": { "type": "integer", "minimum": 1 },
+        "start_sec": { "type": "number", "minimum": 0 },
+        "end_sec": { "type": "number", "minimum": 0 },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "position_label": { "type": "string", "enum": ["opening", "development", "peak", "release", "other"] },
+        "energy": {
+          "type": "object",
+          "required": ["mean", "trend"],
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "trend": { "type": ["string", "null"], "enum": ["rising", "falling", "stable", null] }
+          }
+        },
+        "dominant_layers": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["drums", "bass", "vocals", "other"] }
+        },
+        "melody_contour": { "type": ["string", "null"] },
+        "important_event_times": {
+          "type": "array",
+          "description": "In-range event times only; out-of-range references are dropped and counted.",
+          "items": { "type": "number", "minimum": 0 }
+        },
+        "anchors": {
+          "type": "array",
+          "description": "The strongest in-range anchors inside this phrase's bar range.",
+          "items": {
+            "type": "object",
+            "required": ["time_sec", "bar", "beat_in_bar", "type", "strength", "priority"],
+            "additionalProperties": false,
+            "properties": {
+              "time_sec": { "type": "number", "minimum": 0 },
+              "bar": { "type": "integer", "minimum": 1 },
+              "beat_in_bar": { "type": ["number", "null"], "minimum": 1 },
+              "type": { "type": "string" },
+              "strength": { "type": ["number", "null"] },
+              "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+            }
+          }
+        },
+        "design_features": {
+          "type": "object",
+          "description": "Derived, deterministic hints. They are advisory inputs to the director, never instructions, and never a substitute for the director's own judgement.",
+          "required": ["relative_intensity", "recommended_density", "is_transition_candidate", "is_climax_candidate", "is_recovery_candidate", "motif_recurrence_candidate"],
+          "additionalProperties": false,
+          "properties": {
+            "relative_intensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "recommended_density": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "is_transition_candidate": { "type": "boolean" },
+            "is_climax_candidate": { "type": "boolean" },
+            "is_recovery_candidate": { "type": "boolean" },
+            "motif_recurrence_candidate": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "barRow": {
+      "type": "object",
+      "required": ["bar", "start_sec", "energy", "drums", "bass", "vocals", "melody", "onset_density", "combined_intensity", "derived"],
+      "additionalProperties": false,
+      "properties": {
+        "bar": { "type": "integer", "minimum": 1 },
+        "start_sec": { "type": "number", "minimum": 0 },
+        "energy": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "drums": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "bass": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "vocals": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "melody": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "onset_density": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "combined_intensity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "derived": {
+          "type": "object",
+          "required": ["intensity_class", "change_from_previous", "is_local_peak", "is_local_valley", "is_build", "is_release"],
+          "additionalProperties": false,
+          "properties": {
+            "intensity_class": { "$ref": "#/$defs/intensityClass" },
+            "change_from_previous": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "is_local_peak": { "type": "boolean" },
+            "is_local_valley": { "type": "boolean" },
+            "is_build": { "type": "boolean" },
+            "is_release": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "anchor": {
+      "type": "object",
+      "required": ["time_sec", "bar", "beat_in_bar", "type", "strength", "confidence", "priority", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "time_sec": { "type": "number", "minimum": 0 },
+        "bar": { "type": "integer", "minimum": 1 },
+        "beat_in_bar": { "type": ["number", "null"], "minimum": 1 },
+        "type": {
+          "type": "string",
+          "enum": [
+            "section_boundary", "phrase_boundary", "energy_rise", "energy_drop", "energy_peak",
+            "strong_beat", "strong_onset", "large_pitch_jump", "melody_rise", "melody_fall",
+            "melody_peak", "vocal_entry", "vocal_exit"
+          ]
+        },
+        "strength": { "type": ["number", "null"] },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Only structural anchors carry a detection confidence; for a detected anchor, strength is the evidence." },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "source": { "type": ["string", "null"] }
+      }
+    },
+
+    "repeatGroup": {
+      "type": "object",
+      "required": ["repeat_group_id", "confidence", "occurrences", "similarity", "variation_profile", "recommended_gameplay_relation"],
+      "additionalProperties": false,
+      "properties": {
+        "repeat_group_id": { "type": ["string", "null"] },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "similarity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "occurrences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["section_id", "occurrence", "start_bar", "end_bar_exclusive", "start_sec", "end_sec", "similarity"],
+            "additionalProperties": false,
+            "properties": {
+              "section_id": { "type": "string", "minLength": 1 },
+              "occurrence": { "type": ["integer", "null"], "minimum": 1 },
+              "start_bar": { "type": "integer", "minimum": 1 },
+              "end_bar_exclusive": { "type": "integer", "minimum": 2 },
+              "start_sec": { "type": "number", "minimum": 0 },
+              "end_sec": { "type": "number", "minimum": 0 },
+              "similarity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "variation_profile": {
+          "type": "object",
+          "description": "Mean arrangement delta of each later occurrence against the group's earlier ones. Positive = stronger/denser/brighter.",
+          "required": ["energy_delta", "drum_delta", "bass_delta", "vocal_delta", "onset_density_delta", "arrangement_intensity_delta"],
+          "additionalProperties": false,
+          "properties": {
+            "energy_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "drum_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "bass_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "vocal_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "onset_density_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "arrangement_intensity_delta": { "type": ["number", "null"], "minimum": -1, "maximum": 1 }
+          }
+        },
+        "recommended_gameplay_relation": {
+          "type": "string",
+          "enum": ["statement", "reprise_equivalent", "reprise_with_escalation", "reprise_with_reduction"],
+          "description": "A deterministic hint derived from the arrangement delta -- never an LLM call. A director may override it, but it may not silently disagree with it."
+        }
+      }
+    }
+  }
+}

@@ -28,6 +28,13 @@
  * step, each at the band's radius for that step. The renderer draws from the
  * *same* sample set, so what is drawn and what damages are the same figure
  * rather than two figures that happen to look alike.
+ *
+ * WHERE THE CENTRE COMES FROM
+ * ---------------------------
+ * Every function here takes the band's centre as an argument. A seal is not
+ * necessarily centred on the arena -- A12's is centred on the player -- and the
+ * only way a drawn figure and a damaging figure stay the same figure is if both
+ * are built from one centre, passed in once.
  */
 
 import type { Shape, Vec2 } from '../../core/geometry';
@@ -113,49 +120,52 @@ export function bandSamples(shape: SealShape, circumradius: number, spin: number
  */
 export function bandShapes(
   shape: SealShape, circumradius: number, thickness: number, spin: number,
+  centre: Vec2 = ARENA_CENTRE,
 ): Shape[] {
   const half = thickness / 2;
   if (isRound(shape)) {
     return [{
       kind: 'sector',
-      ...sector(Math.max(0, circumradius - half), circumradius + half, 0, Math.PI * 2),
+      ...sector(Math.max(0, circumradius - half), circumradius + half, 0, Math.PI * 2, centre),
     }];
   }
   return bandSamples(shape, circumradius, spin).map((s) => ({
     kind: 'sector' as const,
-    ...sector(Math.max(0, s.radius - half), s.radius + half, s.a0, s.a1),
+    ...sector(Math.max(0, s.radius - half), s.radius + half, s.a0, s.a1, centre),
   }));
 }
 
 /** Closed outline at `offset` from the band's centre line, in field points. */
 export function outlinePoints(
   shape: SealShape, circumradius: number, spin: number, offset: number,
+  centre: Vec2 = ARENA_CENTRE,
 ): Vec2[] {
   if (isRound(shape)) {
     return Array.from({ length: CIRCLE_SEGMENTS }, (_, i) => {
       const angle = (i / CIRCLE_SEGMENTS) * Math.PI * 2;
-      return polarToField(angle, Math.max(0, circumradius + offset));
+      return polarToField(angle, Math.max(0, circumradius + offset), centre);
     });
   }
   // A polygon only needs its corners: the edges between them are straight.
   return Array.from({ length: shape.sides }, (_, i) => {
     const angle = spin + (i / shape.sides) * Math.PI * 2;
-    return polarToField(angle, Math.max(0, circumradius + offset / inradiusFactor(shape)));
+    return polarToField(angle, Math.max(0, circumradius + offset / inradiusFactor(shape)), centre);
   });
 }
 
 /** The four corners of one segment's slab of band, for filling. */
 export function segmentQuad(
   shape: SealShape, sample: BandSample, thickness: number, circumradius: number, spin: number,
+  centre: Vec2 = ARENA_CENTRE,
 ): Vec2[] {
   const half = thickness / 2;
   const r0 = radiusAt(shape, circumradius, sample.a0, spin);
   const r1 = radiusAt(shape, circumradius, sample.a1, spin);
   return [
-    polarToField(sample.a0, Math.max(0, r0 - half)),
-    polarToField(sample.a1, Math.max(0, r1 - half)),
-    polarToField(sample.a1, r1 + half),
-    polarToField(sample.a0, r0 + half),
+    polarToField(sample.a0, Math.max(0, r0 - half), centre),
+    polarToField(sample.a1, Math.max(0, r1 - half), centre),
+    polarToField(sample.a1, r1 + half, centre),
+    polarToField(sample.a0, r0 + half, centre),
   ];
 }
 

@@ -28,17 +28,33 @@ import { BaseMechanic, type MechanicSpawnContext } from '../../core/Mechanic';
 import type { BouncePad, GroundGap, Platform, RunnerTerrain, TrackSurfaceLike } from '../../core/capabilities';
 import type { Rect, Shape } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
-import { CourseWorld, hazardShape } from './courseWorld';
-import { BODY_HEIGHT } from './runnerPhysics';
-import { trackX } from './runnerGeometry';
+import { CourseWorld, blockFaceOf, hazardShape, standFaceOf } from './courseWorld';
+import { CEILING_Y, GROUND_Y, trackX } from './runnerGeometry';
 import type { VerticalZone } from './verticalZones';
-import type { TrackSurface } from './surface';
+import { MASS_FILL, MASS_OUTLINE, SURFACE_COLOUR, type TrackSurface } from './surface';
 import type { Trajectory } from './trajectory';
-/** Colours: terrain is quiet, the standable edge is bright, hazards shout. */
-const SLAB_BODY = '#243050';
-const SLAB_EDGE = '#7dd0ff';
-const SLAB_ROOF_EDGE = '#b98cff';
-const SLAB_DEAD_EDGE = '#3d4c75';
+
+/**
+ * The palette, one rule per entry.
+ *
+ * A platformer's colours are a language, and a language with exceptions is not
+ * one. Each entry below means exactly one thing everywhere it is used, so the
+ * player can learn the vocabulary once:
+ *
+ *   - a *standable* face is the colour of its surface (`SURFACE_COLOUR`) and
+ *     nothing else may use it. The base line, a step and a floating plate all
+ *     answer "can I land here?" the same way, because the answer is the same;
+ *   - *lethal* is red for a spike and orange for a beam;
+ *   - *input the level is asking for* is green for a pad and gold for a ring;
+ *   - *mass* -- a body the player can be stopped by but not stand on -- is a
+ *     dark low-contrast fill with a thin outline. It never competes with any of
+ *     the above, and it is never bright.
+ *
+ * Decoration has no entry here at all. It lives in `RunnerMode`'s background,
+ * off the running plane and at low alpha, and never borrows a surface colour.
+ */
+/** The face of a floating slab a rising head meets: mass, not a landing. */
+const MASS_FACE = MASS_OUTLINE;
 const HAZARD_COLOUR = '#ff5c5c';
 const BEAM_COLOUR = '#ff9d5c';
 const PAD_COLOUR = '#4dffd0';
@@ -46,8 +62,14 @@ const AIRJUMP_COLOUR = '#ffd166';
 const GAP_COLOUR = '#05070d';
 const GAP_EDGE = '#7d86a3';
 
-/** How deep a slab is drawn when the trajectory did not say. */
-const DEFAULT_SLAB_DEPTH = BODY_HEIGHT;
+/**
+ * The least body a slab is drawn with, whatever the trajectory said.
+ *
+ * A slab's depth is a physical number -- how far its mass reaches from the face
+ * the player stands on -- and a shallow one would otherwise draw as a hairline
+ * that reads as a stray line rather than as something solid.
+ */
+const MIN_MASS_DEPTH = 0.028;
 
 export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain {
   override readonly damageSource = 'OBSTACLE' as const;
@@ -115,7 +137,7 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
 
   // ---- debug ------------------------------------------------------------
 
-  /** Phrase currently under the player, for the debug view. */
+  /** Phrase currently under the player, for the debug view and the backdrop. */
   phraseAt(beat: number): {
     label: string;
     motif: string;
@@ -123,6 +145,7 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
     surface: TrackSurface | null;
     zoneBeats: Record<VerticalZone, number>;
     groundRatio: number;
+    startBeat: number;
   } | null {
     const phrase = this.world.phraseAt(beat);
     if (!phrase) return null;
@@ -133,6 +156,7 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
       surface: phrase.surface,
       zoneBeats: phrase.zoneBeats,
       groundRatio: phrase.groundRatio,
+      startBeat: phrase.startBeat,
     };
   }
 
@@ -158,33 +182,7 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
     this.renderPads(r, beat);
     this.renderAirJumps(r, beat);
     this.renderHazards(r, beat);
-    this.renderPhraseTint(r, beat);
     this.renderFlipGates(r, beat);
-  }
-
-  /**
-   * A hairline of colour on the running surface for the phrase in play.
-   *
-   * Spec §65's readability requirement is really a *legibility* one: the player
-   * should be able to feel that a new phrase started without reading anything.
-   * A tint that changes per motif does that at almost no cost, and it makes the
-   * motif's recurrence visible -- the same colour coming back is the mode
-   * telling the player "you have done this before".
-   */
-  private renderPhraseTint(r: Renderer, beat: number): void {
-    const phrase = this.world.phraseAt(beat);
-    if (!phrase) return;
-    const gravityDown = this.world.gravityAt(beat) > 0;
-    const y = gravityDown ? 0.72 : 0.28;
-    const colour = motifColour(phrase.motif);
-    const x0 = trackX(phrase.startBeat, beat);
-    const x1 = trackX(phrase.endBeat, beat);
-    const left = Math.max(-0.02, x0);
-    const right = Math.min(1.02, x1);
-    if (right <= left) return;
-    const dir = gravityDown ? 1 : -1;
-    r.fillRect({ x: left, y: y + (gravityDown ? 0 : -0.012), w: right - left, h: 0.012 }, colour, 0.5);
-    r.line(left, y + dir * 0.02, right, y + dir * 0.02, colour, 1.5, 0.35);
   }
 
   private renderGaps(r: Renderer, beat: number): void {
@@ -192,33 +190,68 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
       const x0 = trackX(gap.startBeat, beat);
       const x1 = trackX(gap.endBeat, beat);
       if (x1 < -0.1 || x0 > 1.1) continue;
-      const base = gap.surface === 'FLOOR' ? 0.72 : 0;
-      r.fillRect({ x: x0, y: base, w: x1 - x0, h: 0.28 }, GAP_COLOUR, 1);
+      // The pit is the *body* of its own surface, hollowed out: from the base
+      // line inward, in the direction gravity would drop the player.
+      const base = gap.surface === 'FLOOR' ? GROUND_Y : 0;
+      const depth = gap.surface === 'FLOOR' ? 1 - GROUND_Y : CEILING_Y;
+      r.fillRect({ x: x0, y: base, w: x1 - x0, h: depth }, GAP_COLOUR, 1);
       const dir = gap.surface === 'FLOOR' ? 1 : -1;
       r.line(x0, base, x0, base + dir * 0.05, GAP_EDGE, 2, 0.8);
       r.line(x1, base, x1, base + dir * 0.05, GAP_EDGE, 2, 0.8);
     }
   }
 
+  /**
+   * Every slab that is *geometry*, drawn so a landing is unmistakable.
+   *
+   * Three things are deliberately absent here, and each was a real read the
+   * player was being asked to make for nothing:
+   *
+   *   - **Base-line slabs.** A slab on its surface's base line is the floor, not
+   *     terrain -- see `CourseWorld.visibleSpans`, which is what decides. Drawing
+   *     them put a brick of body colour with a bright edge on the running surface
+   *     once per landing, so half of every course (70 of the 134 slabs in the
+   *     library) was furniture laid along the floor. They are not drawn at all,
+   *     except where one bridges a hole, which is the one place such a slab is
+   *     genuinely standable over nothing.
+   *   - **A second edge colour.** A slab's standable face was cyan when the slab
+   *     was floating and violet when it was anchored, a distinction no course in
+   *     the library ever produced. Now every standable face is the colour of its
+   *     surface, which is the same colour the base line uses -- so "land here"
+   *     looks the same wherever it is, and the hue only ever means which way is
+   *     down.
+   *   - **A leading-edge stripe.** The body outline already gives the slab its
+   *     extent; a second vertical line at the same place was one more mark on the
+   *     screen saying what the silhouette already said.
+   *
+   * What is left is the hierarchy the mode is built on: mass, then the face you
+   * land on, and nothing else.
+   */
   private renderSlabs(r: Renderer, beat: number): void {
-    const gravityDown = this.world.gravityAt(beat) > 0;
     for (const slab of this.world.slabs) {
-      const x0 = trackX(slab.startBeat, beat);
-      const x1 = trackX(slab.endBeat, beat);
-      if (x1 < -0.1 || x0 > 1.1) continue;
-      const top = Math.min(slab.faceY, slab.backY);
-      const bottom = Math.max(slab.faceY, slab.backY);
-      const h = Math.max(DEFAULT_SLAB_DEPTH * 0.35, bottom - top);
-      r.fillRect({ x: x0, y: top, w: x1 - x0, h }, SLAB_BODY, 0.95);
-      // The standable edge is the bright line. Which of the two faces that is
-      // depends on gravity, so the *live* one is drawn brighter and the other
-      // dimmer -- the same read the track itself uses.
-      const liveFace = gravityDown ? slab.faceY : slab.backY;
-      const deadFace = gravityDown ? slab.backY : slab.faceY;
-      r.line(x0, liveFace, x1, liveFace, slab.floating ? SLAB_EDGE : SLAB_ROOF_EDGE, 3, 0.95);
-      r.line(x0, deadFace, x1, deadFace, SLAB_DEAD_EDGE, 2, 0.5);
-      // A leading-edge marker so the direction of travel is legible on a wide slab.
-      r.line(x1, top, x1, bottom, '#8fa6d8', 1.5, 0.55);
+      // The face the player stands on, and the one a rising head meets. Both come
+      // from the world's own accessors so the drawing cannot disagree with the
+      // collision about which of a slab's two faces is which.
+      const stand = standFaceOf(slab, slab.surface);
+      const far = blockFaceOf(slab, slab.surface);
+      const depth = Math.max(MIN_MASS_DEPTH, Math.abs(stand - far));
+      // Mass hangs *away* from the standable face: downward from a floor slab's
+      // top, upward from a ceiling slab's underside.
+      const top = slab.surface === 'FLOOR' ? stand : stand - depth;
+      const body = { y: top, h: depth };
+
+      for (const span of this.world.visibleSpans(slab)) {
+        const x0 = trackX(span.startBeat, beat);
+        const x1 = trackX(span.endBeat, beat);
+        if (x1 < -0.1 || x0 > 1.1) continue;
+        r.fillRect({ x: x0, y: body.y, w: x1 - x0, h: body.h }, MASS_FILL, 0.95);
+        r.strokeRect({ x: x0, y: body.y, w: x1 - x0, h: body.h }, MASS_OUTLINE, 1.5, 0.7);
+        // The landing face. This is the one bright mark on a platform.
+        r.line(x0, stand, x1, stand, SURFACE_COLOUR[slab.surface], 3, 0.95);
+        // The far face is mass, not a landing -- a corridor's roof, a plate's
+        // underside. It is drawn quietly so it cannot be mistaken for one.
+        r.line(x0, far, x1, far, MASS_FACE, 2, 0.55);
+      }
     }
   }
 
@@ -277,7 +310,7 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
         continue;
       }
       const tip = demand.faceY;
-      const base = gravityDown ? 0.72 : 0.28;
+      const base = gravityDown ? GROUND_Y : CEILING_Y;
       r.glow(x, tip, Math.abs(tip - base) * 1.6, HAZARD_COLOUR, 0.2 * alpha);
       r.fillPolygon([
         { x: x - 0.012, y: base },
@@ -300,32 +333,17 @@ export class RunnerCourseMechanic extends BaseMechanic implements RunnerTerrain 
       if (x < -0.15 || x > 1.15) continue;
       const approaching = flip.beat - beat;
       const charge = Math.max(0, Math.min(1, 1 - approaching / 3));
-      const colour = flip.to === 'CEILING' ? '#8a5fff' : '#4dffd0';
+      // The gate is coloured by the surface it hands the player to, so the mark
+      // and the world it opens onto are the same colour.
+      const colour = SURFACE_COLOUR[flip.to];
       const width = 0.014 + 0.02 * charge;
-      r.fillRect({ x: x - width / 2, y: 0.28, w: width, h: 0.44 }, colour, 0.18 + 0.35 * charge);
-      r.line(x, 0.28, x, 0.72, colour, 2 + 3 * charge, 0.5 + 0.5 * charge);
+      r.fillRect({ x: x - width / 2, y: CEILING_Y, w: width, h: GROUND_Y - CEILING_Y }, colour, 0.18 + 0.35 * charge);
+      r.line(x, CEILING_Y, x, GROUND_Y, colour, 2 + 3 * charge, 0.5 + 0.5 * charge);
       const arrow = flip.to === 'CEILING' ? '⇡' : '⇣';
-      r.text(arrow, x, 0.28 + 0.045, colour, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
-      r.text(arrow, x, 0.72 - 0.045, colour, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
+      r.text(arrow, x, CEILING_Y + 0.045, colour, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
+      r.text(arrow, x, GROUND_Y - 0.045, colour, 16 + 8 * charge, 'center', 0.5 + 0.5 * charge);
     }
   }
-}
-
-/**
- * A motif's colour, hashed from its id.
- *
- * Deterministic and free of state: the same motif is always the same colour, on
- * every run and in every section, which is the whole point -- a recurring motif
- * has to *look* like the one that came before or the memory is invisible.
- */
-function motifColour(motif: string): string {
-  const palette = ['#4dffd0', '#7dd0ff', '#b98cff', '#ffd166', '#ff8fb1', '#9ffcff'];
-  let h = 2166136261;
-  for (let i = 0; i < motif.length; i++) {
-    h ^= motif.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return palette[(h >>> 0) % palette.length];
 }
 
 /**

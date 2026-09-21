@@ -34,6 +34,20 @@ export interface MechanicTiming {
   telegraphBeats: number;
   /** Post-active recovery/cooldown, in beats. */
   cooldownBeats?: number;
+  /**
+   * How long before activation this mechanic has to exist to be *readable*,
+   * when that is longer than its telegraph.
+   *
+   * A telegraph is a warning drawn on screen; a scroll-in is a warning that
+   * happens by the mechanic travelling towards the player from off-screen. The
+   * second kind needs no telegraph at all -- which is why every RUNNER obstacle
+   * declares `telegraphBeats: 0` -- but it still needs *time*, and the level
+   * compiler has to know how much in order to make the mode live early enough
+   * for the mechanic to be seen at all. Without it a section whose first
+   * obstacle sits on its own first beat reads as zero warning: the mode
+   * activates and the obstacle is already on top of the player.
+   */
+  spawnLeadBeats?: number;
 }
 
 export interface MechanicDefinition {

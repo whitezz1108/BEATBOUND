@@ -78,10 +78,19 @@ export class MechanicRegistry {
    * How far ahead of its activation beat a mechanic must be created. The
    * scheduler asks this instead of reading `telegraphBeats` directly, so a mode
    * can need more lead than the data declares without the scheduler knowing why.
+   *
+   * Three sources, in increasing order of specificity, and the largest wins:
+   * the library's temporal telegraph, the library's `spawnLeadBeats` (the
+   * spatial scroll-in a mechanic needs instead of a telegraph), and the
+   * runtime registration's own override.
    */
   spawnLeadBeats(id: string): number {
-    const telegraph = this.definitions.get(id)?.timing.telegraphBeats ?? 0;
-    return Math.max(telegraph, this.registrations.get(id)?.spawnLeadBeats ?? 0);
+    const timing = this.definitions.get(id)?.timing;
+    return Math.max(
+      timing?.telegraphBeats ?? 0,
+      timing?.spawnLeadBeats ?? 0,
+      this.registrations.get(id)?.spawnLeadBeats ?? 0,
+    );
   }
 
   getDefinition(id: string): MechanicDefinition | undefined {

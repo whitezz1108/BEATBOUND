@@ -316,3 +316,30 @@ export function isSequenceEncounter(m: RuntimeMechanic): m is RuntimeMechanic & 
   return typeof (m as Partial<SequenceEncounter>).capturesInput === 'function'
     && typeof (m as Partial<SequenceEncounter>).pressDirection === 'function';
 }
+
+/**
+ * A hazard built around the player rather than around the arena.
+ *
+ * Almost every mechanic in the game places its geometry somewhere on the board
+ * and asks the player to be elsewhere. A few -- currently only A12's seal --
+ * close around the body itself, which changes what "can this hit me?" even
+ * means: the answer no longer depends on where the player is standing, because
+ * the hazard moves with them.
+ *
+ * That distinction is invisible during play and only matters to tools that
+ * reason about a player who is *not* being simulated frame by frame. Such a
+ * tool has to ask the anchored mechanic where it currently is, and test the
+ * body there, rather than testing the body against a board position the hazard
+ * would never occupy.
+ */
+export interface PlayerAnchoredMechanic {
+  readonly playerAnchored: true;
+  /** Where the hazard is closed around right now. */
+  readonly anchor: { x: number; y: number };
+}
+
+export function isPlayerAnchored(
+  m: RuntimeMechanic,
+): m is RuntimeMechanic & PlayerAnchoredMechanic {
+  return (m as Partial<PlayerAnchoredMechanic>).playerAnchored === true;
+}

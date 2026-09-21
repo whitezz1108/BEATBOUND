@@ -21,6 +21,13 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+import { readTuningMirror, loadRulesWithTuning, TUNING_FALLBACK } from '../generation/rules.js';
+import { registerInIndex as registerInIndexShared, generateLevel, MANIFEST_SCHEMA_VERSION } from '../generation/pipeline.js';
+import { PRESETS, PRESET_IDS, describeRequest } from '../generation/presets.js';
+import { resolveGenerationRequest } from './requests.js';
+import { loadCatalog, buildGameplayContext, GAMEPLAY_CONTEXT_SCHEMA_VERSION } from '../generation/gameplayContext.js';
+import { describeConfig, loadLlmConfig } from '../generation/llm/config.js';
+
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const UI_DIR = path.join(ROOT, 'editor', 'ui');
 const OUTPUT_DIR = path.join(ROOT, 'editor', 'output');
@@ -29,7 +36,8 @@ const AUDIO_DIR = path.join(LIB_DIR, 'audio', 'editor');
 const ANALYSIS_SCRIPT = path.join(ROOT, 'editor', 'music-analysis', 'analyze_music_v2.py');
 const V2_OUTPUT = path.join(OUTPUT_DIR, 'music_analysis_v2.json');
 const LEGACY_OUTPUT = path.join(OUTPUT_DIR, 'music_analysis.json');
-const DIRECTOR_OUTPUT = path.join(OUTPUT_DIR, 'director_context.json');
+const DIRECTOR_OUTPUT = path.join(OUTPUT_DIR, 'director_context.json'); // v1, still exported
+const DIRECTOR_V2_OUTPUT = path.join(OUTPUT_DIR, 'director_context_v2.json');
 const PORT = Number(process.env.EDITOR_PORT) || 5174;
 const HOST = '127.0.0.1';
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
@@ -73,38 +81,16 @@ async function restoreState() {
 await restoreState();
 
 // ---- runtime tuning mirror ---------------------------------------------------
-// The editor must never hardcode values the game owns. breatherBeats and
-// sceneBeats are parsed from the live game source (src/tuning.ts) at startup;
-// the rules JSON only carries an offline fallback, and any disagreement
-// between the two is surfaced as a consistency warning instead of silently
-// generating levels against a stale value.
-function readTuningMirror() {
-  const mirror = { breatherBeats: null, sceneBeats: null, source: null, missing: [] };
-  try {
-    const src = readFileSync(path.join(ROOT, 'src', 'tuning.ts'), 'utf8');
-    const block = src.match(/transition:\s*\{([\s\S]*?)\n\s*\},/);
-    if (!block) {
-      mirror.missing.push('TUNING.transition block');
-      return mirror;
-    }
-    const read = (name) => {
-      const m = block[1].match(new RegExp(`${name}\\s*:\\s*(\\d+)`));
-      if (!m) {
-        mirror.missing.push(`TUNING.transition.${name}`);
-        return null;
-      }
-      return Number(m[1]);
-    };
-    mirror.breatherBeats = read('breatherBeats');
-    mirror.sceneBeats = read('sceneBeats');
-    mirror.source = 'src/tuning.ts';
-  } catch (err) {
-    mirror.missing.push(`src/tuning.ts unreadable (${err.message})`);
-  }
-  return mirror;
-}
-const tuningMirror = readTuningMirror();
-const rulesConsistencyNotes = []; // set on the first loadRules() call
+// The editor must never hardcode values the game owns. The mirror of
+// `TUNING.transition` is parsed out of the live game source at startup and
+// injected over the rules JSON, which only carries an offline fallback; a
+// disagreement between the two is surfaced as a consistency note instead of
+// silently generating levels against a stale value.
+//
+// Both halves live in editor/generation/rules.js, shared with the generation
+// pipeline, so the server and the pipeline cannot read different numbers.
+const tuningMirror = readTuningMirror({ projectRoot: ROOT });
+const rulesConsistencyNotes = []; // filled by loadRules()
 
 // ---- helpers ----------------------------------------------------------------
 
@@ -169,6 +155,36 @@ function runAnalysis(audioAbsPath, { bpm, timesig, mode } = {}) {
   });
 }
 
+/**
+ * A small shape summary of director_context_v2.json, or null when it is absent.
+ *
+ * Read back rather than derived from the analyser's own stdout: `--quiet` is
+ * deliberate (nothing downstream should depend on parsing a subprocess log),
+ * so the artifacts are the contract.
+ */
+async function readDirectorSummary() {
+  try {
+    const dc = JSON.parse(await fs.readFile(DIRECTOR_V2_OUTPUT, 'utf8'));
+    return {
+      schema_version: dc.schema_version,
+      song_id: dc.source?.song_id ?? null,
+      bars: dc.timing?.bars?.length ?? 0,
+      bar_count: dc.timing?.bar_count ?? null,
+      bpm: dc.timing?.bpm ?? null,
+      meter: dc.timing?.meter ?? null,
+      sections: dc.sections?.length ?? 0,
+      phrases: dc.phrases?.length ?? 0,
+      anchors: dc.anchors?.length ?? 0,
+      repeat_groups: dc.repeat_groups?.length ?? 0,
+      sync_checkpoints: dc.sync_checkpoints?.length ?? 0,
+      melody_available: dc.melody?.available ?? false,
+      reliability: dc.reliability ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Serve one of the analysis JSON files, optionally as a forced download. */
 function sendAnalysisFile(res, filePath, filename, download) {
   if (!existsSync(filePath)) {
@@ -194,16 +210,11 @@ function runLevelCheck(levelFile) {
   });
 }
 
-async function registerInIndex(entry) {
-  const indexPath = path.join(LIB_DIR, 'levels.index.json');
-  let index = { version: '1.0.0', levels: [] };
-  try {
-    index = JSON.parse(await fs.readFile(indexPath, 'utf8'));
-  } catch {}
-  const existing = index.levels.find((l) => l.file === entry.file);
-  if (!existing) index.levels.push(entry);
-  else Object.assign(existing, entry);
-  await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
+// The index writer lives in the generation pipeline so the server and the
+// pipeline register levels the same way -- including the trailing newline the
+// old copy here dropped, which showed up as a whitespace diff on every write.
+function registerInIndex(entry) {
+  return registerInIndexShared(entry, { libraryDir: LIB_DIR });
 }
 
 async function loadGeneratorModules() {
@@ -217,32 +228,34 @@ async function loadGeneratorModules() {
   return { seedMod, directorMod, compilerMod, validateMod, indexMod };
 }
 
+/**
+ * The three rules files with the live game tuning injected over them.
+ *
+ * The comparison itself is `loadRulesWithTuning`'s; all this adds is capturing
+ * its notes once, into the array `/api/state` reports. Reading the files on
+ * every call (rather than caching the result) keeps the editor honest while a
+ * rules JSON is being edited underneath it.
+ */
 function loadRules() {
-  const read = (name) => JSON.parse(readFileSync(path.join(ROOT, 'editor', 'rules', name), 'utf8'));
-  const rules = {
-    gameplay: read('gameplay-rules.json'),
-    difficulty: read('difficulty-rules.json'),
-    transition: read('transition-rules.json'),
-  };
-  // Consistency check: the game source is authoritative for breatherBeats.
-  // Inject the live value over the JSON mirror and say so once, loudly.
-  if (rulesConsistencyNotes.length === 0) {
-    if (tuningMirror.breatherBeats !== null && rules.gameplay.transition.breatherBeats !== tuningMirror.breatherBeats) {
-      rulesConsistencyNotes.push(
-        `gameplay-rules.json breatherBeats (${rules.gameplay.transition.breatherBeats}) differs from ` +
-        `src/tuning.ts (${tuningMirror.breatherBeats}) -- the live game value is used. ` +
-        `Update the rules JSON mirror.`
-      );
-    }
-    for (const missing of tuningMirror.missing) {
-      rulesConsistencyNotes.push(`Could not read ${missing} from src/tuning.ts -- using the rules JSON fallback.`);
-    }
-  }
-  if (tuningMirror.breatherBeats !== null) {
-    rules.gameplay.transition.breatherBeats = tuningMirror.breatherBeats;
-  }
+  const { rules, notes, tuning } = loadRulesWithTuning({ projectRoot: ROOT, mirror: tuningMirror });
+  if (rulesConsistencyNotes.length === 0) rulesConsistencyNotes.push(...notes);
+  liveTuning = tuning;
   return rules;
 }
+
+/**
+ * The mirror in the shape the UI already reads.
+ *
+ * `readTuningMirror` returns `{values, source, missing}`; `/api/state` has
+ * always published the values flattened alongside `source` and `missing`, and
+ * the UI reads them that way. Kept flat here so the shared loader could change
+ * shape without breaking the panel.
+ */
+function tuningMirrorForUi() {
+  return { ...tuningMirror.values, source: tuningMirror.source, missing: [...tuningMirror.missing] };
+}
+
+let liveTuning = { ...TUNING_FALLBACK };
 
 // ---- routes ------------------------------------------------------------------
 
@@ -297,8 +310,10 @@ const server = createServer(async (req, res) => {
         hasBlueprint: state.blueprint !== null,
         levelFile: state.levelFile,
         hasDirectorContext: existsSync(DIRECTOR_OUTPUT),
+        hasDirectorContextV2: existsSync(DIRECTOR_V2_OUTPUT),
         hasFullAnalysis: existsSync(V2_OUTPUT),
-        tuningMirror: { ...tuningMirror, missing: [...tuningMirror.missing] },
+        tuningMirror: tuningMirrorForUi(),
+        tuning: { ...liveTuning },
         consistencyNotes: [...rulesConsistencyNotes],
         analysis: state.analysis
           ? {
@@ -335,7 +350,7 @@ const server = createServer(async (req, res) => {
       state.blueprint = null;
       state.levelFile = null;
       // Stale analysis exports must not be downloadable against the new song.
-      for (const stale of [V2_OUTPUT, LEGACY_OUTPUT, DIRECTOR_OUTPUT]) {
+      for (const stale of [V2_OUTPUT, LEGACY_OUTPUT, DIRECTOR_OUTPUT, DIRECTOR_V2_OUTPUT]) {
         await fs.rm(stale, { force: true });
       }
       return json(res, 200, { ok: true, song: state.song });
@@ -355,24 +370,10 @@ const server = createServer(async (req, res) => {
       await fs.writeFile(LEGACY_OUTPUT, JSON.stringify(analysis, null, 2));
       state.analysis = analysis;
 
-      // The director context is the headline V2.1 export; summarise it so the
-      // UI can confirm what the download button will deliver.
-      let directorSummary = null;
-      try {
-        const dc = JSON.parse(await fs.readFile(DIRECTOR_OUTPUT, 'utf8'));
-        directorSummary = {
-          sections: dc.sections.length,
-          phrases: dc.phrases.length,
-          repeat_groups: dc.repeat_groups.length,
-          repeat_comparisons: dc.repeat_comparisons.length,
-          important_events: dc.important_events.length,
-          bars: dc.grid.bars.length,
-          bar_phase_confidence: dc.grid.bar_phase_confidence,
-          lyrics_available: dc.lyrics.available,
-        };
-      } catch {
-        directorSummary = null;
-      }
+      // The V2 director context is what the generator reads, so summarise that
+      // one -- the UI is confirming what the pipeline will be handed, not what
+      // the v1 export looks like.
+      const directorSummary = await readDirectorSummary();
       return json(res, 200, {
         ok: true,
         report: {
@@ -394,9 +395,14 @@ const server = createServer(async (req, res) => {
       return json(res, 200, state.analysis);
     }
 
-    // ---- director context (the agent-facing export, V2.1) ----
+    // ---- director context (the generator-facing export, V2) ----
+    // `?v=1` still serves the legacy v1 document, which the old UI panel and
+    // any saved bookmark may be asking for.
     if (req.method === 'GET' && p === '/api/director-context') {
-      return sendAnalysisFile(res, DIRECTOR_OUTPUT, 'director_context.json', url.searchParams.get('download') === '1');
+      const legacy = url.searchParams.get('v') === '1';
+      const file = legacy ? DIRECTOR_OUTPUT : DIRECTOR_V2_OUTPUT;
+      const name = legacy ? 'director_context.json' : 'director_context_v2.json';
+      return sendAnalysisFile(res, file, name, url.searchParams.get('download') === '1');
     }
 
     // ---- full V2 analysis (optional secondary download) ----
@@ -522,6 +528,59 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { ok: true, output });
     }
 
+    // ---- V2 generation: presets, LLM status, gameplay context --------------
+
+    // ---- generation presets (the UI's dropdown) ----
+    if (req.method === 'GET' && p === '/api/presets') {
+      return json(res, 200, {
+        presets: PRESET_IDS.map((id) => PRESETS[id]),
+        ids: PRESET_IDS,
+      });
+    }
+
+    // ---- LLM status: is a director configured, and what will it be? ----
+    // Reports the key as a mask plus a boolean. The value never leaves
+    // `loadLlmConfig`, and nothing here writes it anywhere.
+    if (req.method === 'GET' && p === '/api/llm/status') {
+      const config = loadLlmConfig();
+      return json(res, 200, {
+        ...describeConfig(config),
+        // The pipeline can run without a key as long as a blueprint is supplied;
+        // the UI uses this to decide whether the generate button needs a file.
+        canGenerateWithoutKey: true,
+      });
+    }
+
+    // ---- gameplay context: the capability catalog for the chosen modes ----
+    if (req.method === 'GET' && p === '/api/gameplay-context') {
+      const primaryMode = url.searchParams.get('primary_mode') || undefined;
+      const allowedParam = url.searchParams.get('allowed_modes');
+      const allowedModes = allowedParam ? allowedParam.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
+      const context = buildGameplayContext({ projectRoot: ROOT, allowedModes, primaryMode });
+      return json(res, 200, context);
+    }
+
+    // ---- the generation manifest for a level (the audit trail) ----
+    if (req.method === 'GET' && p === '/api/manifest') {
+      const levelId = url.searchParams.get('level_id');
+      if (!levelId) return json(res, 400, { error: 'level_id is required' });
+      // `path.basename` so a crafted id cannot walk out of editor/output/.
+      const manifestPath = path.join(OUTPUT_DIR, `${path.basename(levelId)}.generation.json`);
+      if (!existsSync(manifestPath)) return json(res, 404, { error: `no manifest for ${levelId}` });
+      return sendAnalysisFile(res, manifestPath, `${path.basename(levelId)}.generation.json`, url.searchParams.get('download') === '1');
+    }
+
+    // ---- run the V2 generation pipeline (streamed) ----
+    //
+    // This is the long one: it may call the model, compile, run the game's own
+    // level report, run both RUNNER courses, and repair. It streams
+    // newline-delimited JSON events so the UI can show where it is instead of
+    // staring at a spinner, and ends with one `result` event.
+    if (req.method === 'POST' && p === '/api/generate-level') {
+      const opts = await readJsonBody(req);
+      return streamGeneration(res, req, opts);
+    }
+
     // ---- existing levels (for reference) ----
     if (req.method === 'GET' && p === '/api/levels') {
       try {
@@ -546,6 +605,85 @@ async function readJsonBody(req) {
   const buf = await readBody(req, 10 * 1024 * 1024);
   if (buf.length === 0) return {};
   return JSON.parse(buf.toString('utf8'));
+}
+
+/**
+ * Run the generation pipeline and stream its events to the browser.
+ *
+ * Wire format is newline-delimited JSON rather than SSE: there is no reconnect
+ * story to support (a generation is one-shot and cannot be resumed), and NDJSON
+ * needs no event framing on either end. Each line is
+ * `{"type": "event"|"result"|"error", ...}`.
+ *
+ * The abort controller is wired to the response closing, so a browser that
+ * navigates away mid-generation stops the model call rather than leaving it to
+ * finish against a socket nobody is reading.
+ */
+async function streamGeneration(res, req, opts) {
+  res.writeHead(200, {
+    'Content-Type': 'application/x-ndjson; charset=utf-8',
+    'Cache-Control': 'no-cache',
+    // The pipeline writes to the library and the model call can be slow; a
+    // proxy that buffers would defeat the point of streaming at all.
+    'X-Accel-Buffering': 'no',
+  });
+
+  const controller = new AbortController();
+  res.on('close', () => controller.abort());
+
+  const send = (obj) => {
+    if (res.writableEnded) return;
+    res.write(`${JSON.stringify(obj)}\n`);
+  };
+
+  try {
+    const request = resolveGenerationRequest(opts);
+    send({ type: 'event', stage: 'request', message: describeRequest(request), request });
+
+    const result = await generateLevel({
+      projectRoot: ROOT,
+      outputDir: OUTPUT_DIR,
+      libraryDir: LIB_DIR,
+      request,
+      blueprint: opts.blueprint ?? undefined,
+      levelId: opts.level_id ?? undefined,
+      // No `model` here on purpose: the model is deployment configuration and
+      // comes from BEATBOUND_LLM_MODEL, not from a request body. The CLI's
+      // --model sets that same variable rather than threading a second path.
+      preset: opts.preset,
+      repair: opts.repair !== false,
+      courses: opts.courses !== false,
+      fairness: opts.fairness === true,
+      dryRun: opts.dry_run === true,
+      keepOnFailure: opts.keep_on_failure === true,
+      signal: controller.signal,
+      onEvent: (event) => send({ type: 'event', ...event }),
+    });
+
+    // Keep the session's notion of "the level" in step with what just landed,
+    // so /api/check and the playtest button point at the new file.
+    if (result.files?.level) {
+      state.levelFile = result.levelFile;
+      state.blueprint = result.blueprint;
+    }
+
+    send({
+      type: 'result',
+      ok: result.ok,
+      levelFile: result.levelFile,
+      files: result.files,
+      manifest: result.manifest,
+      manifestSchemaVersion: MANIFEST_SCHEMA_VERSION,
+      level: result.level,
+      validation: result.validation,
+      structural: result.structural,
+      runtimeRepair: result.runtimeRepair,
+    });
+  } catch (err) {
+    send({ type: 'error', error: String(err?.message ?? err) });
+  } finally {
+    if (!res.writableEnded) res.end();
+  }
 }
 
 server.listen(PORT, HOST, () => {

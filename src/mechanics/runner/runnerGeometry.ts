@@ -23,6 +23,17 @@ export const PLAYER_X = 0.22;
 export const UNITS_PER_BEAT = TUNING.runner.unitsPerBeat;
 /** One bar of run-up: obstacles enter just off the right edge. */
 export const SCROLL_LEAD_BEATS = 4;
+/**
+ * Beats an obstacle spends on screen between entering at the right edge and
+ * reaching the player.
+ *
+ * `SCROLL_LEAD_BEATS` is deliberately the larger of the two: a mechanic created
+ * exactly this far ahead would appear at the right edge on its first frame,
+ * which is fine for a mechanic already scrolling but not for one that has to be
+ * *introduced*. The extra beat is what makes the difference between "the
+ * obstacle was always there" and "the obstacle appeared".
+ */
+export const SCREEN_CROSSING_BEATS = (1 - PLAYER_X) / UNITS_PER_BEAT;
 /** Beats after passing the player before a mechanic is retired. */
 export const SCROLL_TAIL_BEATS = 1.5;
 

@@ -24,7 +24,7 @@ import { clamp } from '../../core/geometry';
 import type { Renderer } from '../../core/Renderer';
 import { ScrollingObstacle } from './ScrollingObstacle';
 import { CEILING_Y, GROUND_Y, UNITS_PER_BEAT } from './runnerGeometry';
-import { readSurface, type TrackSurface } from './surface';
+import { MASS_FILL, MASS_OUTLINE, SURFACE_COLOUR, readSurface, type TrackSurface } from './surface';
 
 /** A platform's base width: half a beat of track, scaled by `width`. */
 export const PLATFORM_BASE_WIDTH = 0.5 * UNITS_PER_BEAT;
@@ -38,9 +38,16 @@ export const MIN_HEIGHT = 0.02;
 export const MAX_HEIGHT = 0.24;
 /** How deep the damaging front face is, in field units. */
 export const FACE_DEPTH = 0.035;
-/** Hue of the block body; the standable edge is drawn brighter. */
-const BODY_COLOUR = '#2a3552';
-const EDGE_COLOUR = '#7dd0ff';
+/**
+ * The block body is the shared mass fill and its standable edge is the colour
+ * of its own surface, so a pattern platform and a course slab are the same
+ * object as far as the player is concerned. The old edge colour was a third
+ * blue that meant "platform" -- a distinction the player had no way to act on,
+ * and one that made the landing face disagree with every other landing face in
+ * the level about what "you can stand here" looks like.
+ */
+const BODY_COLOUR = MASS_FILL;
+const EDGE_COLOUR = SURFACE_COLOUR;
 
 export class PlatformMechanic extends ScrollingObstacle {
   override readonly damageSource = 'OBSTACLE' as const;
@@ -105,15 +112,15 @@ export class PlatformMechanic extends ScrollingObstacle {
 
     // Body + standable edge. The bright line on the edge is the "you can land
     // here" signal; the front face is marked as the part that hurts.
-    r.fillRect(body, BODY_COLOUR, 0.9);
-    r.line(x0, stand, x1, stand, EDGE_COLOUR, 2.5, 0.9);
+    r.fillRect(body, BODY_COLOUR, 0.95);
+    r.line(x0, stand, x1, stand, EDGE_COLOUR[this.surface], 3, 0.95);
     const face = this.face();
     r.fillRect(face, '#ff5c5c', 0.35);
     // Vertical stripes inside the block give it a solid, fixed look against
     // the scrolling track.
     for (let u = 0.25; u < 1; u += 0.25) {
       const x = x0 + w * u;
-      r.line(x, body.y + 0.006, x, body.y + body.h - 0.006, '#3d4c75', 1, 0.5);
+      r.line(x, body.y + 0.006, x, body.y + body.h - 0.006, MASS_OUTLINE, 1, 0.5);
     }
   }
 }

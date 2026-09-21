@@ -13,14 +13,14 @@
  * sequences from a music analysis. Four things are guaranteed by construction,
  * at every tempo:
  *
- *   1. The seal spawns outside the field, so nobody is ever caught *outside* it.
- *      Radii are *inradii* -- the distance to the nearest wall -- so a
- *      hexagonal seal guarantees the same clearance a circular one does, and
- *      a skin stays a cosmetic choice rather than a difficulty one.
- *   2. The prep window is long enough for a player standing in the far corner
- *      to walk to the middle, with reaction time on top. Prep is stretched
- *      when it is not -- and only prep, because it is the one quantity that can
- *      move without shifting the musical anchors the encounter resolves on.
+ *   1. The seal forms *around the player*, wherever the player is. Radii are
+ *      *inradii* -- the distance to the nearest wall -- so a hexagonal seal
+ *      guarantees the same clearance a circular one does, and a skin stays a
+ *      cosmetic choice rather than a difficulty one.
+ *   2. The prep window is long enough for the seal to be read as a seal before
+ *      it starts closing. It is *not* a travel budget: the player is already
+ *      inside the cage, so there is no walk to pay for. That is why prep can be
+ *      authored as short as two beats without becoming unfair.
  *   3. Steps are never closer together than a person can articulate, and the
  *      judging windows can never overlap two adjacent steps.
  *   4. The barrier reaches its critical radius *at* the final beat and not
@@ -34,7 +34,7 @@
 
 import { clamp } from '../../core/geometry';
 import { parseDirection } from '../../core/direction8';
-import { COMFORT_REACTION_SECONDS, REACTION_FLOOR_SECONDS } from '../../core/fairness';
+import { COMFORT_REACTION_SECONDS } from '../../core/fairness';
 import type { ParamBag } from '../../core/types';
 import { TUNING } from '../../tuning';
 import { ARENA_OUTER_RADIUS } from './polar';
@@ -144,8 +144,10 @@ export function planEncounter(params: ParamBag, ctx: PlanContext): BreakoutPlan 
   const goodBeats = clamp(authoredGood * ctx.gapScale, Math.min(0.08, cap), cap);
   const perfectBeats = clamp(authoredPerfect * ctx.gapScale, 0.03, goodBeats);
 
-  // Geometry. The seal always spawns past the corner of the field; the critical
-  // radius always leaves a body room to stand.
+  // Geometry. Both radii are measured from the *player*, so the start radius no
+  // longer has to reach past the far corner to be safe -- it starts wide because
+  // a distant ring reads as distant, which is the whole point of the approach.
+  // The critical radius still has to leave a body room to stand.
   const criticalRadius = clamp(
     numberOr(params.criticalRadius, 0.13),
     TUNING.arena.playerRadius * 2 + 0.08,
@@ -163,10 +165,12 @@ export function planEncounter(params: ParamBag, ctx: PlanContext): BreakoutPlan 
     finalGoodBeats + collapseBeats + 0.5,
   );
 
-  // Movement is damped while the encounter owns the controls, so the walk the
-  // prep window has to cover is the *damped* one, not the full-speed one.
+  // Movement is damped while the encounter owns the controls. The default is a
+  // damp rather than a lock so a player can still shuffle; a level that wants a
+  // hard lock authors 0, which is a legitimate choice now that the seal travels
+  // with the player and there is nowhere to walk to anyway.
   const movementScale = clamp(numberOr(params.movementScale, 0.6), 0, 1);
-  const prepBeats = planPrep(params, ctx, finalBeatOffset, startRadius, movementScale, spb, notes);
+  const prepBeats = planPrep(params, ctx, spb, notes);
 
   return {
     prepBeats,
@@ -194,19 +198,19 @@ export function planEncounter(params: ParamBag, ctx: PlanContext): BreakoutPlan 
  * The seal is inert during prep, so lengthening it is always safe: it shifts
  * when the barrier *appears*, never when the player has to play. That makes it
  * the right place to absorb a tempo the encounter was not authored for -- at
- * 180 BPM four beats of closing is 1.3 seconds, which is not enough for someone
- * standing in a corner to reach the middle, and the answer is to show them the
- * seal earlier rather than to rewrite their rhythm.
+ * 180 BPM two beats of closing is 0.67 seconds, which is not enough to read a
+ * ring, and the answer is to show the player the seal earlier rather than to
+ * rewrite their rhythm.
  *
- * The requirement is the walk plus reaction time; the closing window counts
- * toward it because the player is free to move during it.
+ * What prep is *not* is a travel budget. The seal closes around the player, so
+ * the player is inside it from the first frame and there is no walk to pay for;
+ * the only requirement is that the seal reads as a seal before it starts to
+ * move. That is what makes a two-beat prep defensible, and it is why this clamp
+ * no longer consults `startRadius` or the movement scale.
  */
 function planPrep(
   params: ParamBag,
   ctx: PlanContext,
-  finalBeatOffset: number,
-  startRadius: number,
-  movementScale: number,
   spb: number,
   notes: string[],
 ): number {
@@ -216,20 +220,13 @@ function planPrep(
     // by MechanicRegistry, is the build-up -- exactly as for every other mechanic.
     : Math.max(ctx.telegraphBeats, MIN_PREP_BEATS);
 
-  // The damped speed, floored: a movementScale of 0 would otherwise demand an
-  // infinite walk, and an encounter that freezes the player is still expected
-  // to be escapable -- it simply has to spawn far enough out to already be safe.
-  const speed = TUNING.arena.playerSpeed * Math.max(0.25, movementScale);
-  const walkSeconds = FIELD_REACH / speed;
-  const requiredSeconds = walkSeconds + REACTION_FLOOR_SECONDS;
-  const needed = requiredSeconds / spb - finalBeatOffset;
-  // A second, softer floor: the seal must be readable as a seal before it moves.
+  // The floor: the seal must be readable as a seal before it starts closing.
   const comfort = COMFORT_REACTION_SECONDS / spb;
 
-  const prep = clamp(Math.max(authored, needed, comfort, MIN_PREP_BEATS), MIN_PREP_BEATS, MAX_PREP_BEATS);
+  const prep = clamp(Math.max(authored, comfort, MIN_PREP_BEATS), MIN_PREP_BEATS, MAX_PREP_BEATS);
   if (prep > authored + 1e-6) {
     notes.push(
-      `prepBeats stretched ${authored.toFixed(2)} -> ${prep.toFixed(2)} so the seal at r=${startRadius.toFixed(2)} stays escapable at this tempo`,
+      `prepBeats stretched ${authored.toFixed(2)} -> ${prep.toFixed(2)} so the seal is readable at this tempo`,
     );
   }
   return prep;

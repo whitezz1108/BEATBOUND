@@ -26,4 +26,10 @@ MELODY_MODEL_VERSION = "basic-pitch-0.4.0"
 
 #: Analysis settings that participate in the cache key. Bump the signature when
 #: a default in this module changes in a way that alters numeric output.
-SETTINGS_SIGNATURE = "v2-sr22050-hop512-win500hop250"
+#:
+#: 2.1.0 -> 2.1.1: the demucs python-API path wrote 44.1 kHz samples under a
+#: 22.05 kHz header (no resample), so every cached stem ran at half speed and
+#: the stem/melody/structure/phrasing/repetition layers built on them were
+#: time-compressed by 2. The signature bump retires those cached stems instead
+#: of silently reusing them.
+SETTINGS_SIGNATURE = "v2.1.1-sr22050-hop512-win500hop250"
