@@ -7,3 +7,4 @@ editor/output/
 
 # editor checkpoint backups
 .editor-checkpoint-*/
+backup-geometry-dash-style-game/.env
