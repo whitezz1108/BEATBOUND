@@ -16,6 +16,9 @@ import { LevelLoader, type CompiledLevel } from '../src/core/LevelLoader';
 import { MechanicRegistry } from '../src/core/MechanicRegistry';
 import type { MechanicDefinition } from '../src/core/types';
 import { registerArenaMechanics } from '../src/mechanics/arena';
+import { registerRunnerMechanics } from '../src/mechanics/runner';
+import { registerVerticalMechanics } from '../src/mechanics/vertical';
+import { registerRadialMechanics } from '../src/mechanics/radial';
 import { specToRelativeBeats, absoluteToPosition } from '../src/core/TempoMap';
 import { scaleTelegraphBeats } from '../src/core/Intensity';
 import { DATA } from '../src/config';
@@ -60,7 +63,12 @@ async function main(): Promise<void> {
 
   const registry = new MechanicRegistry();
   registry.loadLibrary(loader.mechanics);
+  // Every mode, not just ARENA: the report claims which events the runtime will
+  // actually spawn, so a mode left unregistered here reads as dead air.
   registerArenaMechanics(registry);
+  registerRunnerMechanics(registry);
+  registerVerticalMechanics(registry);
+  registerRadialMechanics(registry);
 
   printHeader(level, levelUrl);
 

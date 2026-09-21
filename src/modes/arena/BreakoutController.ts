@@ -14,11 +14,13 @@
  *     death or a mode change -- cannot leave a key captured, a speed modifier
  *     applied, or an axis disabled. There is no restore step because there is
  *     no stored state to restore.
- *   - *Arrows and WASD never mean the same thing at once.* While an encounter
- *     is capturing, the arrows are the phrase and WASD is movement. Outside
- *     one, both steer, exactly as before.
+ *   - *While an encounter is capturing, every directional key is the phrase.*
+ *     Arrows and WASD alike press their cardinal into the sequence, dance-pad
+ *     style, and movement is suspended: the seal has no gap, so there is
+ *     nowhere to walk to anyway. The moment it ends, both families steer
+ *     again, exactly as before.
  *   - *Edges only.* Presses are read with `wasPressed`, which is true on the
- *     frame a key goes down and never again while it is held, so a held arrow
+ *     frame a key goes down and never again while it is held, so a held key
  *     cannot machine-gun a sequence.
  *
  * It also carries the encounter's verdicts into the run's note tally, so a
@@ -27,7 +29,9 @@
  */
 
 import { isSequenceEncounter, type SequenceEncounter } from '../../core/capabilities';
-import { ARENA_CONFIRM_KEYS, ARENA_MOVE_KEYS, ARENA_MOVE_KEYS_WASD, ARENA_SEQUENCE_KEYS } from '../../core/controls';
+import {
+  ARENA_CONFIRM_KEYS, ARENA_MOVE_KEYS, ARENA_MOVE_KEYS_CAPTURED, ARENA_SEQUENCE_KEYS,
+} from '../../core/controls';
 import type { Input } from '../../core/Input';
 import type { RunStatus } from '../../core/RunStatus';
 import type { RuntimeMechanic } from '../../core/Mechanic';
@@ -57,14 +61,14 @@ export class BreakoutController {
     this.capturing = [];
   }
 
-  /** True while the arrow keys are a rhythm phrase rather than movement. */
+  /** True while the directional keys are a rhythm phrase rather than movement. */
   get isCapturing(): boolean {
     return this.capturing.length > 0;
   }
 
   /** The movement binding for this frame. */
   get moveKeys(): typeof ARENA_MOVE_KEYS {
-    return this.isCapturing ? ARENA_MOVE_KEYS_WASD : ARENA_MOVE_KEYS;
+    return this.isCapturing ? ARENA_MOVE_KEYS_CAPTURED : ARENA_MOVE_KEYS;
   }
 
   /** How much of the walking speed the player keeps. 1 when nothing is live. */

@@ -1,0 +1,416 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BeatBound Gameplay Capability Catalog (Consolidated)",
+  "description": "Normalized consolidation of the five BeatBound read-only runtime capability audits (ARENA, RUNNER, VERTICAL, RADIAL + mode transitions) for use by a Gameplay Director LLM. The consolidated envelope is strictly typed; embedded source catalogs (`modes.*.catalog`, `transitions.catalog`) are verbatim copies of the original audit artifacts and are intentionally permissive here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "meta", "modes", "transitions", "global_contract", "director_view", "integration_warnings"],
+  "properties": {
+    "schema_version": { "const": "beatbound_gameplay_capabilities_v1" },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "generated_date", "purpose", "source_catalogs", "consolidation_constraints", "counts"],
+      "properties": {
+        "name": { "type": "string" },
+        "generated_date": { "type": "string", "format": "date" },
+        "purpose": { "type": "string" },
+        "source_catalogs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL", "TRANSITION"],
+          "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL", "TRANSITION"] },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["file", "sha256_16", "companion_audit", "audit_date"],
+            "properties": {
+              "file": { "type": "string" },
+              "sha256_16": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+              "companion_audit": { "type": "string" },
+              "audit_date": { "type": "string" }
+            }
+          }
+        },
+        "consolidation_constraints": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["modes_covered", "runtime_primitives_total", "pattern_library_total", "per_mode", "integration_warnings"],
+          "properties": {
+            "modes_covered": { "type": "integer", "minimum": 1 },
+            "runtime_primitives_total": { "type": "integer", "minimum": 0 },
+            "pattern_library_total": { "type": "integer", "minimum": 0 },
+            "per_mode": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+              "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+              "additionalItems": false,
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["primitives", "library_patterns"],
+                "properties": {
+                  "primitives": { "type": "integer", "minimum": 0 },
+                  "library_patterns": { "type": "integer", "minimum": 0 }
+                }
+              }
+            },
+            "integration_warnings": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "modes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+      "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["provenance", "normalized", "catalog"],
+        "properties": {
+          "provenance": {
+            "type": "object",
+            "required": ["source_catalog", "companion_audit", "audit_type", "audit_date"],
+            "properties": {
+              "source_catalog": { "type": "string" },
+              "companion_audit": { "type": "string" },
+              "audit_type": { "type": "string" },
+              "audit_date": { "type": "string" }
+            },
+            "additionalProperties": true
+          },
+          "normalized": { "$ref": "#/definitions/normalizedMode" },
+          "catalog": {
+            "description": "Verbatim embedded source catalog. Deliberately permissive: its contract is owned by the original audit artifact, not by this consolidation schema.",
+            "type": "object",
+            "minProperties": 1
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provenance", "normalized", "catalog"],
+      "properties": {
+        "provenance": {
+          "type": "object",
+          "required": ["source_catalog", "companion_audit", "audit_type", "audit_date"],
+          "properties": {
+            "source_catalog": { "type": "string" },
+            "companion_audit": { "type": "string" },
+            "audit_type": { "type": "string" },
+            "audit_date": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "normalized": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported_modes", "placeholder_modes", "mode_pair_matrix_verdict", "pipeline", "breather", "state_handoff", "input_handoff", "cleanup", "beat_clock_continuity", "camera_handoff", "safe_transition_bounds", "known_risks"],
+          "properties": {
+            "supported_modes": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "placeholder_modes": { "type": "array" },
+            "mode_pair_matrix_verdict": { "type": "string" },
+            "pipeline": { "type": "object", "minProperties": 1 },
+            "breather": { "type": "object", "minProperties": 1 },
+            "state_handoff": { "type": "object", "minProperties": 1 },
+            "input_handoff": { "type": "object", "minProperties": 1 },
+            "cleanup": { "type": "object", "minProperties": 1 },
+            "beat_clock_continuity": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["music_continuity", "beat_reset_on_switch", "absolute_beat"],
+              "properties": {
+                "music_continuity": {},
+                "beat_reset_on_switch": {},
+                "absolute_beat": {}
+              }
+            },
+            "camera_handoff": { "type": "object", "minProperties": 1 },
+            "safe_transition_bounds": { "type": "object", "minProperties": 1 },
+            "known_risks": { "$ref": "#/definitions/riskList" }
+          }
+        },
+        "catalog": {
+          "description": "Verbatim embedded TRANSITION source catalog.",
+          "type": "object",
+          "minProperties": 1
+        }
+      }
+    },
+    "global_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timing_coordinate_system", "difficulty_model", "intensity_model", "health_score_combo", "mode_switching"],
+      "properties": {
+        "timing_coordinate_system": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["shared", "per_mode", "refs"],
+          "properties": {
+            "shared": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["tempo", "event_position", "activation_beat_formula", "telegraph_or_approach_domain", "transitions"],
+              "properties": {
+                "tempo": { "type": "string" },
+                "event_position": { "type": "string" },
+                "activation_beat_formula": { "type": "string" },
+                "telegraph_or_approach_domain": { "type": "string" },
+                "transitions": { "type": "string" }
+              }
+            },
+            "per_mode": { "$ref": "#/definitions/perModeStrings2" },
+            "refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          }
+        },
+        "difficulty_model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["shared_input", "per_mode_runtime_effect", "warning"],
+          "properties": {
+            "shared_input": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["field", "tier_mapping", "implemented_in"],
+              "properties": {
+                "field": { "type": "string" },
+                "tier_mapping": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "additionalProperties": { "type": "string" }
+                },
+                "implemented_in": { "type": "string" }
+              }
+            },
+            "per_mode_runtime_effect": { "$ref": "#/definitions/perModeStrings" },
+            "warning": { "type": "string" }
+          }
+        },
+        "intensity_model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["per_mode", "warning"],
+          "properties": {
+            "per_mode": { "$ref": "#/definitions/perModeStrings" },
+            "warning": { "type": "string" }
+          }
+        },
+        "health_score_combo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["health", "score", "combo", "refs"],
+          "properties": {
+            "health": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["pool", "continuity", "per_mode_damage", "warning"],
+              "properties": {
+                "pool": { "type": "string" },
+                "continuity": { "type": "string" },
+                "per_mode_damage": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+                  "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+                  "additionalProperties": true
+                },
+                "warning": { "type": "string" }
+              }
+            },
+            "score": { "type": "string" },
+            "combo": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["hit", "miss", "milestone_every", "across_mode_switch"],
+              "properties": {
+                "hit": { "type": "string" },
+                "miss": { "type": "string" },
+                "milestone_every": { "type": "integer" },
+                "across_mode_switch": { "type": "string" }
+              }
+            },
+            "refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          }
+        },
+        "mode_switching": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pipeline", "breather_formula", "what_resets", "what_persists", "beat_clock", "bounds_ref"],
+          "properties": {
+            "pipeline": { "type": "string" },
+            "breather_formula": { "type": "string" },
+            "what_resets": { "type": "string" },
+            "what_persists": { "type": "string" },
+            "beat_clock": { "type": "string" },
+            "bounds_ref": { "type": "string" }
+          }
+        }
+      }
+    },
+    "director_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode_selection_affinity", "primary_gameplay_vocabulary", "safe_generation_summary"],
+      "properties": {
+        "mode_selection_affinity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+          "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["best_for", "avoid_when", "timing_resolution", "safety_summary"],
+            "properties": {
+              "best_for": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "avoid_when": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "timing_resolution": { "type": "string" },
+              "safety_summary": { "type": "string" }
+            }
+          }
+        },
+        "primary_gameplay_vocabulary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+          "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["primitives", "library"],
+            "properties": {
+              "primitives": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "library": { "type": "string" },
+              "verbs": { "type": "array", "items": {} },
+              "judgement_verdicts": { "type": "array", "items": { "type": "string" } },
+              "phrase_archetypes": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "safe_generation_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL", "TRANSITIONS"],
+          "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL", "TRANSITIONS"] },
+          "additionalProperties": { "type": "object", "minProperties": 1 }
+        }
+      }
+    },
+    "integration_warnings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "modes", "summary", "resolution", "evidence"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^W[0-9]+$" },
+          "type": {
+            "type": "string",
+            "enum": ["unit_conflict", "semantic_conflict", "parameter_conflict", "dead_or_alias", "dead_code", "metadata_only", "safety_overshoot", "transition_edge", "placeholder_mode", "no_global_guarantee", "score_absence"]
+          },
+          "modes": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "summary": { "type": "string" },
+          "resolution": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "normalizedMode": {
+      "type": "object",
+      "required": ["movement_model", "input_model", "runtime_primitive_ids", "primitive_count", "pattern_library_ids", "pattern_library_count", "judgement_model", "health", "safe_generation_bounds"],
+      "properties": {
+        "movement_model": { "type": "string" },
+        "input_model": {
+          "type": "object",
+          "required": ["type"],
+          "properties": { "type": { "type": "string" } },
+          "additionalProperties": true
+        },
+        "runtime_primitive_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "primitive_count": { "type": "integer", "minimum": 1 },
+        "all_primitives_available": { "type": "boolean" },
+        "primitive_availability_note": { "type": "string" },
+        "not_supported_ids": { "type": "array", "items": { "type": "string" } },
+        "not_supported": { "type": "object", "minProperties": 1 },
+        "pattern_library_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "pattern_library_count": { "type": "integer", "minimum": 1 },
+        "motion_verb_count": { "type": "integer", "minimum": 0 },
+        "phrase_archetype_count": { "type": "integer", "minimum": 0 },
+        "judgement_model": {
+          "type": "object",
+          "required": ["type"],
+          "properties": { "type": { "type": "string" } },
+          "additionalProperties": true
+        },
+        "health": { "type": "object", "minProperties": 1 },
+        "combo": { "type": "object", "minProperties": 1 },
+        "score_system": { "type": "string" },
+        "player_physics": { "type": "object", "minProperties": 1 },
+        "jump_envelope": { "type": "object", "minProperties": 1 },
+        "reaction_window": { "type": "object", "minProperties": 1 },
+        "safe_generation_bounds": { "type": "object", "minProperties": 1 },
+        "safety_enforcement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enforced_in_mechanics", "not_enforced", "offruntime_tools"],
+          "properties": {
+            "enforced_in_mechanics": { "type": "array", "items": { "type": "string" } },
+            "not_enforced": { "type": "array", "items": { "type": "string" } },
+            "offruntime_tools": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "music_affinity": { "type": "object", "minProperties": 1 },
+        "music_affinity_note": { "type": "string" },
+        "known_risks": { "$ref": "#/definitions/riskList" },
+        "known_risks_note": { "type": "string" },
+        "dead_or_unreachable": {
+          "oneOf": [
+            { "type": "object", "minProperties": 1 },
+            { "type": "array", "minItems": 1 }
+          ]
+        },
+        "metadata_only": { "type": "array", "items": {} }
+      }
+    },
+    "riskList": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "minProperties": 1 }
+        ]
+      }
+    },
+    "perModeStrings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+      "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+      "additionalProperties": { "type": "string" }
+    },
+    "perModeStrings2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"],
+      "propertyNames": { "enum": ["ARENA", "RUNNER", "VERTICAL", "RADIAL"] },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["space", "motion_time"],
+        "properties": {
+          "space": { "type": "string" },
+          "motion_time": { "type": "string" }
+        }
+      }
+    }
+  }
+}

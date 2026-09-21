@@ -21,7 +21,7 @@ export const DATA = {
   mechanics: dataUrl('/mechanics.mvp.json'),
   patterns: dataUrl('/patterns.mvp.json'),
   levels: dataUrl('/levels.index.json'),
-  defaultLevel: dataUrl('/arena_test.level.json'),
+  defaultLevel: dataUrl('/toosie_slide_arena_primary.level.json'),
 } as const;
 
 /** One entry of levels.index.json -- what the level picker lists. */
