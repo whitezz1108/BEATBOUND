@@ -1,0 +1,104 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "toosie_slide_dance_golden",
+    "title": "Dance Fruits Music, Steve Void - Toosie Slide (Sped Up) [Dance Golden]",
+    "audio": "audio/editor/dance_fruits_musicsteve_void_-_toosie_slide_sped_up.mp3",
+    "bpm": 125.6,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "DANCE_01_TEACH",
+      "startBar": 1,
+      "lengthBars": 16,
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        { "patternId": "AP30", "repeat": 1, "intensity": 0.18 },
+        { "patternId": "AP31", "repeat": 1, "intensity": 0.22 },
+        { "patternId": "AP32", "repeat": 1, "intensity": 0.30 },
+        { "patternId": "AP33", "repeat": 1, "intensity": 0.32 },
+        { "patternId": "AP34", "repeat": 1, "intensity": 0.45 }
+      ]
+    },
+    {
+      "id": "DANCE_02_DROP1",
+      "startBar": 17,
+      "lengthBars": 10,
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [
+        { "patternId": "AP35", "repeat": 1, "intensity": 0.68 },
+        { "patternId": "AP36", "repeat": 1, "intensity": 0.60 },
+        { "patternId": "AP37", "repeat": 1, "intensity": 0.72 }
+      ]
+    },
+    {
+      "id": "DANCE_03_RELIEF",
+      "startBar": 27,
+      "lengthBars": 14,
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "AP38", "repeat": 1, "intensity": 0.24 },
+        { "patternId": "AP39", "repeat": 1, "intensity": 0.26 },
+        { "patternId": "AP40", "repeat": 1, "intensity": 0.22 },
+        { "patternId": "AP41", "repeat": 1, "intensity": 0.50 }
+      ]
+    },
+    {
+      "id": "DANCE_04_DROP2",
+      "startBar": 41,
+      "lengthBars": 11,
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": 4,
+      "patterns": [
+        { "patternId": "AP42", "repeat": 1, "intensity": 0.78 },
+        { "patternId": "AP43", "repeat": 1, "intensity": 0.84 },
+        { "patternId": "AP44", "repeat": 1, "intensity": 0.90 }
+      ]
+    },
+    {
+      "id": "DANCE_05_RELIEF2",
+      "startBar": 52,
+      "lengthBars": 9,
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "AP45", "repeat": 1, "intensity": 0.22 },
+        { "patternId": "AP46", "repeat": 1, "intensity": 0.24 },
+        { "patternId": "AP47", "repeat": 1, "intensity": 0.42 }
+      ]
+    },
+    {
+      "id": "DANCE_06_REBUILD",
+      "startBar": 61,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": 4,
+      "patterns": [
+        { "patternId": "AP48", "repeat": 1, "intensity": 0.88 }
+      ]
+    },
+    {
+      "id": "DANCE_07_CLIMAX",
+      "startBar": 65,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": 5,
+      "patterns": [
+        { "patternId": "AP49", "repeat": 1, "intensity": 0.90 },
+        { "patternId": "AP50", "repeat": 1, "intensity": 0.96 },
+        { "patternId": "AP51", "repeat": 1, "intensity": 1.00 }
+      ]
+    }
+  ]
+}

@@ -72,6 +72,10 @@
                 "type": "number",
                 "minimum": 0
               },
+              "spawnLeadBeats": {
+                "type": "number",
+                "minimum": 0
+              },
               "cooldownBeats": {
                 "type": "number",
                 "minimum": 0

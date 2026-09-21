@@ -1,1097 +1,1187 @@
 {
-  "version": "1.0.0",
-  "mechanics": [
-    {
-      "id": "A01",
-      "name": "Floor Warning",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 1,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "HIHAT",
-          "SNARE"
-        ],
-        "sections": [
-          "INTRO",
-          "VERSE"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "timing",
-        "spatial_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "A02",
-          "A05",
-          "A03"
-        ],
-        "avoidWith": [
-          "A15"
-        ]
-      },
-      "defaults": {
-        "shape": "tile",
-        "damageActiveBeats": 1,
-        "warningStyle": "red_flash"
-      }
-    },
-    {
-      "id": "A02",
-      "name": "Safe Tile",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 2,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "STRONG_BEAT"
-        ],
-        "instruments": [
-          "KICK"
-        ],
-        "sections": [
-          "VERSE",
-          "BREAKDOWN"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "positioning"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "A01",
-          "A03"
-        ],
-        "avoidWith": [
-          "A14"
-        ]
-      },
-      "defaults": {
-        "safeAreaCount": 1,
-        "safeAreaSize": 0.25,
-        "safeZone": "STATIC"
-      },
-      "notes": "The floor turns hostile except for a refuge. STATIC places the patch once and asks whether the player can reach it; MOVING walks the patch along a closed path and asks whether they can keep up; QUADRANT halves or quarters the arena and rotates which part is safe, so the crossing is made on the pulse. A moving patch may never outrun the player and a rotating one owes a full walk to the next part, both floored by fairness."
-    },
-    {
-      "id": "A03",
-      "name": "Projectile",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 2,
-        "telegraphBeats": 0.5,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT",
-          "SUBDIVISION"
-        ],
-        "instruments": [
-          "MELODY",
-          "HIHAT"
-        ],
-        "sections": [
-          "VERSE",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "trajectory_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "A01",
-          "A05"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "speed": 1.0,
-        "count": 1,
-        "spawnSide": "random"
-      }
-    },
-    {
-      "id": "A04",
-      "name": "Radial Burst",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 3,
-      "timing": {
-        "durationBeats": 3,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "DOWNBEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "SYNTH"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "spatial_reading",
-        "timing"
-      ],
-      "defaults": {
-        "arms": 1,
-        "bulletsPerBurst": 3,
-        "burstArcDeg": 40,
-        "stepDeg": 45,
-        "subdivision": 1,
-        "direction": "CW",
-        "startAngleDeg": -90,
-        "origin": "CENTER",
-        "speed": 1.0
-      },
-      "notes": "A rotating spray: bursts of projectiles fire from the centre (or inward from the rim), each emission rotated by stepDeg from the last. The rotation trend is visible from the first two emissions, so the player predicts the next burst instead of reacting to it. Legacy aliases: gapCount->arms, gapAngleDeg->startAngleDeg, gapArcDeg->burstArcDeg, rotationDeg added to start."
-    },
-    {
-      "id": "A05",
-      "name": "Chain",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 1,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "STRONG_BEAT"
-        ],
-        "instruments": [
-          "SNARE",
-          "KICK"
-        ],
-        "sections": [
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "direction_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "A01",
-          "A03"
-        ],
-        "avoidWith": [
-          "A14"
-        ]
-      },
-      "defaults": {
-        "layout": "LANE",
-        "direction": "LEFT_TO_RIGHT",
-        "width": 1.0,
-        "thickness": 0.016,
-        "corridorWidth": 0.16,
-        "gap": 0.5,
-        "axis": "VERTICAL",
-        "segments": 3,
-        "amplitude": 0.28,
-        "travel": "FORWARD"
-      },
-      "notes": "A thin chain whip. Line layouts (SLASH, BACKSLASH, CROSS, ZIGZAG, SNAKE, CORRIDOR, POLYLINE) make the chain itself the danger -- dodging is precise positioning off the line. CORRIDOR draws parallel chains around a safe channel floored by the fairness system. LANE is the legacy direction whip: the chain claims one lane of a tiling that covers the arena."
-    },
-    {
-      "id": "A06",
-      "name": "Laser",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 1,
-        "telegraphBeats": 1,
-        "cooldownBeats": 1
-      },
-      "musicTags": {
-        "rhythm": [
-          "DOWNBEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "BASS"
-        ],
-        "sections": [
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "HIGH",
-          "PEAK"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "timing",
-        "lane_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "A01",
-          "A02"
-        ],
-        "avoidWith": [
-          "A06"
-        ]
-      },
-      "defaults": {
-        "orientation": "HORIZONTAL",
-        "position": 0.5,
-        "thickness": 0.15
-      }
-    },
-    {
-      "id": "A07",
-      "name": "Rotating Fan",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 3,
-      "timing": {
-        "durationBeats": 4,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "SYNTH"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "spatial_reading",
-        "anticipation"
-      ],
-      "defaults": {
-        "arms": 2,
-        "armArcDeg": 55,
-        "startAngleDeg": -90,
-        "rotationPerBeatDeg": 45,
-        "direction": "CW",
-        "radius": 0.72,
-        "innerRadius": 0,
-        "reversalBeats": 0
-      },
-      "notes": "Arms reach the centre -- no dead hub -- so the safe zone is the moving wedge between arms and the play is orbiting it on the beat. reversalBeats > 0 turns the fan into a pendulum that sweeps an arc back and forth. Rotation is per beat, never per frame, so the sweep stays musical."
-    },
-    {
-      "id": "A08",
-      "name": "Spiral",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 4,
-      "timing": {
-        "durationBeats": 4,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "SUBDIVISION"
-        ],
-        "instruments": [
-          "HIHAT",
-          "SYNTH"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "spatial_reading",
-        "timing"
-      ],
-      "defaults": {
-        "arms": 2,
-        "stepDeg": 26,
-        "subdivision": 0.25,
-        "direction": "CW",
-        "speed": 0.9,
-        "startAngleDeg": -90,
-        "expand": true
-      },
-      "notes": "Emitter angle advances by stepDeg every subdivision, drawing a spiral of projectiles. direction CW/CCW/ALTERNATE; expand false fires inward from the rim."
-    },
-    {
-      "id": "A09",
-      "name": "Wave Sweep",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 2,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "SNARE"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "spatial_reading"
-      ],
-      "defaults": {
-        "mode": "STATIC",
-        "axis": "HORIZONTAL",
-        "direction": "FORWARD",
-        "gapCount": 1,
-        "gapWidth": 0.2,
-        "gapPath": [
-          0.5
-        ],
-        "thickness": 0.09,
-        "amplitude": 0.0,
-        "shrinkTo": 0.65
-      },
-      "notes": "A wall crossing the arena whose window moves with the music. RHYTHM follows gapPath (one centre per beat) so the window steps on the pulse; SHRINK tightens the window as the wall travels; DOUBLE mirrors a second window. Window width and step speed are floored by fairness."
-    },
-    {
-      "id": "A10",
-      "name": "Ring",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 3,
-      "timing": {
-        "durationBeats": 3,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "DOWNBEAT"
-        ],
-        "instruments": [
-          "KICK"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "spatial_reading",
-        "positioning"
-      ],
-      "defaults": {
-        "mode": "COLLAPSE",
-        "gapCount": 1,
-        "gapArcDeg": 54,
-        "gapAngleDeg": -90,
-        "thickness": 0.07,
-        "rotationDeg": 0
-      },
-      "notes": "A ring closing in on the centre (COLLAPSE) or pushing out from it (EXPAND), with a safe arc. Pairs well with A04 as a call and response. `variant` picks how the gap behaves across a `ringCount` sequence: BASIC_GAP holds it still, ROTATING_GAP walks it round, NARROWING_GAP shrinks it each ring, ADVANCED_ALTERNATING steps out and back. Gap width and gap-edge travel are both floored by fairness, so no variant can close the circle on the player."
-    },
-    {
-      "id": "A11",
-      "name": "Sector Sweep",
-      "mode": "ARENA",
-      "status": "MVP",
-      "difficulty": 3,
-      "timing": {
-        "durationBeats": 6,
-        "telegraphBeats": 1.5,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "EIGHTH",
-          "BEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "SNARE"
-        ],
-        "sections": [
-          "CHORUS",
-          "BUILD"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "movement",
-        "spatial_reading",
-        "positioning"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "A03",
-          "A04"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "sectorCount": 6,
-        "sweepDirection": "CW",
-        "skipStep": 0,
-        "firstAngleDeg": -90,
-        "startSector": 0,
-        "innerRadius": 0
-      },
-      "notes": "The arena cut into wedges that go off in turn. There is always a safe majority, so the ask is pacing rather than precision: keep circling at the sweep's speed. `sweepDirection` sets CW/CCW, `skipStep` leaves safe wedges between activations, and the sweep may never advance faster than the player can walk the rim -- the step is floored by both reachability and warning, so a fast tempo lengthens the sequence instead of tightening it."
-    },
-    {
-      "id": "D01",
-      "name": "Single",
-      "mode": "RADIAL",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "MELODY",
-          "SNARE"
-        ],
-        "sections": [
-          "INTRO",
-          "VERSE"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "direction_reading",
-        "rhythm_accuracy"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "D02",
-          "D06"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "direction": "UP"
-      }
-    },
-    {
-      "id": "D02",
-      "name": "Opposite Double",
-      "mode": "RADIAL",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "STRONG_BEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "BASS"
-        ],
-        "sections": [
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "simultaneous_input",
-        "direction_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "D01"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "directions": [
-          "UP",
-          "DOWN"
-        ]
-      }
-    },
-    {
-      "id": "D06",
-      "name": "Clockwise",
-      "mode": "RADIAL",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 4,
-        "telegraphBeats": 1,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "MELODY"
-        ],
-        "sections": [
-          "VERSE",
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "pattern_memory",
-        "direction_reading",
-        "rhythm_accuracy"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "D01",
-          "D02"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "sequence": [
-          "UP",
-          "RIGHT",
-          "DOWN",
-          "LEFT"
-        ],
-        "stepBeats": 1
-      }
-    },
-    {
-      "id": "R01",
-      "name": "Spike",
-      "mode": "RUNNER",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 0,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "KICK"
-        ],
-        "sections": [
-          "INTRO",
-          "VERSE"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "jump_timing"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "R02",
-          "R08"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "height": 1.0
-      }
-    },
-    {
-      "id": "R02",
-      "name": "Gap",
-      "mode": "RUNNER",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 0,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "KICK"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "jump_timing",
-        "distance_judgement"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "R01",
-          "R08"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "width": 1.0
-      }
-    },
-    {
-      "id": "R03",
-      "name": "Low Wall",
-      "mode": "RUNNER",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 0,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "SNARE"
-        ],
-        "sections": [
-          "VERSE"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "slide_timing"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "R01"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "clearance": 0.5
-      }
-    },
-    {
-      "id": "R08",
-      "name": "Bounce Pad",
-      "mode": "RUNNER",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 0.25,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "STRONG_BEAT"
-        ],
-        "instruments": [
-          "BASS",
-          "KICK"
-        ],
-        "sections": [
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "air_control",
-        "timing"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "R01",
-          "R02",
-          "R09"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "launchStrength": 1.0
-      }
-    },
-    {
-      "id": "R09",
-      "name": "Gravity Flip",
-      "mode": "RUNNER",
-      "status": "MVP",
-      "difficulty": 3,
-      "timing": {
-        "durationBeats": 4,
-        "telegraphBeats": 1,
-        "cooldownBeats": 2
-      },
-      "musicTags": {
-        "rhythm": [
-          "DOWNBEAT"
-        ],
-        "instruments": [
-          "BASS"
-        ],
-        "sections": [
-          "BUILD",
-          "DROP",
-          "CHORUS"
-        ],
-        "energy": [
-          "HIGH",
-          "PEAK"
-        ]
-      },
-      "playerSkills": [
-        "orientation_switch",
-        "timing"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "R08",
-          "R01"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "gravityScale": -1
-      }
-    },
-    {
-      "id": "V01",
-      "name": "Tap",
-      "mode": "VERTICAL",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT",
-          "SUBDIVISION"
-        ],
-        "instruments": [
-          "MELODY",
-          "KICK",
-          "SNARE"
-        ],
-        "sections": [
-          "VERSE",
-          "CHORUS"
-        ],
-        "energy": [
-          "LOW",
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "rhythm_accuracy"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "V02",
-          "V03"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "lane": 1
-      }
-    },
-    {
-      "id": "V02",
-      "name": "Hold",
-      "mode": "VERTICAL",
-      "status": "MVP",
-      "difficulty": 1,
-      "timing": {
-        "durationBeats": 2,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "MELODY",
-          "VOCAL"
-        ],
-        "sections": [
-          "VERSE",
-          "BREAKDOWN"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "hold_control",
-        "rhythm_accuracy"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "V01"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "lane": 1,
-        "holdBeats": 2
-      }
-    },
-    {
-      "id": "V03",
-      "name": "Double",
-      "mode": "VERTICAL",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "STRONG_BEAT",
-          "DOWNBEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "BASS"
-        ],
-        "sections": [
-          "BUILD",
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "simultaneous_input",
-        "rhythm_accuracy"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "V01"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "lanes": [
-          1,
-          4
-        ]
-      }
-    },
-    {
-      "id": "V04",
-      "name": "Drift Hold",
-      "mode": "VERTICAL",
-      "status": "MVP",
-      "difficulty": 4,
-      "timing": {
-        "durationBeats": 4,
-        "telegraphBeats": 2,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "SUSTAIN"
-        ],
-        "instruments": [
-          "VOCAL",
-          "LEAD"
-        ],
-        "sections": [
-          "CHORUS"
-        ],
-        "energy": [
-          "MID",
-          "HIGH"
-        ]
-      },
-      "playerSkills": [
-        "timing",
-        "sustain",
-        "lane_tracking"
-      ],
-      "defaults": {
-        "lane": 1,
-        "path": [
-          [
-            0,
-            1
-          ],
-          [
-            1,
-            2
-          ],
-          [
-            2,
-            3
-          ],
-          [
-            3,
-            4
-          ]
-        ],
-        "holdBeats": 4
-      },
-      "notes": "A hold whose lane moves while it is held. path is a list of [beatOffset, lane] checkpoints; the player has to slide the hold across lanes to trace the melody."
-    },
-    {
-      "id": "R04",
-      "name": "Platform",
-      "mode": "RUNNER",
-      "status": "MVP",
-      "difficulty": 2,
-      "timing": {
-        "durationBeats": 0,
-        "telegraphBeats": 0,
-        "cooldownBeats": 0
-      },
-      "musicTags": {
-        "rhythm": [
-          "BEAT"
-        ],
-        "instruments": [
-          "KICK",
-          "SYNTH"
-        ],
-        "sections": [
-          "VERSE",
-          "BUILD"
-        ],
-        "energy": [
-          "LOW",
-          "MID"
-        ]
-      },
-      "playerSkills": [
-        "jump_timing",
-        "spatial_reading"
-      ],
-      "compatibility": {
-        "goodWith": [
-          "R01",
-          "R08"
-        ],
-        "avoidWith": []
-      },
-      "defaults": {
-        "surface": "FLOOR",
-        "height": 0.12,
-        "width": 1.0
-      },
-      "notes": "A solid block rising from the running surface. The front face damages; jump onto the top and it becomes terrain -- stand on it, hop between heights, run off the far edge. Platforms at or under the step-up height are walked over automatically. Inverted gravity hangs them from the ceiling."
-    }
-  ]
+ "version": "1.0.0",
+ "mechanics": [
+  {
+   "id": "A01",
+   "name": "Floor Warning",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 1,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "HIHAT",
+     "SNARE"
+    ],
+    "sections": [
+     "INTRO",
+     "VERSE"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "timing",
+    "spatial_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A02",
+     "A05",
+     "A03"
+    ],
+    "avoidWith": [
+     "A15"
+    ]
+   },
+   "defaults": {
+    "shape": "tile",
+    "damageActiveBeats": 1,
+    "warningStyle": "red_flash"
+   }
+  },
+  {
+   "id": "A02",
+   "name": "Safe Tile",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 2,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "STRONG_BEAT"
+    ],
+    "instruments": [
+     "KICK"
+    ],
+    "sections": [
+     "VERSE",
+     "BREAKDOWN"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "positioning"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A01",
+     "A03"
+    ],
+    "avoidWith": [
+     "A14"
+    ]
+   },
+   "defaults": {
+    "safeAreaCount": 1,
+    "safeAreaSize": 0.25,
+    "safeZone": "STATIC"
+   },
+   "notes": "The floor turns hostile except for a refuge. STATIC places the patch once and asks whether the player can reach it; MOVING walks the patch along a closed path and asks whether they can keep up; QUADRANT halves or quarters the arena and rotates which part is safe, so the crossing is made on the pulse. A moving patch may never outrun the player and a rotating one owes a full walk to the next part, both floored by fairness."
+  },
+  {
+   "id": "A03",
+   "name": "Projectile",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 2,
+    "telegraphBeats": 0.5,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT",
+     "SUBDIVISION"
+    ],
+    "instruments": [
+     "MELODY",
+     "HIHAT"
+    ],
+    "sections": [
+     "VERSE",
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "trajectory_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A01",
+     "A05"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "speed": 1.0,
+    "count": 1,
+    "spawnSide": "random"
+   }
+  },
+  {
+   "id": "A04",
+   "name": "Radial Burst",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 3,
+   "timing": {
+    "durationBeats": 3,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "DOWNBEAT"
+    ],
+    "instruments": [
+     "KICK",
+     "SYNTH"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "spatial_reading",
+    "timing"
+   ],
+   "defaults": {
+    "arms": 1,
+    "bulletsPerBurst": 3,
+    "burstArcDeg": 40,
+    "stepDeg": 45,
+    "subdivision": 1,
+    "direction": "CW",
+    "startAngleDeg": -90,
+    "origin": "CENTER",
+    "speed": 1.0
+   },
+   "notes": "A rotating spray: bursts of projectiles fire from the centre (or inward from the rim), each emission rotated by stepDeg from the last. The rotation trend is visible from the first two emissions, so the player predicts the next burst instead of reacting to it. Legacy aliases: gapCount->arms, gapAngleDeg->startAngleDeg, gapArcDeg->burstArcDeg, rotationDeg added to start."
+  },
+  {
+   "id": "A05",
+   "name": "Chain",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 1,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "STRONG_BEAT"
+    ],
+    "instruments": [
+     "SNARE",
+     "KICK"
+    ],
+    "sections": [
+     "BUILD",
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "direction_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A01",
+     "A03"
+    ],
+    "avoidWith": [
+     "A14"
+    ]
+   },
+   "defaults": {
+    "layout": "LANE",
+    "direction": "LEFT_TO_RIGHT",
+    "width": 1.0,
+    "thickness": 0.016,
+    "corridorWidth": 0.16,
+    "gap": 0.5,
+    "axis": "VERTICAL",
+    "segments": 3,
+    "amplitude": 0.28,
+    "travel": "FORWARD"
+   },
+   "notes": "A thin chain whip. Line layouts (SLASH, BACKSLASH, CROSS, ZIGZAG, SNAKE, CORRIDOR, POLYLINE) make the chain itself the danger -- dodging is precise positioning off the line. CORRIDOR draws parallel chains around a safe channel floored by the fairness system. LANE is the legacy direction whip: the chain claims one lane of a tiling that covers the arena."
+  },
+  {
+   "id": "A06",
+   "name": "Laser",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 1,
+    "telegraphBeats": 1,
+    "cooldownBeats": 1
+   },
+   "musicTags": {
+    "rhythm": [
+     "DOWNBEAT"
+    ],
+    "instruments": [
+     "KICK",
+     "BASS"
+    ],
+    "sections": [
+     "BUILD",
+     "CHORUS"
+    ],
+    "energy": [
+     "HIGH",
+     "PEAK"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "timing",
+    "lane_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A01",
+     "A02"
+    ],
+    "avoidWith": [
+     "A06"
+    ]
+   },
+   "defaults": {
+    "orientation": "HORIZONTAL",
+    "position": 0.5,
+    "thickness": 0.15
+   }
+  },
+  {
+   "id": "A07",
+   "name": "Rotating Fan",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 3,
+   "timing": {
+    "durationBeats": 4,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "SYNTH"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "spatial_reading",
+    "anticipation"
+   ],
+   "defaults": {
+    "arms": 2,
+    "armArcDeg": 55,
+    "startAngleDeg": -90,
+    "rotationPerBeatDeg": 45,
+    "direction": "CW",
+    "radius": 0.72,
+    "innerRadius": 0,
+    "reversalBeats": 0
+   },
+   "notes": "Arms reach the centre -- no dead hub -- so the safe zone is the moving wedge between arms and the play is orbiting it on the beat. reversalBeats > 0 turns the fan into a pendulum that sweeps an arc back and forth. Rotation is per beat, never per frame, so the sweep stays musical."
+  },
+  {
+   "id": "A08",
+   "name": "Spiral",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 4,
+   "timing": {
+    "durationBeats": 4,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "SUBDIVISION"
+    ],
+    "instruments": [
+     "HIHAT",
+     "SYNTH"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "spatial_reading",
+    "timing"
+   ],
+   "defaults": {
+    "arms": 2,
+    "stepDeg": 26,
+    "subdivision": 0.25,
+    "direction": "CW",
+    "speed": 0.9,
+    "startAngleDeg": -90,
+    "expand": true
+   },
+   "notes": "Emitter angle advances by stepDeg every subdivision, drawing a spiral of projectiles. direction CW/CCW/ALTERNATE; expand false fires inward from the rim."
+  },
+  {
+   "id": "A09",
+   "name": "Wave Sweep",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 2,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "SNARE"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "spatial_reading"
+   ],
+   "defaults": {
+    "mode": "STATIC",
+    "axis": "HORIZONTAL",
+    "direction": "FORWARD",
+    "gapCount": 1,
+    "gapWidth": 0.2,
+    "gapPath": [
+     0.5
+    ],
+    "thickness": 0.09,
+    "amplitude": 0.0,
+    "shrinkTo": 0.65
+   },
+   "notes": "A wall crossing the arena whose window moves with the music. RHYTHM follows gapPath (one centre per beat) so the window steps on the pulse; SHRINK tightens the window as the wall travels; DOUBLE mirrors a second window. Window width and step speed are floored by fairness."
+  },
+  {
+   "id": "A10",
+   "name": "Ring",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 3,
+   "timing": {
+    "durationBeats": 3,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "DOWNBEAT"
+    ],
+    "instruments": [
+     "KICK"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "spatial_reading",
+    "positioning"
+   ],
+   "defaults": {
+    "mode": "COLLAPSE",
+    "gapCount": 1,
+    "gapArcDeg": 54,
+    "gapAngleDeg": -90,
+    "thickness": 0.07,
+    "rotationDeg": 0
+   },
+   "notes": "A ring closing in on the centre (COLLAPSE) or pushing out from it (EXPAND), with a safe arc. Pairs well with A04 as a call and response. `variant` picks how the gap behaves across a `ringCount` sequence: BASIC_GAP holds it still, ROTATING_GAP walks it round, NARROWING_GAP shrinks it each ring, ADVANCED_ALTERNATING steps out and back. Gap width and gap-edge travel are both floored by fairness, so no variant can close the circle on the player."
+  },
+  {
+   "id": "A11",
+   "name": "Sector Sweep",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 3,
+   "timing": {
+    "durationBeats": 6,
+    "telegraphBeats": 1.5,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "EIGHTH",
+     "BEAT"
+    ],
+    "instruments": [
+     "KICK",
+     "SNARE"
+    ],
+    "sections": [
+     "CHORUS",
+     "BUILD"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "movement",
+    "spatial_reading",
+    "positioning"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A03",
+     "A04"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "sectorCount": 6,
+    "sweepDirection": "CW",
+    "skipStep": 0,
+    "firstAngleDeg": -90,
+    "startSector": 0,
+    "innerRadius": 0
+   },
+   "notes": "The arena cut into wedges that go off in turn. There is always a safe majority, so the ask is pacing rather than precision: keep circling at the sweep's speed. `sweepDirection` sets CW/CCW, `skipStep` leaves safe wedges between activations, and the sweep may never advance faster than the player can walk the rim -- the step is floored by both reachability and warning, so a fast tempo lengthens the sequence instead of tightening it."
+  },
+  {
+   "id": "D01",
+   "name": "Single",
+   "mode": "RADIAL",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 2,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "MELODY",
+     "SNARE"
+    ],
+    "sections": [
+     "INTRO",
+     "VERSE"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "direction_reading",
+    "rhythm_accuracy"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "D02",
+     "D06"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "direction": "UP"
+   }
+  },
+  {
+   "id": "D02",
+   "name": "Opposite Double",
+   "mode": "RADIAL",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 2,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "STRONG_BEAT"
+    ],
+    "instruments": [
+     "KICK",
+     "BASS"
+    ],
+    "sections": [
+     "BUILD",
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "simultaneous_input",
+    "direction_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "D01"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "directions": [
+     "UP",
+     "DOWN"
+    ]
+   }
+  },
+  {
+   "id": "D06",
+   "name": "Clockwise",
+   "mode": "RADIAL",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 4,
+    "telegraphBeats": 1,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "MELODY"
+    ],
+    "sections": [
+     "VERSE",
+     "BUILD",
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "pattern_memory",
+    "direction_reading",
+    "rhythm_accuracy"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "D01",
+     "D02"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "sequence": [
+     "UP",
+     "RIGHT",
+     "DOWN",
+     "LEFT"
+    ],
+    "stepBeats": 1
+   }
+  },
+  {
+   "id": "R01",
+   "name": "Spike",
+   "mode": "RUNNER",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "KICK"
+    ],
+    "sections": [
+     "INTRO",
+     "VERSE"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "jump_timing"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "R02",
+     "R08"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "height": 1.0
+   }
+  },
+  {
+   "id": "R02",
+   "name": "Gap",
+   "mode": "RUNNER",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "KICK"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "jump_timing",
+    "distance_judgement"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "R01",
+     "R08"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "width": 1.0
+   }
+  },
+  {
+   "id": "R03",
+   "name": "Low Wall",
+   "mode": "RUNNER",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "SNARE"
+    ],
+    "sections": [
+     "VERSE"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "slide_timing"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "R01"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "clearance": 0.5
+   }
+  },
+  {
+   "id": "R08",
+   "name": "Bounce Pad",
+   "mode": "RUNNER",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 0.25,
+    "spawnLeadBeats": 4,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "STRONG_BEAT"
+    ],
+    "instruments": [
+     "BASS",
+     "KICK"
+    ],
+    "sections": [
+     "BUILD",
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "air_control",
+    "timing"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "R01",
+     "R02",
+     "R09"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "launchStrength": 1.0
+   }
+  },
+  {
+   "id": "R09",
+   "name": "Gravity Flip",
+   "mode": "RUNNER",
+   "status": "MVP",
+   "difficulty": 3,
+   "timing": {
+    "durationBeats": 4,
+    "telegraphBeats": 1,
+    "spawnLeadBeats": 4,
+    "cooldownBeats": 2
+   },
+   "musicTags": {
+    "rhythm": [
+     "DOWNBEAT"
+    ],
+    "instruments": [
+     "BASS"
+    ],
+    "sections": [
+     "BUILD",
+     "DROP",
+     "CHORUS"
+    ],
+    "energy": [
+     "HIGH",
+     "PEAK"
+    ]
+   },
+   "playerSkills": [
+    "orientation_switch",
+    "timing"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "R08",
+     "R01"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "gravityScale": -1
+   }
+  },
+  {
+   "id": "V01",
+   "name": "Tap",
+   "mode": "VERTICAL",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 2,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT",
+     "SUBDIVISION"
+    ],
+    "instruments": [
+     "MELODY",
+     "KICK",
+     "SNARE"
+    ],
+    "sections": [
+     "VERSE",
+     "CHORUS"
+    ],
+    "energy": [
+     "LOW",
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "rhythm_accuracy"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "V02",
+     "V03"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "lane": 1
+   }
+  },
+  {
+   "id": "V02",
+   "name": "Hold",
+   "mode": "VERTICAL",
+   "status": "MVP",
+   "difficulty": 1,
+   "timing": {
+    "durationBeats": 2,
+    "telegraphBeats": 2,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "MELODY",
+     "VOCAL"
+    ],
+    "sections": [
+     "VERSE",
+     "BREAKDOWN"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "hold_control",
+    "rhythm_accuracy"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "V01"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "lane": 1,
+    "holdBeats": 2
+   }
+  },
+  {
+   "id": "V03",
+   "name": "Double",
+   "mode": "VERTICAL",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 2,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "STRONG_BEAT",
+     "DOWNBEAT"
+    ],
+    "instruments": [
+     "KICK",
+     "BASS"
+    ],
+    "sections": [
+     "BUILD",
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "simultaneous_input",
+    "rhythm_accuracy"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "V01"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "lanes": [
+     1,
+     4
+    ]
+   }
+  },
+  {
+   "id": "V04",
+   "name": "Drift Hold",
+   "mode": "VERTICAL",
+   "status": "MVP",
+   "difficulty": 4,
+   "timing": {
+    "durationBeats": 4,
+    "telegraphBeats": 2,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "SUSTAIN"
+    ],
+    "instruments": [
+     "VOCAL",
+     "LEAD"
+    ],
+    "sections": [
+     "CHORUS"
+    ],
+    "energy": [
+     "MID",
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "timing",
+    "sustain",
+    "lane_tracking"
+   ],
+   "defaults": {
+    "lane": 1,
+    "path": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "holdBeats": 4
+   },
+   "notes": "A hold whose lane moves while it is held. path is a list of [beatOffset, lane] checkpoints; the player has to slide the hold across lanes to trace the melody."
+  },
+  {
+   "id": "R04",
+   "name": "Platform",
+   "mode": "RUNNER",
+   "status": "MVP",
+   "difficulty": 2,
+   "timing": {
+    "durationBeats": 0,
+    "telegraphBeats": 0,
+    "spawnLeadBeats": 4,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "BEAT"
+    ],
+    "instruments": [
+     "KICK",
+     "SYNTH"
+    ],
+    "sections": [
+     "VERSE",
+     "BUILD"
+    ],
+    "energy": [
+     "LOW",
+     "MID"
+    ]
+   },
+   "playerSkills": [
+    "jump_timing",
+    "spatial_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "R01",
+     "R08"
+    ],
+    "avoidWith": []
+   },
+   "defaults": {
+    "surface": "FLOOR",
+    "height": 0.12,
+    "width": 1.0
+   },
+   "notes": "A solid block rising from the running surface. The front face damages; jump onto the top and it becomes terrain -- stand on it, hop between heights, run off the far edge. Platforms at or under the step-up height are walked over automatically. Inverted gravity hangs them from the ceiling."
+  },
+  {
+   "id": "A12",
+   "name": "Rhythm Breakout",
+   "mode": "ARENA",
+   "status": "MVP",
+   "difficulty": 3,
+   "timing": {
+    "durationBeats": 6,
+    "telegraphBeats": 4,
+    "cooldownBeats": 0
+   },
+   "musicTags": {
+    "rhythm": [
+     "DOWNBEAT",
+     "BUILD",
+     "ACCENT"
+    ],
+    "instruments": [
+     "KICK",
+     "SNARE",
+     "RISER"
+    ],
+    "sections": [
+     "BUILD",
+     "DROP",
+     "CHORUS",
+     "BRIDGE"
+    ],
+    "energy": [
+     "HIGH"
+    ]
+   },
+   "playerSkills": [
+    "rhythm_input",
+    "timing_precision",
+    "sequence_reading"
+   ],
+   "compatibility": {
+    "goodWith": [
+     "A01",
+     "A02"
+    ],
+    "avoidWith": [
+     "A04",
+     "A07",
+     "A08",
+     "A10",
+     "A11"
+    ]
+   },
+   "defaults": {
+    "variant": "SINGLE_RING",
+    "prepBeats": 4,
+    "sequence": [
+     {
+      "beatOffset": 0,
+      "direction": "LEFT"
+     },
+     {
+      "beatOffset": 1,
+      "direction": "UP"
+     },
+     {
+      "beatOffset": 2,
+      "direction": "RIGHT"
+     },
+     {
+      "beatOffset": 3,
+      "direction": "DOWN"
+     }
+    ],
+    "finalBeatOffset": 4,
+    "releaseBeats": 2,
+    "perfectWindowBeats": 0.12,
+    "goodWindowBeats": 0.24,
+    "maxMisses": 1,
+    "failureMode": "DAMAGE",
+    "startRadius": 0.72,
+    "criticalRadius": 0.13,
+    "thickness": 0.05,
+    "movementScale": 0.6
+   },
+   "notes": "A sealed circular barrier with no gap. The player enters the directional phrase in `sequence` on the arrow keys -- untimed: steps can be played any time before the accent, in any rhythm, and only a wrong direction counts as a miss. Then the seal is broken on `finalBeatOffset` with SPACE, the one beat-locked press, timed for the moment the seal finishes closing (criticalRadius), releasing a shockwave that shatters the ring. Timing is judged in beats like VERTICAL and RADIAL; `perfectWindowMs`/`goodWindowMs` are accepted as an alternative for generated data. A seal that takes more than `maxMisses` step misses can no longer be broken, and an unbroken seal collapses through the player for `failureMode` damage (LIGHT/DAMAGE/HEAVY). Prep is stretched automatically when the tempo would make the encounter unescapable, and step spacing, judging windows and the critical radius are all floored by fairness -- see breakoutPlan.ts. `variant` picks the silhouette, which is real geometry and not just a palette: SINGLE_RING and DOUBLE_RING are circular, HEX_SEAL is a slowly turning hexagon and RUNE_SEAL an octagon. Radii are inradii -- the distance to the nearest wall -- so every silhouette is equally fair at the same numbers."
+  }
+ ]
 }
