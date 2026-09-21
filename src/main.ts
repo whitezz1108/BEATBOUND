@@ -1,5 +1,5 @@
 import { BeatBoundGame } from './game/BeatBoundGame';
-import { DATA, devOptionsFromLocation, loadLevelIndex, levelUrlFromLocation, type LevelIndexEntry } from './config';
+import { DATA, devOptionsFromLocation, libraryPath, loadLevelIndex, levelUrlFromLocation, type LevelIndexEntry } from './config';
 import { findLab, LABS, type LabDefinition, type LabGroup } from './lab/labs';
 import { LabController } from './lab/LabController';
 
@@ -102,7 +102,7 @@ async function startLevelFlow(): Promise<void> {
       invincible: invincibleInput.checked,
     };
     const next = new URLSearchParams(window.location.search);
-    next.set('level', levelSelect.value || levelUrl.replace(/^\//, ''));
+    next.set('level', levelSelect.value || libraryPath(levelUrl));
     next.set('startBar', String(options.startBar));
     if (options.invincible) next.set('invincible', '1');
     else next.delete('invincible');
@@ -152,7 +152,9 @@ function renderLabMenu(active: LabDefinition | null): void {
 }
 
 function populateLevels(entries: LevelIndexEntry[], levelUrl: string): void {
-  const current = levelUrl.replace(/^\//, '');
+  // The index stores library paths (`runner_showcase.level.json`); `levelUrl` is
+  // the absolute URL we fetched, so strip the deploy base before comparing.
+  const current = libraryPath(levelUrl);
   if (entries.length === 0) {
     levelSelect.innerHTML = `<option value="${current}">${current}</option>`;
     return;

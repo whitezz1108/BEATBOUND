@@ -15,13 +15,34 @@
 // substitutes the real base in both dev and build; Node falls back to '/',
 // which is what the tools' fetch shim resolves library paths against anyway.
 const BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-const dataUrl = (path: string) => BASE + path.replace(/^\//, '');
+
+/**
+ * Absolute URL for a path inside the library root (`beatbound_library_v1/`).
+ *
+ * Level JSON stores library-relative paths -- `audio/editor/song.mp3` -- because
+ * the editor and the headless tools read those files off disk, where a
+ * `/BEATBOUND/` prefix would be meaningless. The runtime is the only consumer
+ * that needs a URL, so it is resolved here, at fetch time.
+ */
+export const libraryUrl = (path: string) => BASE + path.replace(/^\//, '');
+
+/**
+ * The inverse of `libraryUrl`: a URL back to the library-relative path that
+ * `levels.index.json` and the level files themselves use.
+ *
+ * `?level=` and the level picker both speak library paths, but the URL in hand
+ * is absolute (`/BEATBOUND/runner_showcase.level.json`), so the base has to come
+ * off before it can be compared with, or written back into, an index entry.
+ */
+export function libraryPath(url: string): string {
+  return (url.startsWith(BASE) ? url.slice(BASE.length) : url).replace(/^\//, '');
+}
 
 export const DATA = {
-  mechanics: dataUrl('/mechanics.mvp.json'),
-  patterns: dataUrl('/patterns.mvp.json'),
-  levels: dataUrl('/levels.index.json'),
-  defaultLevel: dataUrl('/toosie_slide_arena_primary.level.json'),
+  mechanics: libraryUrl('/mechanics.mvp.json'),
+  patterns: libraryUrl('/patterns.mvp.json'),
+  levels: libraryUrl('/levels.index.json'),
+  defaultLevel: libraryUrl('/toosie_slide_arena_primary.level.json'),
 } as const;
 
 /** One entry of levels.index.json -- what the level picker lists. */
@@ -51,7 +72,7 @@ export async function loadLevelIndex(): Promise<LevelIndexEntry[]> {
 export function levelUrlFromLocation(search = window.location.search): string {
   const requested = new URLSearchParams(search).get('level');
   if (!requested) return DATA.defaultLevel;
-  return requested.startsWith('/') ? dataUrl(requested) : dataUrl(`/${requested}`);
+  return requested.startsWith('/') ? libraryUrl(requested) : libraryUrl(`/${requested}`);
 }
 
 /** Beats of silence before the start bar, so the player can get ready. */

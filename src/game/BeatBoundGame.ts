@@ -36,7 +36,7 @@ import { registerRunnerMechanics } from '../mechanics/runner';
 import { scheduleCourse } from '../mechanics/runner/courseSchedule';
 import { registerVerticalMechanics } from '../mechanics/vertical';
 import { registerRadialMechanics } from '../mechanics/radial';
-import { COUNT_IN_BEATS, DATA, type DevOptions } from '../config';
+import { COUNT_IN_BEATS, DATA, libraryUrl, type DevOptions } from '../config';
 import { MODE_CONTROLS } from '../core/controls';
 import { MODE_COLOURS } from '../core/ModeManager';
 import { beatsForSeconds, TUNING } from '../tuning';
@@ -136,7 +136,10 @@ export class BeatBoundGame {
   async load(sources: LevelSources): Promise<CompiledLevel> {
     await this.loader.loadLibraries(sources.patternsUrl, sources.mechanicsUrl);
     const definition = await fetchLevel(sources.levelUrl);
-    this.songBuffer = await this.audio.loadBuffer(definition.song.audio);
+    // `song.audio` is library-relative (`audio/editor/song.mp3`), so it needs the
+    // same base prefix as the JSON above or it resolves against the page's own
+    // directory -- which on GitHub Pages is /BEATBOUND/, not the library root.
+    this.songBuffer = await this.audio.loadBuffer(libraryUrl(definition.song.audio));
     if (!this.songBuffer) {
       console.info(`[BeatBound] audio "${definition.song.audio}" not found -- using a generated click track.`);
     }
