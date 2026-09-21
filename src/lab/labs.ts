@@ -358,7 +358,7 @@ export const LABS: LabDefinition[] = [
   },
   {
     index: 25, id: 'arena-seal-break', group: 'ARENA', title: 'Rhythm Breakout',
-    hint: 'A12 sealed barrier. Arrows play the phrase, SPACE breaks it on the accent. '
+    hint: 'A12 sealed barrier. Arrows or WASD play the phrase, SPACE breaks it on the accent. '
       + 'Cycle easy/syncopated/gauntlet with [ and ]; retune BPM with - and = to check the timing holds.',
     variants: ['AP27 four on the floor', 'AP28 syncopated', 'AP29 gauntlet'],
     // No Space trigger: Space is the encounter's final hit, and a lab that

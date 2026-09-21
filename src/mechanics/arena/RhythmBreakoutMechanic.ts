@@ -52,7 +52,7 @@ import {
 import { SEAL_SKINS, SealBarrier, type SealPhase } from './SealBarrier';
 import { bandShapes, circumradiusFor, spinAt, type SealShape } from './sealGeometry';
 import {
-  renderEncounterLabel, renderFinalIndicator, renderPlayerCharge, renderSequenceRow, slotPosition,
+  renderEncounterLabel, renderPlayerCharge, renderPromptRow, slotPosition,
 } from './breakoutUI';
 
 type Outcome = 'PENDING' | 'BROKEN' | 'FAILED';
@@ -115,11 +115,7 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     this.plan = plan;
     this.damageSource = FAILURE_DAMAGE[plan.failureMode];
     this.rng = makeRng(spawn.seed);
-    this.sequence = new RhythmSequence(
-      plan.steps,
-      this.activationBeat,
-      new RhythmTimingJudge(plan.perfectBeats, plan.goodBeats),
-    );
+    this.sequence = new RhythmSequence(plan.steps, this.activationBeat);
     this.finalJudge = new RhythmTimingJudge(plan.perfectBeats, plan.finalGoodBeats);
     this.finalBeat = this.activationBeat + plan.finalBeatOffset;
     this.criticalBeat = Math.max(this.sequence.lastBeat, this.finalBeat - 2);
@@ -161,7 +157,8 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     if (this.outcome !== 'PENDING') return;
     const result = this.sequence.press(direction, beat);
     if (!result) return;
-    const at = slotPosition(result.index, this.sequence.length, this.collapse(beat));
+    // +1: the row the particle lands on includes the SPACE slot at its end.
+    const at = slotPosition(result.index, this.sequence.length + 1);
     if (result.verdict === 'MISS') this.cueStepMiss(at);
     else this.cueStepHit(at, result.verdict);
   }
@@ -202,10 +199,9 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     this.barrier.update(u.deltaSeconds);
 
     if (this.outcome === 'PENDING' && beat >= this.telegraphStartBeat) {
-      for (const step of this.sequence.update(beat)) {
-        const index = this.sequence.steps.indexOf(step);
-        this.cueStepMiss(slotPosition(index, this.sequence.length, this.collapse(beat)));
-      }
+      // Steps never expire on their own -- the phrase is untimed, only the
+      // final accent is on the beat -- so update only refreshes UI state.
+      this.sequence.update(beat);
       this.updateFinal(beat);
     }
 
@@ -366,14 +362,6 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     return clamp(1 - (this.finalBeat - beat) / span, 0, 1);
   }
 
-  /** 0..1 -- how far the prompt row has collapsed into the final accent. */
-  private collapse(beat: number): number {
-    if (this.outcome === 'BROKEN') return 1;
-    const from = this.sequence.lastBeat;
-    const span = Math.max(0.25, this.finalBeat - from);
-    return clamp((beat - from) / span, 0, 1);
-  }
-
   /** The band's circumradius, which is what the geometry actually runs on. */
   private circumradiusAt(beat: number): number {
     return circumradiusFor(this.shape, this.radiusAt(beat));
@@ -422,25 +410,20 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
       reveal * 0.8,
       this.tally,
     );
-    renderSequenceRow(r, {
+    // One row, dance-game style: the arrows, the judgement track beneath
+    // them, and the SPACE target at its far end are a single widget.
+    renderPromptRow(r, {
       steps: this.sequence.steps,
       beat,
       goodBeats: this.plan.goodBeats,
       startBeat: this.activationBeat,
       finalBeat: this.finalBeat,
       reveal,
-      collapse: this.collapse(beat),
-    });
-    r.withAlpha(reveal, () => {
-      renderFinalIndicator(r, {
-        beat,
-        finalBeat: this.finalBeat,
-        charge: this.charge(beat),
-        state: this.finalState,
-        changedBeat: this.finalChangedBeat,
-        breakable: this.breakable,
-        keyLabel: 'SPACE',
-      });
+      charge: this.charge(beat),
+      finalState: this.finalState,
+      finalChangedBeat: this.finalChangedBeat,
+      breakable: this.breakable,
+      keyLabel: 'SPACE',
     });
   }
 

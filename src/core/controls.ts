@@ -28,32 +28,32 @@ export const ARENA_MOVE_KEYS: AxisKeys = {
 };
 
 /**
- * ARENA movement while a rhythm encounter (A12) owns the arrow keys.
+ * ARENA movement while a rhythm encounter (A12) owns the directional keys.
  *
- * The encounter reads the arrows as a directional phrase, so for the length of
- * it the same keys cannot also be steering -- a player entering the sequence
- * would otherwise be walking into the wall they are trying to break. WASD keeps
- * working throughout, so movement is never actually taken away, and the mode
- * picks between the two maps per frame rather than latching anything, which is
- * what makes the restore automatic.
+ * The encounter reads *both* key families as the phrase -- it is a dance pad,
+ * and the player uses whichever hand position they prefer -- so for its length
+ * there is nothing left to steer with. That is deliberate: the seal has no
+ * gap, so no position is safer than another and walking has no answer to give.
+ * The mode picks this map per frame rather than latching anything, which is
+ * what makes the restore automatic when the encounter ends.
  */
-export const ARENA_MOVE_KEYS_WASD: AxisKeys = {
-  up: ['w'],
-  down: ['s'],
-  left: ['a'],
-  right: ['d'],
+export const ARENA_MOVE_KEYS_CAPTURED: AxisKeys = {
+  up: [],
+  down: [],
+  left: [],
+  right: [],
 };
 
 /**
- * The arrow keys, as the rhythm-sequence alphabet. Arrows only: WASD is
- * movement, and a direction that could be entered two ways would make it
- * impossible to tell a step from a sidestep.
+ * The directional phrase alphabet: arrows *and* WASD, each meaning its
+ * cardinal. Both families press the same step, so the phrase can be played
+ * with either hand layout or a mix of the two.
  */
 export const ARENA_SEQUENCE_KEYS: Record<'N' | 'E' | 'S' | 'W', readonly string[]> = {
-  N: ['arrowup'],
-  E: ['arrowright'],
-  S: ['arrowdown'],
-  W: ['arrowleft'],
+  N: ['arrowup', 'w'],
+  E: ['arrowright', 'd'],
+  S: ['arrowdown', 's'],
+  W: ['arrowleft', 'a'],
 };
 
 /** The final accent of a rhythm encounter. ARENA binds nothing else to Space. */
@@ -86,7 +86,7 @@ export const MODE_CONTROLS: Record<GameMode, ControlHint[]> = {
   ARENA: [
     { label: 'MOVE', keys: ['W', 'A', 'S', 'D'] },
     { label: 'or', keys: ['↑', '←', '↓', '→'] },
-    { label: 'SEAL', keys: ['↑', '←', '↓', '→', 'SPACE'] },
+    { label: 'SEAL', keys: ['WASD/↑←↓→', '+', 'SPACE'] },
   ],
   RUNNER: [
     { label: 'JUMP', keys: ['W', '↑', 'SPACE'] },

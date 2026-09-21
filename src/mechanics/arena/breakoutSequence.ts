@@ -23,12 +23,14 @@ export type BreakoutVerdict = 'PERFECT' | 'GOOD' | 'MISS';
 /**
  * A step's life:
  *
- *   UPCOMING -> ACTIVE -> HIT      (played in time, right direction)
- *   UPCOMING -> ACTIVE -> MISSED   (wrong direction, or never played)
+ *   UPCOMING -> ACTIVE -> HIT      (played, right direction)
+ *   UPCOMING -> ACTIVE -> MISSED   (wrong direction)
  *
- * MISSED is scored once and then inert, but the step stays on screen for the
- * rest of the encounter: a prompt that vanishes the instant it is missed steals
- * the feedback the player needs to understand what went wrong.
+ * There is no timeout state: a step never expires on its own, because the
+ * phrase is untimed. MISSED is scored once and then inert, but the step stays
+ * on screen for the rest of the encounter: a prompt that vanishes the instant
+ * it is missed steals the feedback the player needs to understand what went
+ * wrong.
  */
 export type StepState = 'UPCOMING' | 'ACTIVE' | 'HIT' | 'MISSED';
 
@@ -76,22 +78,21 @@ export interface PressResult {
 /**
  * The phrase in flight.
  *
- * Two rules keep it honest and both are borrowed from `NoteMode`, because a
- * player who has learned one rhythm mode should not have to learn another set
- * of manners for this one:
+ * One rule keeps it honest:
  *
- *   - a press before any window opens is *ignored*, not punished. Eagerness is
- *     not an error, and punishing it teaches the player to stop playing.
- *   - a press inside a window resolves the nearest unplayed step, right or
- *     wrong. A wrong direction is a miss on that step rather than a free
- *     retry, so the sequence cannot be brute-forced by mashing.
+ *   - direction presses are *untimed*. The phrase is what unlocks the seal,
+ *     not a rhythm test: a step can be played any time after the encounter
+ *     starts and before the final accent, early or late or all in a burst.
+ *     Only the direction is judged -- a wrong direction is a miss on that step
+ *     rather than a free retry, so the sequence cannot be brute-forced by
+ *     mashing. The beat-locked press is the final accent, and only that.
  */
 export class RhythmSequence {
   readonly steps: SequenceStep[];
   private _misses = 0;
   private _hits = 0;
 
-  constructor(specs: SequenceSpec[], activationBeat: number, private readonly judge: RhythmTimingJudge) {
+  constructor(public readonly specs: SequenceSpec[], readonly activationBeat: number) {
     this.steps = specs.map((spec) => ({
       direction: spec.direction,
       beatOffset: spec.beatOffset,
@@ -111,45 +112,31 @@ export class RhythmSequence {
   }
 
   /**
-   * Advance the phrase to `beat`. Returns any step that ran out of time on
-   * this frame, so the mechanic can fire exactly one miss cue for it.
+   * Advance the phrase to `beat`. Returns nothing: untimed steps never expire,
+   * so there is no timeout to miss. Kept for symmetry with the mechanic's
+   * update loop and to refresh each step's ACTIVE state for the UI.
    */
-  update(beat: number): SequenceStep[] {
-    const expired: SequenceStep[] = [];
+  update(_beat: number): SequenceStep[] {
     for (const step of this.steps) {
       if (step.state === 'HIT' || step.state === 'MISSED') continue;
-      if (beat > step.beat + this.judge.goodBeats) {
-        step.state = 'MISSED';
-        step.verdict = 'MISS';
-        step.resolvedBeat = beat;
-        this._misses += 1;
-        expired.push(step);
-        continue;
-      }
-      step.state = this.judge.inWindow(beat - step.beat) ? 'ACTIVE' : 'UPCOMING';
+      step.state = 'ACTIVE';
     }
-    return expired;
+    return [];
   }
 
-  /** Enter a direction. Null when no step was listening. */
+  /**
+   * Enter a direction. Null when every step has been played already.
+   *
+   * Resolves the *next unplayed* step, wherever the beat is: the phrase is
+   * untimed, so a press always lands on the front of the queue.
+   */
   press(direction: BreakoutDirection, beat: number): PressResult | null {
-    let index = -1;
-    let best = Infinity;
-    for (let i = 0; i < this.steps.length; i++) {
-      const step = this.steps[i];
-      if (step.state === 'HIT' || step.state === 'MISSED') continue;
-      const offset = Math.abs(beat - step.beat);
-      if (offset <= this.judge.goodBeats && offset < best) {
-        best = offset;
-        index = i;
-      }
-    }
-    if (index < 0) return null;
+    const index = this.pendingIndex();
+    if (index >= this.steps.length) return null;
 
     const step = this.steps[index];
-    const offset = beat - step.beat;
     step.resolvedBeat = beat;
-    step.offsetBeats = offset;
+    step.offsetBeats = 0;
 
     if (step.direction !== direction) {
       step.state = 'MISSED';
@@ -158,11 +145,12 @@ export class RhythmSequence {
       return { step, verdict: 'MISS', index };
     }
 
-    const verdict = this.judge.verdict(offset);
+    // A landed direction scores as a plain GOOD: it unlocked the step, but it
+    // is not the accent, so it carries no perfect.
     step.state = 'HIT';
-    step.verdict = verdict;
+    step.verdict = 'GOOD';
     this._hits += 1;
-    return { step, verdict, index };
+    return { step, verdict: 'GOOD', index };
   }
 
   /** Index of the step currently being asked for, or the next one due. */
