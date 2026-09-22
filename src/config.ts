@@ -51,6 +51,12 @@ export interface LevelIndexEntry {
   file: string;
   title: string;
   blurb?: string;
+  /** Modes the level contains; the title screen filters its song list by these. */
+  modes?: string[];
+  /** Library-relative audio, for the song-select preview (absent = no music). */
+  audio?: string;
+  bpm?: number;
+  duration?: number;
 }
 
 export interface LevelIndex {

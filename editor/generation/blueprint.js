@@ -386,6 +386,22 @@ export function validateBlueprint(blueprint, { directorContext, gameplayContext,
       if (isLast) {
         warnings.push(`${where}: declares a transition_out but it is the last section; it will be dropped`);
       }
+      // The schema says `transition_out` is an object (`kind`, `reason`,
+      // `breather_beats`, `scene`), but the director prompt only ever shows
+      // `"transition_out": null` and never documents that shape -- so a model
+      // describing a transition free-forms prose. Every read below is
+      // `.breather_beats` or `.scene`, both `undefined` on a string, so the
+      // whole declaration was silently ignored: accepted by the validator,
+      // dropped by the compiler, reported nowhere. `normalizeBlueprint` turns
+      // prose into `{reason}`, which the compiler does forward; this warns so a
+      // human can see it happened rather than having to infer it.
+      if (typeof s.transition_out !== 'object' || Array.isArray(s.transition_out)) {
+        warnings.push(
+          `${where}: transition_out is a ${Array.isArray(s.transition_out) ? 'array' : typeof s.transition_out}, ` +
+            `not an object -- only its reason will survive (the schema wants ` +
+            `{kind, reason, breather_beats, scene})`,
+        );
+      }
       const declared = s.transition_out.breather_beats;
       if (declared !== undefined && declared !== null && changesMode && declared < breather) {
         warnings.push(
@@ -684,6 +700,26 @@ export function normalizeBlueprint(blueprint, { directorContext, gameplayContext
         next.mode = s.mode;
       }
     }
+    // A prose `transition_out` is a real declaration in the wrong shape -- the
+    // director wrote down why the seam matters, and every structured read of it
+    // (`kind`, `breather_beats`, `scene`) returns `undefined`. Dropping it would
+    // throw away the only record of the intent; rewriting it as `{reason}` keeps
+    // the words in a field the compiler forwards to the compiled transition, and
+    // makes the blueprint match its own schema again.
+    if (typeof s.transition_out === 'string') {
+      const reason = s.transition_out.trim();
+      if (reason.length > 0) {
+        fixes.push(`sections[${i}]: transition_out was prose -- kept as its reason`);
+        s.transition_out = { reason };
+      } else {
+        fixes.push(`sections[${i}]: dropped an empty transition_out`);
+        delete s.transition_out;
+      }
+    } else if (Array.isArray(s.transition_out)) {
+      fixes.push(`sections[${i}]: dropped a transition_out that was an array, not an object`);
+      delete s.transition_out;
+    }
+
     if (s.transition_out && Array.isArray(s.transition_out.scene)) {
       const kept = s.transition_out.scene.filter((e) => SCENE_EFFECTS.includes(e.effect));
       if (kept.length !== s.transition_out.scene.length) {

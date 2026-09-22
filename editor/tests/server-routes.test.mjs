@@ -165,3 +165,103 @@ test('generate-level streams a structured error for a bad request, and spends no
   assert.ok(!lines.some((l) => l.stage === 'director'));
   assert.ok(!lines.some((l) => l.type === 'result'));
 });
+
+// ---------------------------------------------------------------------------
+// Schema ownership
+//
+// `state.blueprint` is one slot that can hold either schema, and the routes
+// used to hand it to the v1 compiler whatever it was. These pin the routing
+// decision at the boundary the UI actually calls.
+// ---------------------------------------------------------------------------
+
+/** A minimal but structurally valid v2 blueprint, sized to whatever analysis is
+ *  on disk. Deliberately not a v1 one: the point is that the routes recognise
+ *  it and route it away from the v1 modules. */
+function probeV2Blueprint(barCount = 40) {
+  const sections = [
+    { id: 'section_01', start_bar: 1, end_bar_exclusive: 21, mode: 'ARENA', function: 'INTRO', difficulty: 2, intensity: 0.3, rationale: 'probe', pattern_families: [], pattern_ids: [], energy_band: 'LOW', course: null, transition_out: null },
+    { id: 'section_02', start_bar: 21, end_bar_exclusive: barCount + 1, mode: 'ARENA', function: 'OUTRO', difficulty: 1, intensity: 0.2, rationale: 'probe', pattern_families: [], pattern_ids: [], energy_band: 'LOW', course: null, transition_out: null },
+  ];
+  return {
+    schema_version: 'beatbound_level_blueprint_v2',
+    generator: { kind: 'manual', model: null, prompt_version: 'probe', created_from: 'test' },
+    song: { id: '_probe_schema_ownership', title: 'Probe', audio: 'probe.wav', bpm: 120, timeSignature: [4, 4], barCount, durationSec: barCount * 2 },
+    request: { primary_mode: 'ARENA', allowed_modes: ['ARENA'], target_difficulty: 2, primary_mode_ratio: 1, seed: 1 },
+    global: { intent: 'probe', arc: 'flat', difficulty_curve: [] },
+    sections,
+    sync_points: [],
+    notes: [],
+  };
+}
+
+test('/api/state reports the schema of the session blueprint', async () => {
+  const st = await (await fetch(`${BASE}/api/state`)).json();
+  assert.ok('blueprintSchema' in st, '/api/state must report which schema is loaded');
+  // Whichever is on disk, the answer must be one of the two, or null for an
+  // empty session -- never a third thing the UI cannot branch on.
+  assert.ok(
+    [null, 'v1', 'beatbound_level_blueprint_v2'].includes(st.blueprintSchema),
+    `unexpected schema ${JSON.stringify(st.blueprintSchema)}`,
+  );
+});
+
+test('/api/blueprint reports the schema it detected on save', async () => {
+  const original = await (await fetch(`${BASE}/api/blueprint`)).json();
+
+  const saved = await (
+    await fetch(`${BASE}/api/blueprint`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(probeV2Blueprint()),
+    })
+  ).json();
+  assert.equal(saved.ok, true);
+  assert.equal(saved.schema, 'beatbound_level_blueprint_v2');
+
+  const st = await (await fetch(`${BASE}/api/state`)).json();
+  assert.equal(st.blueprintSchema, 'beatbound_level_blueprint_v2');
+
+  // Put the session back so this test does not decide what the others see.
+  await fetch(`${BASE}/api/blueprint`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(original),
+  });
+});
+
+test('regenerate refuses per-section work on a v2 blueprint instead of corrupting it', async () => {
+  const original = await (await fetch(`${BASE}/api/blueprint`)).json();
+  await fetch(`${BASE}/api/blueprint`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(probeV2Blueprint()),
+  });
+
+  // The v1 path would call `regenerateSection`, which reads `startBar`/`endBar`
+  // and would hand back sections carrying both spellings -- a hybrid. It must
+  // refuse instead.
+  const res = await fetch(`${BASE}/api/regenerate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sectionId: 'section_01' }),
+  });
+  assert.equal(res.status, 400);
+  const body = await res.json();
+  assert.equal(body.code, 'unsupported_for_v2');
+  assert.match(body.error, /beatbound_level_blueprint_v2/);
+
+  // ...and the blueprint must be untouched by the refusal.
+  const after = await (await fetch(`${BASE}/api/blueprint`)).json();
+  assert.equal(after.schema_version, 'beatbound_level_blueprint_v2');
+  assert.equal(after.sections.length, 2);
+  for (const s of after.sections) {
+    assert.ok(!('startBar' in s), 'a refused regenerate must not leave v1 fields behind');
+    assert.ok(!('endBar' in s));
+  }
+
+  await fetch(`${BASE}/api/blueprint`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(original),
+  });
+});

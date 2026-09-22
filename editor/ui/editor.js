@@ -4,7 +4,29 @@
  * Vanilla JS: renders the timeline (waveform, energy, sections, transitions),
  * drives the edit panel, and talks to editor/server/server.mjs. All
  * generation happens server-side -- this file only moves and edits JSON.
+ *
+ * Two blueprint schemas can be in the session and they do not share field
+ * names, so nothing here reads a blueprint field directly. Geometry, modes and
+ * transitions come from `blueprintModel.js`, which is the same module the
+ * server imports -- one place decides what a blueprint means, and this file
+ * only decides how to draw it.
  */
+
+import {
+  detectBlueprintSchema,
+  sectionsOf,
+  boundariesOf,
+  findSection,
+  findBoundary,
+  sectionStartBar,
+  sectionEndBarExclusive,
+  sectionDurationBars,
+  sectionMode,
+  normalizeTransitionOut,
+  assertV2Purity,
+  V2_SCHEMA,
+  SCENE_EFFECTS,
+} from './blueprintModel.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -30,7 +52,8 @@ const ALL_EFFECTS = Object.keys(EFFECT_DEFAULTS);
 const state = {
   song: null, // {id, title, audioPath, audioUrl}
   analysis: null, // music_analysis.json
-  blueprint: null, // level_blueprint.json
+  blueprint: null, // level_blueprint.json -- v1 or v2, whichever the session holds
+  blueprintSchema: null, // 'v1' | 'beatbound_level_blueprint_v2' | null
   patterns: [], // {id, name, mode, function, difficulty, lengthBars, family, energy, recovery, teach, mechanicIds}
   mechanics: [], // {id, mode, telegraphBeats, durationBeats}
   tuningMirror: null, // {breatherBeats, countdownSeconds, sceneBeats, source, missing[]} from src/tuning.ts
@@ -144,21 +167,32 @@ function downloadExport(endpoint, filename) {
 }
 
 /**
- * A blueprint from the director always has `sections`; `transitions` is
- * optional and the session's stored copy omits it entirely. Every reader walks
- * both as arrays, and `state.blueprint?.transitions.find(...)` does not save
- * them: `?.` short-circuits on a missing *blueprint*, not on a missing
- * *transitions*, so the call still landed on `undefined.find` and took
- * `refresh()` -- and with it the whole panel -- down on load. Normalize once
- * where the blueprint enters, rather than guarding a dozen call sites.
+ * Put a blueprint into the session, recording which schema it is.
+ *
+ * This replaced a `normalizeBlueprint` that bolted `transitions: []` onto every
+ * incoming blueprint. That shim stopped the `undefined.find` crash, but it did
+ * it by giving a v2 blueprint a v1 field it should never have -- a hybrid, and
+ * a hybrid is precisely the state the two conventions get mixed up in. The
+ * array-shaped reads it was protecting against are gone instead: every reader
+ * now goes through `blueprintModel.js`, which knows that a v2 blueprint's
+ * transitions live on the sections and that a missing `sections` means an empty
+ * level rather than a reason to throw.
+ *
+ * The blueprint itself is stored exactly as it arrived. Nothing here rewrites
+ * the artifact -- a v2 session stays v2 on the way in, through every edit, and
+ * back out to the compiler.
  */
-function normalizeBlueprint(bp) {
-  if (!bp || typeof bp !== 'object') return null;
-  return {
-    ...bp,
-    sections: Array.isArray(bp.sections) ? bp.sections : [],
-    transitions: Array.isArray(bp.transitions) ? bp.transitions : [],
-  };
+function setBlueprint(bp) {
+  state.blueprint = bp && typeof bp === 'object' ? bp : null;
+  state.blueprintSchema = detectBlueprintSchema(state.blueprint);
+  return state.blueprint;
+}
+
+/** True when the session's blueprint is v2. The editors branch on this rather
+ *  than on which fields happen to be present, so a half-migrated blueprint
+ *  cannot steer the UI into writing the wrong schema. */
+function sessionIsV2() {
+  return state.blueprintSchema === V2_SCHEMA;
 }
 
 async function direct() {
@@ -166,11 +200,17 @@ async function direct() {
   setStatus(`running the level director (seed ${seed})…`);
   try {
     const data = await postJson('/api/direct', { seed });
-    state.blueprint = normalizeBlueprint(data.blueprint);
-    state.selection = { type: 'section', id: state.blueprint.sections[0]?.id ?? null };
+    setBlueprint(data.blueprint);
+    const sections = sectionsOf(state.blueprint);
+    state.selection = { type: 'section', id: sections[0]?.id ?? null };
     refresh();
-    setStatus(`blueprint generated: ${state.blueprint.sections.length} sections, ` +
-      `${state.blueprint.transitions.length} transitions`);
+    // `/api/direct` is the v1 director, so its transitions are real rows.
+    // Counted through the model rather than read off `.transitions`, which does
+    // not exist on the other schema this function could be handed.
+    setStatus(
+      `blueprint generated: ${sections.length} sections, ` +
+        `${boundariesOf(state.blueprint).length} transitions`,
+    );
   } catch (err) {
     setStatus(`director failed: ${err.message}`, true);
   }
@@ -180,15 +220,40 @@ async function saveBlueprint() {
   return postJson('/api/blueprint', state.blueprint);
 }
 
+/**
+ * "Regenerate" means different things to the two schemas, so it asks for
+ * different things.
+ *
+ * v1 has per-section regeneration -- `regenerateSection` picks a new variant of
+ * one section in place. v2 has no such entry point: the director plans the
+ * whole song in one pass, and there is no section-level prompt. Asking the
+ * server for one returns `unsupported_for_v2`, and this shows that message
+ * rather than pretending. What v2 *can* do in place is repair: re-run the
+ * deterministic normalizer, which restores tiling, bar ranges and mode-change
+ * feasibility while leaving every choice -- and every hand edit -- alone.
+ */
 async function regenerateSection() {
   const section = selectedSection();
   if (!section) return;
   applySectionFromPanel();
   try {
     await saveBlueprint();
+    if (sessionIsV2()) {
+      setStatus(`repairing the blueprint around ${section.id}…`);
+      const data = await postJson('/api/regenerate', { mode: 'repair' });
+      setBlueprint(data.blueprint);
+      refresh();
+      const fixes = data.fixes ?? [];
+      setStatus(
+        fixes.length > 0
+          ? `blueprint repaired — ${fixes.length} fix(es): ${fixes[0]}${fixes.length > 1 ? ' …' : ''}`
+          : `blueprint repaired — nothing needed changing`,
+      );
+      return;
+    }
     setStatus(`regenerating ${section.id}…`);
     const data = await postJson('/api/regenerate', { sectionId: section.id });
-    state.blueprint = normalizeBlueprint(data.blueprint);
+    setBlueprint(data.blueprint);
     refresh();
     setStatus(`section ${section.id} regenerated (variant ${section.variant})`);
   } catch (err) {
@@ -209,15 +274,63 @@ async function applySection() {
   }
 }
 
+/**
+ * Write the seam back, in whichever schema the session holds.
+ *
+ * The two schemas store a transition in genuinely different places, and this is
+ * where that difference is confined:
+ *
+ *   v1 -- a row in `blueprint.transitions[]`, carrying the compiled geometry
+ *         (tailBars/headBars/hazardReduction) that `applyTransition` derives.
+ *   v2 -- `sections[i].transition_out`, an object on the *outgoing* section
+ *         holding intent only (`kind`, `reason`, `breather_beats`, `scene`).
+ *         Tail/head bars are not part of it: the v2 compiler derives them from
+ *         the two modes and the rules, so writing v1 geometry into a v2
+ *         blueprint would be inventing fields the compiler ignores and the
+ *         validator does not know about.
+ *
+ * So the v2 branch writes exactly the four fields the published JSON Schema
+ * defines, and leaves geometry to the compiler that owns it.
+ */
 async function applyTransition() {
   const t = selectedTransition();
   if (!t) return;
-  const from = state.blueprint.sections.find((s) => s.id === t.fromSection);
-  const to = state.blueprint.sections.find((s) => s.id === t.toSection);
+  const from = findSection(state.blueprint, t.fromId);
+  const to = findSection(state.blueprint, t.toId);
   if (!from || !to) return;
 
   const beats = Math.max(2, Math.min(16, parseInt($('tr-beats').value) || 4));
   const bpb = state.blueprint.song.timeSignature[0];
+  const checked = [...$('tr-scene').querySelectorAll('input:checked')].map(
+    (i) => i.dataset.effect
+  );
+
+  if (sessionIsV2()) {
+    // `kind` is read-only in this panel (it is derived from the mode pair), so
+    // preserve whatever the director set and only rewrite the editable parts.
+    const existing = normalizeTransitionOut(from.transition_out) ?? {};
+    from.transition_out = {
+      ...existing,
+      breather_beats: beats,
+      scene: checked.map((effect) => ({
+        effect,
+        params: { ...EFFECT_DEFAULTS[effect] },
+        durationBeats: 4,
+      })),
+    };
+    try {
+      await saveBlueprint();
+      refresh();
+      setStatus(
+        `transition ${from.id} → ${to.id} saved — breather ${beats} beats, ` +
+          `${checked.length} scene effect(s)`,
+      );
+    } catch (err) {
+      setStatus(`save failed: ${err.message}`, true);
+    }
+    return;
+  }
+
   // Mirror transitionGenerator's tail/head derivation. The tail must end
   // inside the section's fillable region (fillBars already ends exactly at
   // the runtime's breather boundary), never inside the no-spawn window.
@@ -225,9 +338,6 @@ async function applyTransition() {
   let tail = Math.min(Math.max(0, Math.floor(beats / bpb)), 2, Math.max(0, fromFill - 2));
   let head = Math.min(Math.max(0, Math.ceil(beats / bpb) - tail), 2, to.lengthBars);
 
-  const checked = [...$('tr-scene').querySelectorAll('input:checked')].map(
-    (i) => i.dataset.effect
-  );
   t.lengthBeats = beats;
   t.tailBars = tail;
   t.headBars = head;
@@ -555,11 +665,20 @@ function wireV2Panel() {
 // ---------------------------------------------------------------------------
 
 function selectedSection() {
-  return state.blueprint?.sections.find((s) => s.id === state.selection.id) ?? null;
+  return findSection(state.blueprint, state.selection.id);
 }
 
+/**
+ * The selected seam, as the model derives it.
+ *
+ * `?.transitions.find(...)` was the crash that started all of this: `?.`
+ * guards a missing *blueprint*, not a missing *transitions*, so on a v2
+ * blueprint -- which has no `transitions` at all -- the call landed on
+ * `undefined.find` and took `refresh()` down with it. The model returns null
+ * for a seam that is not there, which is the answer this needs.
+ */
 function selectedTransition() {
-  return state.blueprint?.transitions.find((t) => t.id === state.selection.id) ?? null;
+  return findBoundary(state.blueprint, state.selection.id);
 }
 
 function patternOptions(mode, selected) {
@@ -579,17 +698,74 @@ function familyOf(patternId) {
   return state.patterns.find((p) => p.id === patternId)?.family ?? 'manual';
 }
 
+/** Every pattern family that exists for a mode, so the v2 family list offers
+ *  only choices the compiler can actually honour. */
+function familiesForMode(mode) {
+  return [...new Set(state.patterns.filter((p) => p.mode === mode).map((p) => p.family))]
+    .filter(Boolean)
+    .sort();
+}
+
+/**
+ * The "Patterns" list, in whichever schema the session holds.
+ *
+ * v1 places concrete patterns, so a row is pattern + repeat + intensity. v2
+ * does not place patterns at all -- the compiler picks them, from the
+ * director's `pattern_families` and `pattern_ids`, because it knows each
+ * pattern's length and coverage better than the model does. So the editable
+ * thing for v2 is the *directive*: which families this section should draw
+ * from.
+ *
+ * That distinction is the whole point of the spec's "edit the higher-level
+ * directive instead". The previous version guarded `section.patterns` with
+ * `Array.isArray(...) ? ... : []`, which stopped the `undefined.forEach` crash
+ * but left a v2 section showing an empty list next to a "+ Add pattern" button
+ * that wrote to a field the v2 compiler never reads -- an edit the panel
+ * accepted and silently discarded.
+ */
 function renderPatternRows(section) {
   const ul = $('sec-patterns');
   ul.innerHTML = '';
+  const addBtn = $('sec-add-pattern');
   const keepRole = $('sec-keep-role').checked;
 
-  // A v1 blueprint section carries its `patterns`; a v2 one does not, because
-  // the compiler derives them from the director's section description. Absent
-  // is a real state here, not a bug to report -- but iterating it threw
-  // "Cannot read properties of undefined (reading 'forEach')" and took the
-  // whole refresh down, so the run was reported as failed after it had in fact
-  // compiled, published and validated.
+  if (sessionIsV2()) {
+    const selected = new Set(
+      Array.isArray(section.pattern_families) ? section.pattern_families : [],
+    );
+    const families = familiesForMode(section.mode);
+    if (families.length === 0) {
+      ul.innerHTML = `<li class="pat-empty">no pattern families for ${section.mode}</li>`;
+    }
+    for (const family of families) {
+      const li = document.createElement('li');
+      li.innerHTML =
+        `<label><input type="checkbox" class="pat-family" data-family="${family}"` +
+        `${selected.has(family) ? ' checked' : ''} /> ${family}</label>`;
+      ul.appendChild(li);
+    }
+
+    // `pattern_ids` is legal but discouraged -- the prompt tells the director
+    // to leave it empty. If one is set anyway it is shown, read-only: the
+    // compiler honours it, so hiding it would misrepresent the plan.
+    const ids = Array.isArray(section.pattern_ids) ? section.pattern_ids : [];
+    if (ids.length > 0) {
+      const li = document.createElement('li');
+      li.className = 'pat-pinned';
+      li.innerHTML = `<span title="pinned pattern ids are honoured by the compiler">pinned: ${ids.join(', ')}</span>`;
+      ul.appendChild(li);
+    }
+
+    // Adding a bare pattern id is a v1 gesture: v2 has no place to put one that
+    // the compiler will not treat as a hard pin. Disabled rather than removed,
+    // so the panel keeps its shape and the tooltip can say why.
+    addBtn.disabled = true;
+    addBtn.title = 'v2 picks patterns from the families above; pinning individual ids is not editable here';
+    return;
+  }
+
+  addBtn.disabled = false;
+  addBtn.title = '';
   const patterns = Array.isArray(section.patterns) ? section.patterns : [];
 
   patterns.forEach((p, i) => {
@@ -618,21 +794,66 @@ function populateSectionEditor(section) {
   $('transition-editor').classList.add('hidden');
   $('section-editor').classList.remove('hidden');
 
+  const v2 = sessionIsV2();
+  const startBar = sectionStartBar(section);
+  const endBar = sectionEndBarExclusive(section);
+
   $('sec-id').textContent = section.id;
-  $('sec-mode').value = section.mode;
-  $('sec-function').value = section.function;
+  $('sec-mode').value = sectionMode(section) ?? '';
+  $('sec-function').value = section.function ?? '';
   $('sec-difficulty').value = section.difficulty;
   $('sec-diff-label').textContent = section.difficulty;
-  // v1 spells these `startBar`/`endBar` (endBar inclusive); a v2 blueprint uses
-  // `start_bar`/`end_bar_exclusive`. Read whichever is present rather than
-  // rendering the string "undefined" into the field.
-  $('sec-start').value = section.startBar ?? section.start_bar ?? '';
-  $('sec-end').value = section.endBar ?? section.end_bar_exclusive ?? '';
-  $('sec-breather').textContent =
-    section.breatherFromBeat != null
+
+  // Geometry through the model, so a v2 section shows `end_bar_exclusive` in
+  // the end field rather than the string "undefined" -- and, more importantly,
+  // so the number shown is the same half-open bound the compiler will use.
+  $('sec-start').value = startBar ?? '';
+  $('sec-end').value = endBar ?? '';
+
+  // A v2 blueprint's sections must tile the song: each one starts exactly where
+  // the last ended. That makes `start_bar` *derived*, not free -- it is the
+  // previous section's `end_bar_exclusive` -- so editing it in isolation is
+  // meaningless. Only the end is offered, and moving it moves the next
+  // section's start, which is what tiling means. v1 has no such invariant (its
+  // sections are independent, and `lengthBars` is stored), so it keeps both.
+  $('sec-start').disabled = v2;
+  $('sec-start').title = v2
+    ? 'a v2 section starts where the previous one ended — edit the section before this one to move this boundary'
+    : '';
+  $('sec-end').title = v2
+    ? 'end_bar_exclusive — one past this section’s last bar. Moving it moves the next section’s start.'
+    : '';
+
+  const keepRoleRow = $('sec-keep-role').closest('.row');
+  if (keepRoleRow) keepRoleRow.classList.toggle('hidden', v2);
+
+  $('sec-breather').textContent = v2
+    ? breatherNote(section)
+    : section.breatherFromBeat != null
       ? `breather: beats ≥ ${section.breatherFromBeat} do not spawn (mode change next)`
       : '';
+
   renderPatternRows(section);
+}
+
+/**
+ * What to say about a v2 section's breather.
+ *
+ * v1 sections carry `breatherFromBeat` because the v1 director computes it up
+ * front. v2 sections do not: the breather is a property of the *seam*, derived
+ * by the compiler from the two modes, so it is reported from the boundary
+ * rather than from a field the section does not have.
+ */
+function breatherNote(section) {
+  const next = sectionsOf(state.blueprint)[
+    sectionsOf(state.blueprint).findIndex((s) => s.id === section.id) + 1
+  ];
+  if (!next) return 'last section — no outgoing transition';
+  if (sectionMode(next) === sectionMode(section)) {
+    return `next section stays ${sectionMode(section)} — no breather needed`;
+  }
+  const beats = effectiveBreatherBeats();
+  return `mode change to ${sectionMode(next)} next — the last ${beats} beats do not spawn`;
 }
 
 function populateTransitionEditor(t) {
@@ -640,21 +861,62 @@ function populateTransitionEditor(t) {
   $('section-editor').classList.add('hidden');
   $('transition-editor').classList.remove('hidden');
 
-  $('tr-id').textContent = t.id;
-  $('tr-kind').textContent = t.kind;
-  $('tr-beats').value = t.lengthBeats;
+  const v2 = sessionIsV2();
+  $('tr-id').textContent = `${t.fromId} → ${t.toId}`;
+
+  // v1 stores a compiled `kind` and a `lengthBeats`; v2 stores intent --
+  // `kind`, `reason`, `breather_beats`, `scene`. Same three controls, two
+  // different fields behind them, so each is read through the model.
+  $('tr-kind').textContent = v2
+    ? t.kind ?? (t.changesMode ? `${sectionMode(t.fromSection)} → ${sectionMode(t.toSection)}` : 'same mode')
+    : t.kind ?? '—';
+  $('tr-beats').value = v2 ? t.breatherBeats ?? effectiveBreatherBeats() : t.lengthBeats ?? 4;
 
   const have = new Set((t.scene ?? []).map((e) => e.effect));
-  $('tr-scene').innerHTML = ALL_EFFECTS.map(
+  $('tr-scene').innerHTML = SCENE_EFFECTS.map(
     (effect) =>
       `<li><label><input type="checkbox" data-effect="${effect}"${have.has(effect) ? ' checked' : ''} />` +
       ` ${effect}</label></li>`
   ).join('');
 }
 
+/**
+ * Write the section panel back onto the selected section, in the session's
+ * schema.
+ *
+ * The v2 branch writes only fields the published JSON Schema defines --
+ * `mode`, `function`, `difficulty`, `end_bar_exclusive`, `pattern_families` --
+ * and deliberately does not touch `start_bar`: v2 sections must tile, so a
+ * section's start is the previous section's end. Writing it here would let the
+ * panel create the gap the normalizer would then have to close, and the user
+ * would see a different number than they typed.
+ *
+ * It also does not write v1's `lengthBars`, `source` or `patterns`. Those are
+ * the fields that turned a v2 session into a hybrid.
+ */
 function applySectionFromPanel() {
   const section = selectedSection();
   if (!section) return;
+
+  if (sessionIsV2()) {
+    section.mode = $('sec-mode').value;
+    section.function = $('sec-function').value;
+    section.difficulty = parseInt($('sec-difficulty').value);
+
+    const startBar = sectionStartBar(section);
+    const typedEnd = parseInt($('sec-end').value);
+    if (Number.isFinite(typedEnd) && typedEnd > startBar) {
+      section.end_bar_exclusive = typedEnd;
+    }
+
+    const families = [...$('sec-patterns').querySelectorAll('input.pat-family:checked')].map(
+      (i) => i.dataset.family,
+    );
+    if (families.length > 0) section.pattern_families = families;
+    else delete section.pattern_families;
+    return;
+  }
+
   const keepRole = $('sec-keep-role').checked;
 
   section.mode = $('sec-mode').value;
@@ -722,6 +984,69 @@ function hatch(ctx, x, y, w, h, color, spacing = 7) {
   ctx.restore();
 }
 
+/** Clip a string for a timeline label without cutting mid-nothing. */
+function truncate(s, n) {
+  const str = String(s ?? '');
+  return str.length <= n ? str : `${str.slice(0, n - 1)}…`;
+}
+
+/**
+ * The pattern ids a section names, from either schema.
+ *
+ * v1 spells them `patterns[].patternId`; v2 spells them `pattern_ids` and
+ * usually leaves that empty on purpose -- the prompt tells the director to
+ * prefer `pattern_families` and let the compiler pick the specific patterns,
+ * because it knows each pattern's length and coverage better. So this is often
+ * empty for v2, which is a real answer and not a failure: the mode-swap lead-in
+ * then falls back to zero telegraph, which is what the runtime does too.
+ */
+function patternsNamedBy(section) {
+  if (Array.isArray(section?.pattern_ids)) return section.pattern_ids;
+  if (Array.isArray(section?.patterns)) return section.patterns.map((p) => p.patternId);
+  return [];
+}
+
+/**
+ * Mirror of `breatherBeats()` in editor/generation/blueprint.js: the runtime's
+ * no-spawn window before a mode change is the larger of the configured floor
+ * and the countdown converted to beats. Read from the live tuning the server
+ * reports, so the editor draws the window the game will actually leave rather
+ * than a number this file made up.
+ */
+function effectiveBreatherBeats() {
+  const bpm = state.analysis?.tempo?.bpm ?? state.blueprint?.song?.bpm ?? 120;
+  const floor = state.tuning?.breatherBeats ?? state.tuningMirror?.breatherBeats ?? 6;
+  const countdown = state.tuning?.countdownSeconds ?? state.tuningMirror?.countdownSeconds ?? 3;
+  return Math.max(floor, Math.max(1, Math.round((countdown * bpm) / 60)));
+}
+
+/**
+ * The third line of a section's timeline label.
+ *
+ * v1 lists the patterns it placed (`AP08x2 AP03x1`). v2 has no `patterns` --
+ * the compiler derives them from the director's intent -- so the honest thing
+ * to show is the *higher-level directive* it does carry: the pattern families
+ * it asked for, and any explicitly named pattern ids. That is what the spec
+ * means by showing the directive rather than its derived output, and it is also
+ * the only one of the two the user can meaningfully edit.
+ *
+ * @returns {string|null} null when there is nothing to print, so the caller can
+ *   skip the draw instead of measuring `undefined.length`.
+ */
+function sectionDetailLine(s) {
+  const families = Array.isArray(s?.pattern_families) ? s.pattern_families : [];
+  const ids = Array.isArray(s?.pattern_ids) ? s.pattern_ids : [];
+  const patterns = Array.isArray(s?.patterns) ? s.patterns : [];
+
+  const parts = [];
+  if (families.length > 0) parts.push(families.join(' '));
+  if (ids.length > 0) parts.push(ids.join(' '));
+  if (parts.length === 0 && patterns.length > 0) {
+    parts.push(patterns.map((p) => `${p.patternId}x${p.repeat}`).join(' '));
+  }
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
 function drawTimeline() {
   const canvas = $('timeline-canvas');
   const dpr = window.devicePixelRatio || 1;
@@ -765,11 +1090,28 @@ function drawTimeline() {
   ctx.setLineDash([]);
 
   // Sections.
+  //
+  // Geometry comes from the model, not from field names, because the two
+  // schemas disagree about what a section's bars are. The width used to be
+  // `(s.endBar - s.startBar + 1) * pxPerBar`, which is v1's *inclusive* endBar
+  // -- against a v2 section `s.endBar` is `undefined`, so the width was `NaN`
+  // and `fillRect(NaN, ...)` is silently a no-op in canvas. Every v2 section
+  // vanished with no exception and nothing in the console, which is why the
+  // symptom was "the timeline is empty" rather than a stack trace.
+  //
+  // `sectionDurationBars` is `end_bar_exclusive - start_bar` with no `+1`, and
+  // returns null rather than NaN for a section whose bars cannot be read -- so
+  // a genuinely broken section is skipped visibly instead of silently.
   const sel = state.selection;
-  for (const s of state.blueprint?.sections ?? []) {
-    const x = xForBar(s.startBar, pxPerBar);
-    const wSec = (s.endBar - s.startBar + 1) * pxPerBar;
-    const color = MODE_COLORS[s.mode] || '#888';
+  for (const s of sectionsOf(state.blueprint)) {
+    const startBar = sectionStartBar(s);
+    const durationBars = sectionDurationBars(s);
+    if (startBar === null || durationBars === null) continue;
+
+    const x = xForBar(startBar, pxPerBar);
+    const wSec = durationBars * pxPerBar;
+    const mode = sectionMode(s);
+    const color = MODE_COLORS[mode] || '#888';
     const isSel = sel.type === 'section' && sel.id === s.id;
 
     ctx.fillStyle = color + '2e';
@@ -781,84 +1123,92 @@ function drawTimeline() {
     ctx.textAlign = 'left';
     ctx.fillStyle = color;
     ctx.font = 'bold 12px Consolas, monospace';
-    ctx.fillText(`${s.id} ${s.mode}`, x + 6, LANE_TOP + 20);
+    ctx.fillText(`${s.id} ${mode}`, x + 6, LANE_TOP + 20);
     ctx.fillStyle = '#dfe5f5';
     ctx.font = '11px Consolas, monospace';
     ctx.fillText(`d${s.difficulty} ${s.function}`, x + 6, LANE_TOP + 34);
-    if (wSec > 150 && s.patterns.length > 0) {
+    const detail = sectionDetailLine(s);
+    if (wSec > 150 && detail) {
       ctx.fillStyle = '#8a93b0';
-      ctx.fillText(
-        s.patterns.map((p) => `${p.patternId}x${p.repeat}`).join(' '),
-        x + 6,
-        LANE_TOP + 48
-      );
+      ctx.fillText(detail, x + 6, LANE_TOP + 48);
     }
   }
 
-  // Transitions: labels in the strip, hatched zones over the sections.
-  for (const t of state.blueprint?.transitions ?? []) {
-    const to = state.blueprint.sections.find((s) => s.id === t.toSection);
-    if (!to) continue;
-    const bx = xForBar(to.startBar, pxPerBar);
-    const tailW = t.tailBars * pxPerBar;
-    const headW = t.headBars * pxPerBar;
-    if (tailW > 0) hatch(ctx, bx - tailW, LANE_TOP + 4, tailW, laneH - 8, '#ffffff');
-    if (headW > 0) hatch(ctx, bx, LANE_TOP + 4, headW, laneH - 8, MODE_COLORS[to.mode] || '#fff');
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '10px Consolas, monospace';
-    ctx.fillText(`${t.kind.replace(/_TO_/, ' → ')} · ${t.lengthBeats}b`, bx, 12);
-
-    if (sel.type === 'transition' && sel.id === t.id) {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(bx - tailW, LANE_TOP + 4, tailW + headW, laneH - 8);
-    }
-  }
-
-  // Breather zones -- a separate runtime fact from the transition: from
-  // breatherFromBeat to the section end, nothing spawns at all. Beat-precise
-  // (the boundary may cut mid-bar); drawn with its own colour so it never
-  // reads as part of the transition hatch.
+  // Boundaries -- one pass over the seams, for both schemas.
+  //
+  // v1 keeps its transitions in their own array, so this used to walk
+  // `blueprint.transitions`; v2 has no such array and stores the seam on the
+  // outgoing section as `transition_out`. `boundariesOf` derives one list from
+  // either, which is what lets the panel and the canvas agree on what a seam is
+  // without either of them knowing which schema it is looking at.
+  //
+  // What differs is *geometry*. A v1 transition row carries compiled tail/head
+  // bars, so it can be hatched. A v2 `transition_out` is intent only -- the
+  // compiler derives tail/head from the two modes and the rules -- so a v2 seam
+  // is drawn as what it actually is: the breather the runtime will leave, the
+  // mode-swap marker, and the scene effects the director asked for. Hatching a
+  // v2 seam with geometry the editor guessed would be drawing a number the
+  // compiler never agreed to.
   const beatX = (beat) => PAD_L + (beat / bpb) * pxPerBar;
-  for (const s of state.blueprint?.sections ?? []) {
-    if (s.breatherFromBeat == null) continue;
-    const bx = beatX(s.breatherFromBeat);
-    const ex = xForBar(s.endBar + 1, pxPerBar);
-    hatch(ctx, bx, LANE_TOP + 4, Math.max(0, ex - bx), laneH - 8, '#b8aef0', 9);
-    ctx.strokeStyle = '#b8aef0';
-    ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    ctx.moveTo(bx, LANE_TOP + 4);
-    ctx.lineTo(bx, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#b8aef0';
-    ctx.font = '10px Consolas, monospace';
-    ctx.fillText('breather', bx + 3, LANE_TOP + 12);
-  }
-
-  // Mode-swap tick + colour wipe: the mode becomes live at
-  // sectionStart - leadInBeats (longest mechanic telegraph in the incoming
-  // section, capped at one bar) and the wipe runs sceneBeats from there.
-  // Both come from the live game source via /api/state, never from here.
   const sceneBeats = state.tuningMirror?.sceneBeats ?? null;
   const mechTelegraph = new Map(state.mechanics.map((m) => [m.id, m.telegraphBeats ?? 0]));
-  for (const t of state.blueprint?.transitions ?? []) {
-    const to = state.blueprint.sections.find((s) => s.id === t.toSection);
-    if (!to) continue;
-    const startBeat = (to.startBar - 1) * bpb;
+  const breatherB = effectiveBreatherBeats();
+
+  for (const b of boundariesOf(state.blueprint)) {
+    const to = b.toSection;
+    const from = b.fromSection;
+    const toStart = sectionStartBar(to);
+    const fromEnd = sectionEndBarExclusive(from);
+    if (toStart === null || fromEnd === null) continue;
+
+    const bx = xForBar(toStart, pxPerBar);
+    const isSel = sel.type === 'transition' && sel.id === b.id;
+
+    // v1: hatched tail/head zones from the compiled transition row.
+    if (!sessionIsV2()) {
+      const tailW = (b.tailBars ?? 0) * pxPerBar;
+      const headW = (b.headBars ?? 0) * pxPerBar;
+      if (tailW > 0) hatch(ctx, bx - tailW, LANE_TOP + 4, tailW, laneH - 8, '#ffffff');
+      if (headW > 0) hatch(ctx, bx, LANE_TOP + 4, headW, laneH - 8, MODE_COLORS[sectionMode(to)] || '#fff');
+    }
+
+    // Breather: the runtime stops spawning for the last `breatherB` beats
+    // before a mode change. Mirrors `breatherForSection` in
+    // editor/generator/breather.js, which computes `fromBeat` as
+    // `endBar * beatsPerBar - breatherBeats` on inclusive bars -- hence
+    // `end_bar_exclusive - 1` here. Beat-precise, because the boundary can cut
+    // mid-bar, and drawn in its own colour so it never reads as the hatch.
+    if (b.changesMode && breatherB > 0) {
+      const fromBeat = (fromEnd - 1) * bpb - breatherB;
+      const bxs = beatX(fromBeat);
+      const ex = xForBar(fromEnd, pxPerBar);
+      hatch(ctx, bxs, LANE_TOP + 4, Math.max(0, ex - bxs), laneH - 8, '#b8aef0', 9);
+      ctx.strokeStyle = '#b8aef0';
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(bxs, LANE_TOP + 4);
+      ctx.lineTo(bxs, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#b8aef0';
+      ctx.font = '10px Consolas, monospace';
+      ctx.fillText('breather', bxs + 3, LANE_TOP + 12);
+    }
+
+    // Mode-swap tick + colour wipe: the mode becomes live at
+    // sectionStart - leadInBeats (longest mechanic telegraph in the incoming
+    // section, capped at one bar) and the wipe runs sceneBeats from there.
+    // Both come from the live game source via /api/state, never from here.
+    const startBeat = (toStart - 1) * bpb;
     let maxTelegraph = 0;
-    for (const pl of to.patterns ?? []) {
-      const entry = state.patterns.find((p) => p.id === pl.patternId);
+    for (const patternId of patternsNamedBy(to)) {
+      const entry = state.patterns.find((p) => p.id === patternId);
       for (const mid of entry?.mechanicIds ?? []) {
         maxTelegraph = Math.max(maxTelegraph, mechTelegraph.get(mid) ?? 0);
       }
     }
-    const leadIn = Math.min(maxTelegraph, bpb);
-    const swapBeat = startBeat - leadIn;
+    const swapBeat = startBeat - Math.min(maxTelegraph, bpb);
     ctx.strokeStyle = '#ffffff';
     ctx.globalAlpha = 0.85;
     ctx.lineWidth = 1.5;
@@ -869,8 +1219,28 @@ function drawTimeline() {
     ctx.globalAlpha = 1;
     if (Number.isFinite(sceneBeats) && sceneBeats > 0) {
       const ww = (sceneBeats / bpb) * pxPerBar;
-      ctx.fillStyle = MODE_COLORS[to.mode] + '88';
+      ctx.fillStyle = (MODE_COLORS[sectionMode(to)] || '#fff') + '88';
       ctx.fillRect(beatX(swapBeat), LANE_TOP - 4, ww, 4);
+    }
+
+    // The label. v1 names the compiled kind; v2 shows the director's own words
+    // when it wrote any, because `transition_out` is a note to a human as much
+    // as it is a directive to the compiler.
+    const label = b.kind
+      ? `${String(b.kind).replace(/_TO_/, ' → ')}${b.breatherBeats ? ` · ${b.breatherBeats}b` : ''}`
+      : b.reason
+        ? truncate(b.reason, 34)
+        : `${sectionMode(from) ?? '?'} → ${sectionMode(to) ?? '?'}`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = isSel ? '#ffffff' : '#c8cfe6';
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillText(label, bx, 12);
+
+    if (isSel) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      const selW = Math.max(pxPerBar * 0.5, 6);
+      ctx.strokeRect(bx - selW, LANE_TOP + 4, selW * 2, laneH - 8);
     }
   }
 
@@ -965,19 +1335,32 @@ function onTimelineClick(ev) {
   if (!state.analysis) return;
   const { bar } = timelineHit(ev, $('timeline-canvas'));
 
-  // Transitions take priority over sections (their zones overlap).
-  for (const t of state.blueprint?.transitions ?? []) {
-    const to = state.blueprint.sections.find((s) => s.id === t.toSection);
-    if (!to) continue;
-    const lo = to.startBar - t.tailBars;
-    const hi = to.startBar + t.headBars - 1;
+  // Boundaries take priority over sections (their zones overlap).
+  //
+  // The clickable width differs by schema for the same reason the drawing does:
+  // a v1 seam has real tail/head bars to hit, while a v2 seam has none -- the
+  // compiler derives them -- so the target is a symmetric one-bar window on
+  // either side of the boundary. Without this the v2 seam was unclickable,
+  // because `to.startBar - t.tailBars` on a boundary with no `tailBars` is
+  // `NaN`, and every comparison against `NaN` is false.
+  for (const b of boundariesOf(state.blueprint)) {
+    const toStart = sectionStartBar(b.toSection);
+    if (toStart === null) continue;
+    const lo = sessionIsV2() ? toStart - 1 : toStart - (b.tailBars ?? 0);
+    const hi = sessionIsV2() ? toStart : toStart + (b.headBars ?? 0) - 1;
     if (bar >= lo && bar <= hi) {
-      selectTransition(t.id);
+      selectTransition(b.id);
       return;
     }
   }
-  for (const s of state.blueprint?.sections ?? []) {
-    if (bar >= s.startBar && bar <= s.endBar) {
+  for (const s of sectionsOf(state.blueprint)) {
+    const startBar = sectionStartBar(s);
+    const endBar = sectionEndBarExclusive(s);
+    if (startBar === null || endBar === null) continue;
+    // `end_bar_exclusive` is one past the last bar, so the section owns
+    // `[startBar, endBar - 1]` -- the `- 1` here is the half-open convention,
+    // not an off-by-one.
+    if (bar >= startBar && bar <= endBar - 1) {
       selectSection(s.id);
       return;
     }
@@ -1036,6 +1419,21 @@ function refresh() {
   // Tuning mirror + consistency notes from the live game source.
   const warnEl = $('consistency-warn');
   const lines = [...state.consistencyNotes];
+
+  // Which schema is in the session, and a loud complaint if it is a hybrid.
+  //
+  // The mixed state -- v2 sections next to v1 `transitions` or `patterns` -- is
+  // the one thing this whole exercise exists to make impossible, so it is
+  // reported to a human the moment it appears rather than at the moment it
+  // breaks playback. `assertV2Purity` is the same function the test suite uses,
+  // so the banner and the test cannot disagree about what "hybrid" means.
+  if (state.blueprint) {
+    const hybrid = assertV2Purity(state.blueprint);
+    if (hybrid.length > 0) {
+      lines.push(...hybrid.map((h) => `blueprint schema: ${h}`));
+    }
+  }
+
   if (state.tuningMirror?.breatherBeats != null) {
     lines.push(
       `game tuning: breather ${state.tuningMirror.breatherBeats}b · scene wipe ` +
@@ -1197,12 +1595,25 @@ async function init() {
     renderV2Modes();
     if (st.hasAnalysis) state.analysis = await api('/api/analysis');
     if (st.hasBlueprint) {
-      state.blueprint = normalizeBlueprint(await api('/api/blueprint'));
-      state.selection = { type: 'section', id: state.blueprint.sections[0]?.id ?? null };
+      // `st.blueprintSchema` is the server's read of the same blueprint, and
+      // `setBlueprint` re-derives it here rather than trusting the field -- if
+      // the two ever disagreed, the UI would be the one that is wrong, and
+      // silently so. Deriving on both sides is what makes that impossible.
+      setBlueprint(await api('/api/blueprint'));
+      const sections = sectionsOf(state.blueprint);
+      state.selection = { type: 'section', id: sections[0]?.id ?? null };
+      if (st.blueprintSchema && st.blueprintSchema !== state.blueprintSchema) {
+        state.consistencyNotes.push(
+          `the server called this blueprint "${st.blueprintSchema}" but it reads as ` +
+            `"${state.blueprintSchema}" here — the two ends disagree about the schema`,
+        );
+      }
     }
+    const restoredSections = sectionsOf(state.blueprint).length;
     setStatus(
       state.blueprint
-        ? `session restored: ${state.blueprint.song.title} · ${state.blueprint.sections.length} sections`
+        ? `session restored: ${state.blueprint.song?.title ?? 'untitled'} · ${restoredSections} sections ` +
+          `(${state.blueprintSchema === V2_SCHEMA ? 'v2' : 'v1'} blueprint)`
         : state.song
           ? `song loaded: ${state.song.title} — run analysis next`
           : 'ready — upload a song to begin'

@@ -22,11 +22,14 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 import { readTuningMirror, loadRulesWithTuning, TUNING_FALLBACK } from '../generation/rules.js';
-import { registerInIndex as registerInIndexShared, generateLevel, MANIFEST_SCHEMA_VERSION } from '../generation/pipeline.js';
+import { registerInIndex as registerInIndexShared, generateLevel, loadArtifacts, MANIFEST_SCHEMA_VERSION } from '../generation/pipeline.js';
 import { PRESETS, PRESET_IDS, describeRequest } from '../generation/presets.js';
 import { resolveGenerationRequest } from './requests.js';
 import { loadCatalog, buildGameplayContext, GAMEPLAY_CONTEXT_SCHEMA_VERSION } from '../generation/gameplayContext.js';
 import { describeConfig, loadLlmConfig } from '../generation/llm/config.js';
+// The same module the browser loads. Schema detection lives in exactly one
+// place so the server cannot disagree with the UI about what is in the session.
+import { detectBlueprintSchema, isV2, V2_SCHEMA } from '../ui/blueprintModel.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const UI_DIR = path.join(ROOT, 'editor', 'ui');
@@ -49,10 +52,27 @@ await fs.mkdir(OUTPUT_DIR, { recursive: true });
 const state = {
   song: null, // { id, title, file, audioPath, audioUrl }
   analysis: null, // music_analysis.json object
-  blueprint: null, // level_blueprint.json object
+  blueprint: null, // level_blueprint.json object -- v1 or v2, see below
+  blueprintSchema: null, // 'v1' | 'beatbound_level_blueprint_v2' | null
   levelFile: null, // <slug>.level.json inside the library
   seed: 42,
 };
+
+/**
+ * Put a blueprint into the session, recording which schema it is.
+ *
+ * `state.blueprint` is one slot that can hold either schema, and for a long
+ * time nothing recorded which -- so `/api/generate` handed v2 blueprints to the
+ * v1 compiler and the failure surfaced as an unrelated-looking error deep
+ * inside it. The schema is derived rather than passed in, so a caller cannot
+ * record it wrongly, and it is recomputed on every write rather than cached, so
+ * it cannot go stale against the blueprint it describes.
+ */
+function setBlueprint(bp) {
+  state.blueprint = bp;
+  state.blueprintSchema = detectBlueprintSchema(bp);
+  return bp;
+}
 
 async function restoreState() {
   try {
@@ -61,7 +81,7 @@ async function restoreState() {
   } catch {}
   try {
     const b = JSON.parse(await fs.readFile(path.join(OUTPUT_DIR, 'level_blueprint.json'), 'utf8'));
-    state.blueprint = b;
+    setBlueprint(b);
     state.seed = b.seed ?? state.seed;
   } catch {}
   if (state.blueprint) {
@@ -249,6 +269,121 @@ async function loadGeneratorModules() {
 }
 
 /**
+ * The v2 modules, which are a different set from the v1 ones above.
+ *
+ * `blueprint.js` is the schema (validator + normalizer) and `patternIndex.js`
+ * is shared. Loaded lazily for the same reason the v1 group is: these pull in
+ * the whole generation tree, and the editor's hot paths -- `/api/state`,
+ * static files -- must not pay for that on every request.
+ */
+async function loadV2Modules() {
+  const [blueprintMod, indexMod] = await Promise.all([
+    import('../generation/blueprint.js'),
+    import('../generator/patternIndex.js'),
+  ]);
+  return { blueprintMod, indexMod };
+}
+
+/**
+ * Apply a hand-edited v2 blueprint: repair, compile, publish, validate.
+ *
+ * This calls `generateLevel` with the session's blueprint rather than
+ * re-implementing compile-and-publish here, and that is the whole point. The
+ * pipeline skips layer 3 when a blueprint is supplied (`pipeline.js:513`) and
+ * runs everything after it -- structural repair, the authoritative compiler,
+ * the library write, the index registration, the game's own level report. So an
+ * AI-generated plan and a hand-edited one go through one implementation and
+ * cannot drift apart. A second compile path here is exactly how the two would
+ * start disagreeing about bar conventions.
+ *
+ * No model is involved: a supplied blueprint skips the director, and with no
+ * `client` the model-repair callback is never built either. Deterministic
+ * repair still runs, which is what makes an edited blueprint legal again.
+ */
+async function applyV2Blueprint(res, opts) {
+  const blueprint = state.blueprint;
+  if (opts.title) blueprint.song.title = opts.title;
+  const levelId = opts.level_id ?? blueprint.song?.id;
+  if (!levelId) {
+    return json(res, 400, { error: 'the blueprint has no song.id to name the level after' });
+  }
+
+  const result = await generateLevel({
+    projectRoot: ROOT,
+    outputDir: OUTPUT_DIR,
+    libraryDir: LIB_DIR,
+    // The blueprint's own request block, not a fresh one: it is part of the
+    // artifact, and overriding it would compile something the manifest does not
+    // describe.
+    request: blueprint.request,
+    blueprint,
+    levelId,
+    repair: false,
+    courses: opts.courses !== false,
+    fairness: opts.fairness === true,
+    keepOnFailure: opts.keep_on_failure === true,
+  });
+
+  // Keep the session in step with what just landed, so /api/check and the
+  // playtest button point at the new file -- and so the repaired blueprint the
+  // pipeline hands back (tiling restored, ranges clamped) is what the editor
+  // shows next, rather than the pre-repair copy the user typed.
+  if (result.files?.level) {
+    state.levelFile = result.levelFile;
+    setBlueprint(result.blueprint);
+    await writeBlueprintFile();
+  }
+
+  // The validators' own reports, read at the level each actually nests its
+  // verdicts under. `validateAll` returns `{ok, level:{errors,warnings}, ...}`
+  // and `repairBlueprint` returns `{validation:{errors,warnings}, ...}`;
+  // reading `.errors` off either top level is `undefined`, and `?? []` turns
+  // that into a confident "0 errors" for a level that failed.
+  //
+  // The structural report is the fallback rather than the primary because a
+  // blueprint that fails *structural* validation is never published, so
+  // `validation` is `null` -- and without this the route would answer 200 with
+  // no level file, which reads as success to everything downstream.
+  const structuralErrors = result.structural?.validation?.errors ?? [];
+  const errors = result.validation?.level?.errors ?? structuralErrors;
+  const warnings =
+    result.validation?.level?.warnings ?? result.structural?.validation?.warnings ?? [];
+
+  if (!result.ok || errors.length > 0) {
+    return json(res, 422, {
+      ok: false,
+      errors:
+        errors.length > 0
+          ? errors
+          : ['the blueprint did not compile into a publishable level, and no validator reported why'],
+      warnings,
+      levelFile: result.levelFile ?? null,
+      schema: state.blueprintSchema,
+      structural: result.structural ?? null,
+    });
+  }
+
+  return json(res, 200, {
+    ok: true,
+    levelFile: result.levelFile,
+    warnings,
+    level: result.level,
+    schema: state.blueprintSchema,
+    validation: result.validation ?? null,
+    structural: result.structural ?? null,
+  });
+}
+
+/** Persist the session's blueprint where a restart will find it again. One
+ *  writer, so the file cannot disagree with `state.blueprint`. */
+async function writeBlueprintFile() {
+  await fs.writeFile(
+    path.join(OUTPUT_DIR, 'level_blueprint.json'),
+    JSON.stringify(state.blueprint, null, 2),
+  );
+}
+
+/**
  * The three rules files with the live game tuning injected over them.
  *
  * The comparison itself is `loadRulesWithTuning`'s; all this adds is capturing
@@ -328,6 +463,11 @@ const server = createServer(async (req, res) => {
         seed: state.seed,
         hasAnalysis: state.analysis !== null,
         hasBlueprint: state.blueprint !== null,
+        // Which schema the session's blueprint is, so the UI can pick its
+        // editors before it renders anything. Recomputed here rather than read
+        // off `state` so a blueprint written by a path that forgot
+        // `setBlueprint` still reports honestly instead of reporting stale.
+        blueprintSchema: detectBlueprintSchema(state.blueprint),
         levelFile: state.levelFile,
         hasDirectorContext: existsSync(DIRECTOR_OUTPUT),
         hasDirectorContextV2: existsSync(DIRECTOR_V2_OUTPUT),
@@ -360,7 +500,7 @@ const server = createServer(async (req, res) => {
         audioUrl: `/api/audio/${slug}.${ext}`,
       };
       state.analysis = null;
-      state.blueprint = null;
+      setBlueprint(null);
       state.levelFile = null;
       // Stale analysis exports must not be downloadable against the new song.
       for (const stale of [V2_OUTPUT, LEGACY_OUTPUT, DIRECTOR_OUTPUT, DIRECTOR_V2_OUTPUT]) {
@@ -477,41 +617,89 @@ const server = createServer(async (req, res) => {
         path.join(OUTPUT_DIR, 'level_blueprint.json'),
         JSON.stringify(blueprint, null, 2)
       );
-      state.blueprint = blueprint;
+      setBlueprint(blueprint);
       return json(res, 200, { ok: true, blueprint, seed: state.seed });
     }
 
     // ---- save hand-edited blueprint ----
     if (req.method === 'POST' && p === '/api/blueprint') {
       const blueprint = await readJsonBody(req);
-      state.blueprint = blueprint;
+      setBlueprint(blueprint);
       await fs.writeFile(
         path.join(OUTPUT_DIR, 'level_blueprint.json'),
         JSON.stringify(blueprint, null, 2)
       );
-      return json(res, 200, { ok: true });
+      return json(res, 200, { ok: true, schema: state.blueprintSchema });
     }
 
     // ---- regenerate one section ----
+    //
+    // v1 only, and deliberately so. The v2 director writes the whole plan in a
+    // single pass -- there is no per-section prompt and no section-level entry
+    // point into the pipeline. Synthesising one here would be a second
+    // level-design algorithm living in the server, which is the thing the
+    // pipeline exists to prevent. Worse, `regenerateSection` reads v1 field
+    // names, so handing it a v2 blueprint returns sections carrying `startBar`
+    // alongside `start_bar`: a hybrid, and the mixed state the editor is
+    // supposed to make impossible. So a v2 session is told what it can do
+    // instead of being quietly corrupted.
+    //
+    // `mode: 'repair'` is the v2-native action that *is* safe, and it is the
+    // one that maps onto what this button means for v2: re-run the
+    // deterministic normalizer, which restores tiling, bar ranges and
+    // mode-change feasibility in place while leaving every choice the director
+    // made -- and every hand edit -- alone.
     if (req.method === 'POST' && p === '/api/regenerate') {
       if (!state.blueprint) return json(res, 400, { error: 'no blueprint yet' });
       if (!state.analysis) return json(res, 400, { error: 'no analysis yet' });
-      const { sectionId } = await readJsonBody(req);
+      const { sectionId, mode } = await readJsonBody(req);
+
+      if (isV2(state.blueprint)) {
+        if (mode !== 'repair') {
+          return json(res, 400, {
+            code: 'unsupported_for_v2',
+            error:
+              'this session holds a beatbound_level_blueprint_v2, which has no per-section ' +
+              'regeneration -- the director plans the whole song at once. Re-run AI GENERATE ' +
+              'for a new plan, or repair to re-establish this blueprint’s invariants in place.',
+          });
+        }
+        const { blueprintMod, indexMod } = await loadV2Modules();
+        const { directorContext, tuning } = loadArtifacts({ projectRoot: ROOT, outputDir: OUTPUT_DIR });
+        const request = state.blueprint.request ?? {};
+        const { blueprint, fixes } = blueprintMod.normalizeBlueprint(state.blueprint, {
+          directorContext,
+          gameplayContext: buildGameplayContext({
+            projectRoot: ROOT,
+            allowedModes: request.allowed_modes,
+            primaryMode: request.primary_mode,
+          }),
+          patternIndex: indexMod.loadPatternIndex({ projectRoot: ROOT }),
+          tuning,
+        });
+        setBlueprint(blueprint);
+        await writeBlueprintFile();
+        return json(res, 200, { ok: true, blueprint, fixes, schema: state.blueprintSchema });
+      }
+
       const { directorMod } = await loadGeneratorModules();
-      state.blueprint = directorMod.regenerateSection(state.blueprint, sectionId, loadRules(), {
-        music: state.analysis,
-      });
-      await fs.writeFile(
-        path.join(OUTPUT_DIR, 'level_blueprint.json'),
-        JSON.stringify(state.blueprint, null, 2)
+      setBlueprint(
+        directorMod.regenerateSection(state.blueprint, sectionId, loadRules(), {
+          music: state.analysis,
+        }),
       );
-      return json(res, 200, { ok: true, blueprint: state.blueprint });
+      await writeBlueprintFile();
+      return json(res, 200, { ok: true, blueprint: state.blueprint, schema: state.blueprintSchema });
     }
 
     // ---- compile level.json into the library ----
     if (req.method === 'POST' && p === '/api/generate') {
       if (!state.blueprint) return json(res, 400, { error: 'no blueprint yet' });
       const opts = await readJsonBody(req);
+      // Schema decides the compiler. A v2 blueprint handed to `compilerMod`
+      // (the v1 compiler) reads `section.startBar`, finds `undefined`, and
+      // fails somewhere unrelated to the real problem.
+      if (isV2(state.blueprint)) return applyV2Blueprint(res, opts);
       const { compilerMod, validateMod } = await loadGeneratorModules();
       if (opts.title) state.blueprint.song.title = opts.title;
       const { level } = compilerMod.compile(state.blueprint);
@@ -677,7 +865,13 @@ async function streamGeneration(res, req, opts) {
     // so /api/check and the playtest button point at the new file.
     if (result.files?.level) {
       state.levelFile = result.levelFile;
-      state.blueprint = result.blueprint;
+      setBlueprint(result.blueprint);
+      // Persist it, or the session is a lie: `restoreState` reads
+      // level_blueprint.json on boot, so an unpersisted v2 plan meant a restart
+      // -- or a refresh after the server was reaped -- silently reloaded
+      // whatever v1 blueprint happened to be on disk from an earlier run. The
+      // user saw their v2 session "turn into v1", which is exactly what it was.
+      await writeBlueprintFile();
     }
 
     send({
