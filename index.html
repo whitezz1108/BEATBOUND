@@ -88,12 +88,13 @@
 
       #modes {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 14px;
         width: 100%;
       }
-      @media (max-width: 900px) { #modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (max-width: 560px) {
+      @media (max-width: 1080px) { #modes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      @media (max-width: 760px) { #modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 520px) {
         #modes { grid-template-columns: 1fr; }
         .logo { letter-spacing: 0.12em; padding-left: 0.12em; }
       }
@@ -123,6 +124,57 @@
       .mode-name { font-size: 13px; font-weight: 700; letter-spacing: 0.3em; }
       .mode-desc { font-size: 11px; color: var(--muted); }
 
+      /* Song select -- the level list, music-game style. */
+      #song-list {
+        display: flex; flex-wrap: wrap; justify-content: center;
+        gap: 12px;
+        width: 100%;
+      }
+      .song-tile {
+        --tc: var(--accent);
+        display: flex; align-items: center; gap: 12px;
+        text-align: left;
+        background: rgba(12, 17, 25, 0.72);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 14px 10px 10px;
+        flex: 1 1 300px;
+        max-width: 420px;
+        min-width: 0;
+        cursor: pointer;
+        color: var(--text);
+        font: inherit;
+        transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      }
+      .song-tile:hover { transform: translateY(-2px); border-color: var(--tc); }
+      .song-tile.selected {
+        border-color: var(--tc);
+        box-shadow: 0 0 0 1px var(--tc), 0 10px 30px -14px var(--tc);
+        background: rgba(12, 17, 25, 0.92);
+      }
+      /* Album art slot. A real cover (covers/<id>.jpg) replaces the fallback;
+         until then the song name sits in the box. */
+      .song-cover {
+        position: relative; flex: 0 0 56px;
+        width: 56px; height: 56px;
+        border-radius: 8px; overflow: hidden;
+        background: #121927;
+        border: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: center;
+        text-align: center;
+        font-size: 9px; line-height: 1.25;
+        color: var(--muted);
+        padding: 4px;
+        overflow-wrap: anywhere;
+      }
+      .song-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .song-cover.has-img { color: transparent; }
+      .song-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+      .song-title { font-size: 12px; font-weight: 700; letter-spacing: 0.03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .song-meta { font-size: 10px; color: var(--muted); }
+      .song-modes { display: flex; flex-wrap: wrap; gap: 4px; }
+      .mode-chip { font-size: 8.5px; letter-spacing: 0.1em; padding: 1px 5px; border-radius: 3px; border: 1px solid; }
+
       #dock {
         display: flex; align-items: center; justify-content: center;
         flex-wrap: wrap; gap: 18px;
@@ -132,11 +184,6 @@
         display: flex; align-items: center; gap: 10px;
         color: var(--muted);
         font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-      }
-      #dock select {
-        background: #121927; color: var(--text);
-        border: 1px solid var(--line); border-radius: 6px;
-        padding: 9px 10px; font: inherit; min-width: 250px;
       }
       #dock .dev { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 11px; }
       #dock .dev input[type="number"] {
@@ -198,7 +245,7 @@
       .lab-title { font-size: 12px; letter-spacing: 0.22em; color: var(--accent); margin-bottom: 4px; }
       .lab-hint { color: var(--muted); font-size: 11px; margin-bottom: 10px; }
     </style>
-    <script type="module" crossorigin src="/BEATBOUND/assets/index-BOixjXsw.js"></script>
+    <script type="module" crossorigin src="/BEATBOUND/assets/index-t7l3I9zc.js"></script>
   </head>
   <body class="menu-open">
     <div id="stage-wrap">
@@ -214,6 +261,18 @@
           <p id="overlay-subtitle">Loading level&hellip;</p>
           <div id="setup">
             <div id="modes">
+              <button class="mode-card" data-mode="MIXED" style="--mc: #e8ecf8">
+                <span class="mode-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5" fill="#6de3ff"></rect>
+                    <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.5" fill="#8a5fff"></rect>
+                    <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.5" fill="#4dffa6"></rect>
+                    <rect x="13" y="13" width="7.5" height="7.5" rx="1.5" fill="#ffc46d"></rect>
+                  </svg>
+                </span>
+                <span class="mode-name">MIXED</span>
+                <span class="mode-desc">Every map, every mode.</span>
+              </button>
               <button class="mode-card" data-mode="ARENA" style="--mc: #6de3ff">
                 <span class="mode-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
@@ -257,10 +316,8 @@
                 <span class="mode-desc">Eight directions around one ring.</span>
               </button>
             </div>
+            <div id="song-list"></div>
             <div id="dock">
-              <label class="dock-field">Level
-                <select id="level-select"></select>
-              </label>
               <div class="dev">
                 <label>Bar <input id="start-bar" type="number" min="1" value="1" /></label>
                 <label><input id="invincible" type="checkbox" /> Invincible</label>
