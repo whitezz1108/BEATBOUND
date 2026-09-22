@@ -240,14 +240,14 @@ test('validateLevel reports a missing level without running the tool', () => {
 // ---------------------------------------------------------------------------
 
 test('a real library level validates through the real loader', () => {
-  const r = validateLevel('runner_procedural.level.json');
+  const r = validateLevel('arkins_-_jangchung.level.json');
   assert.equal(r.ok, true, `expected ok, got ${JSON.stringify(r.errors)}`);
   assert.deepEqual(r.errors, []);
   assert.equal(r.raw.status, 0);
 });
 
 test('a deliberately broken level fails with the loader\'s own errors', () => {
-  const source = read(path.join(LIB, 'prototype_90s.level.json'));
+  const source = read(path.join(LIB, '_archive', 'prototype_90s.level.json'));
   source.sections[0].mode = 'NOPE';
   source.sections[1].startBar = 1;
   const probe = path.join(LIB, '_probe_broken.level.json');
@@ -271,7 +271,7 @@ test('a deliberately broken level fails with the loader\'s own errors', () => {
 });
 
 test('a broken probe level fails validation end to end and the summary says why', () => {
-  const source = read(path.join(LIB, 'prototype_90s.level.json'));
+  const source = read(path.join(LIB, '_archive', 'prototype_90s.level.json'));
   source.sections[0].lengthBars = 0;
   const probe = path.join(LIB, '_probe_len.level.json');
   writeFileSync(probe, JSON.stringify(source, null, 2));

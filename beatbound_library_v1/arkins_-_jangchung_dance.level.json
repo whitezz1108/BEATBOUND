@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "song": {
+    "id": "arkins_-_jangchung_dance",
+    "title": "Arkins - Jangchung [Dance]",
+    "audio": "audio/editor/arkins_-_jangchung.mp3",
+    "bpm": 129.2,
+    "timeSignature": [4, 4]
+  },
+  "sections": [
+    {
+      "id": "DANCE_01_TEACH",
+      "startBar": 1,
+      "lengthBars": 15,
+      "mode": "ARENA",
+      "function": "TEACH",
+      "difficulty": 1,
+      "patterns": [
+        { "patternId": "AP30", "repeat": 1, "intensity": 0.16 },
+        { "patternId": "AP59", "repeat": 1, "intensity": 0.24 },
+        { "patternId": "AP31", "repeat": 1, "intensity": 0.20 },
+        { "patternId": "AP60", "repeat": 1, "intensity": 0.30 }
+      ],
+      "transitionOut": null,
+      "rationale": "Jangchung opens loud -- bars 1-15 sit flat between combined_intensity 0.690 and 0.733 with energy_peaks at 5, 7, 8, 13 and 15 -- so this section cannot teach by being quiet. It teaches by input count instead: two arrows, then four, then three, then five, every phrase locked to the bar line. The analysis put this track's grid phase at zero (bar_phase_offset_beats 0), so bar N beat 1 is the real downbeat and an accent landing there lands on the kick. AP59 is the first song-specific pattern and it introduces that: four arrows inside a beat and a fifth, resolving on the downbeat. AP60 introduces the other half of the family's vocabulary -- the accent on beat four that pushes into the next bar. AP31 sits between them as a step back down, so the section breathes inside itself rather than ramping straight through."
+    },
+    {
+      "id": "DANCE_02_BREAKDOWN",
+      "startBar": 16,
+      "lengthBars": 16,
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "AP45", "repeat": 1, "intensity": 0.22 },
+        { "patternId": "AP40", "repeat": 1, "intensity": 0.20 },
+        { "patternId": "AP46", "repeat": 1, "intensity": 0.24 },
+        { "patternId": "AP47", "repeat": 1, "intensity": 0.28 },
+        { "patternId": "AP38", "repeat": 1, "intensity": 0.26 }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 15 beat 5 and bar 16 beat 5 are both flagged energy_drop and the floor falls out: bars 17-31 run between 0.261 and 0.479, the only real valley in the first two thirds of the record. Sixteen bars is a long time to hold a player's attention over music that has stepped away, so the section is built from five short recovery patterns rather than two long ones -- pendulum, slow arch, slow circuit, short echo, slow sway -- each under five arrows and each forgiving two misses. The hands keep moving through the whole valley without the section ever asking for a decision. It is deliberately the longest section in the level: the drop that follows is the biggest event in the song and the player should arrive at it rested."
+    },
+    {
+      "id": "DANCE_03_DROP1",
+      "startBar": 32,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "VARIATION",
+      "difficulty": 3,
+      "patterns": [
+        { "patternId": "AP60", "repeat": 1, "intensity": 0.55 },
+        { "patternId": "AP35", "repeat": 1, "intensity": 0.60 },
+        { "patternId": "AP41", "repeat": 1, "intensity": 0.64 }
+      ],
+      "transitionOut": null,
+      "rationale": "Bars 32 and 33 are both flagged is_build and the track jumps from 0.261 to 0.771 in one bar, then holds 0.77-0.87 for the next twenty-two bars. This is the first drop and it is where the level stops teaching: AP60 returns at real intensity, so the beat-four push the player met gently in the opening now arrives at full speed, and the three full beats of nothing before it stop being a courtesy and start being the demand -- hold position when your hands are ready. AP35 and AP41 then run continuous circuits at the same density, so the section ends on sustained input rather than on a hole, which is the shape the drop actually has."
+    },
+    {
+      "id": "DANCE_04_DROP1B",
+      "startBar": 44,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": 4,
+      "patterns": [
+        { "patternId": "AP61", "repeat": 1, "intensity": 0.74 },
+        { "patternId": "AP42", "repeat": 1, "intensity": 0.78 },
+        { "patternId": "AP43", "repeat": 1, "intensity": 0.82 }
+      ],
+      "transitionOut": null,
+      "rationale": "The first drop keeps going and gets a second wind: energy_peaks at 42, 45, 51 and 52, with a phrase boundary at 49 and a dip at 47 (0.712) that is the only place the section relaxes. AP61 is the stomp -- the same direction twice, three times over, then the beat-four accent -- which is how a four-on-the-floor record asks for weight rather than speed, and it is placed here because bar 45 beat 5 is a peak and a doubled cell reads as hitting something. AP42 and AP43 are the two long variants, so the section closes on length rather than on density and the player leaves the drop with their hands still moving."
+    },
+    {
+      "id": "DANCE_05_BREATHE",
+      "startBar": 56,
+      "lengthBars": 7,
+      "mode": "ARENA",
+      "function": "RECOVERY",
+      "difficulty": 2,
+      "patterns": [
+        { "patternId": "AP46", "repeat": 1, "intensity": 0.20 },
+        { "patternId": "AP38", "repeat": 1, "intensity": 0.22 }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 55 is a release (0.671) and bars 56-62 slide from 0.615 down to 0.312, the second valley and the last quiet passage before the record runs loud to its end. Seven bars, two slow patterns, nothing above four arrows. It is short on purpose: the valley is short, and a longer recovery here would put the player to sleep in front of the biggest section in the song. The two patterns are the gentlest in the language so that the hands are warm and empty when the second drop lands."
+    },
+    {
+      "id": "DANCE_06_DROP2",
+      "startBar": 63,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": 4,
+      "patterns": [
+        { "patternId": "AP62", "repeat": 1, "intensity": 0.84 },
+        { "patternId": "AP48", "repeat": 1, "intensity": 0.88 },
+        { "patternId": "AP49", "repeat": 1, "intensity": 0.86 }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 63 is a build and bar 64 lands at 0.881 with a local peak -- the second drop arrives harder than the first did and never really leaves. AP62 is the roll: seven arrows across three beats resolving on the downbeat of the bar after next, then a three-arrow reply resolving on the downbeat after that, so the two accents arrive two beats apart with nothing between them. The long round is long enough to leave working memory and has to be read continuously. AP48 and AP49 follow at the same density, which is the point -- the drop is a plateau, not a spike, and the level treats it as one."
+    },
+    {
+      "id": "DANCE_07_PEAK",
+      "startBar": 75,
+      "lengthBars": 12,
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": 5,
+      "patterns": [
+        { "patternId": "AP63", "repeat": 1, "intensity": 0.94 },
+        { "patternId": "AP50", "repeat": 1, "intensity": 0.97 },
+        { "patternId": "AP64", "repeat": 1, "intensity": 1.00 }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 75 is the highest bar in the track at 0.891 and the region from 74 to 86 never drops below 0.628, with energy_peaks at 77, 81 and 87 and local peaks at 75, 82, 85 and 88. AP63 is the hardest reading demand in the library at this tempo: seven arrows with one missing, and the missing one is the beat this family has spent the whole level teaching the player to press on, so muscle memory will press into the hole and lose the phrase. It goes first, while there is still room to recover. AP50 is the grand arch and AP64 is the torrent -- eight arrows, one per half-beat, four full beats of unbroken input at 129 BPM. The pattern that ends the section is the one with no trick in it, because at this point in the song the tempo is the trick."
+    },
+    {
+      "id": "DANCE_08_BOSS",
+      "startBar": 87,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "BOSS",
+      "difficulty": 5,
+      "patterns": [
+        { "patternId": "AP65", "repeat": 1, "intensity": 1.00 }
+      ],
+      "transitionOut": null,
+      "rationale": "Bars 87-93 hold 0.688-0.724 with an energy_peak at 91, and bar 94 beat 5 is the final energy_drop -- after it the record falls to 0.097 and then to zero, so this is the last musical bar and the level ends on it rather than playing out the fade. AP65 is the only pattern in the library with four rounds: an even eight, two nines that each end in a sixteenth cluster, then a short five closing on beat four of the last bar. Thirty-one inputs, every round a little longer than the last, and every accent still landing where this family puts it for this track. It escalates in load without ever moving its resolution, which is what a finale has to do -- the player who has learned the whole level should be able to read the last thing it says."
+    }
+  ]
+}

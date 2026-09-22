@@ -16,7 +16,7 @@
  */
 
 import { createServer } from 'node:http';
-import { createReadStream, existsSync, readFileSync, promises as fs } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync, promises as fs } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -100,13 +100,33 @@ function json(res, code, obj) {
   res.end(body);
 }
 
-function sendFile(res, filePath, contentType) {
+/**
+ * Serve a UI file with an ETag.
+ *
+ * Without any validator the browser applies heuristic caching and keeps running
+ * a stale `editor.js` after the file changes -- which is how a fixed panel kept
+ * reporting a bug that was no longer in the code. `no-cache` still allows the
+ * file to be *stored*, it just forces a revalidation, so the common case is a
+ * 304 with no body.
+ */
+function sendFile(res, filePath, contentType, req) {
   if (!existsSync(filePath)) {
     res.writeHead(404);
     res.end('not found');
     return;
   }
-  res.writeHead(200, { 'Content-Type': contentType });
+  const { mtimeMs, size } = statSync(filePath);
+  const etag = `W/"${size}-${Math.round(mtimeMs)}"`;
+  if (req?.headers['if-none-match'] === etag) {
+    res.writeHead(304, { ETag: etag, 'Cache-Control': 'no-cache' });
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'Content-Type': contentType,
+    'Cache-Control': 'no-cache',
+    ETag: etag,
+  });
   createReadStream(filePath).pipe(res);
 }
 
@@ -266,12 +286,12 @@ const server = createServer(async (req, res) => {
   try {
     // ---- static UI ----
     if (req.method === 'GET' && (p === '/' || p === '/index.html')) {
-      return sendFile(res, path.join(UI_DIR, 'index.html'), 'text/html; charset=utf-8');
+      return sendFile(res, path.join(UI_DIR, 'index.html'), 'text/html; charset=utf-8', req);
     }
     if (req.method === 'GET' && /^\/[a-zA-Z0-9_.\-]+$/.test(p) && existsSync(path.join(UI_DIR, p))) {
       const ext = p.split('.').pop();
       const types = { html: 'text/html', css: 'text/css', js: 'text/javascript', svg: 'image/svg+xml' };
-      return sendFile(res, path.join(UI_DIR, p), types[ext] || 'application/octet-stream');
+      return sendFile(res, path.join(UI_DIR, p), types[ext] || 'application/octet-stream', req);
     }
 
     // ---- audio preview (with Range support so seeking works) ----
@@ -315,20 +335,13 @@ const server = createServer(async (req, res) => {
         tuningMirror: tuningMirrorForUi(),
         tuning: { ...liveTuning },
         consistencyNotes: [...rulesConsistencyNotes],
-        analysis: state.analysis
-          ? {
-              bpm: state.analysis.tempo.bpm,
-              durationSec: state.analysis.song.durationSec,
-              bars: state.analysis.bars.length,
-              sections: state.analysis.sections.map((s) => ({
-                id: s.id,
-                startBar: s.startBar,
-                endBar: s.endBar,
-                meanEnergy: s.meanEnergy,
-                peakEnergy: s.peakEnergy,
-              })),
-            }
-          : null,
+        // The *whole* analysis, not a summary: the timeline and waveform
+        // canvases read `bars[].energy`, `tempo.timeSignature`, `onsets` and
+        // `waveformEnvelope` directly, and `/api/analysis` hands out the same
+        // object. Sending a reduced shape here meant whichever of the two
+        // landed last in `state.analysis` decided whether the panel rendered
+        // or threw -- so there is only one shape now.
+        analysis: state.analysis,
       });
     }
 

@@ -23,9 +23,10 @@
  *     frame a key goes down and never again while it is held, so a held key
  *     cannot machine-gun a sequence.
  *
- * It also carries the encounter's verdicts into the run's note tally, so a
- * phrase played in ARENA counts on the results screen exactly as a phrase
- * played in VERTICAL does. The mechanic judges; the run scores.
+ * It also carries the encounter's verdicts into the run's note tally, and the
+ * health it decided a phrase cost into the run's pool, so a phrase played in
+ * ARENA counts and costs on the results screen exactly as a phrase played in
+ * VERTICAL does. The mechanic judges; the run scores and charges.
  */
 
 import { isSequenceEncounter, type SequenceEncounter } from '../../core/capabilities';
@@ -83,8 +84,14 @@ export class BreakoutController {
    *
    * Called before the avatar moves, so the movement binding the player gets is
    * the one that matches the presses the encounter is about to receive.
+   *
+   * `songTime` is what the run charges against: health is denominated in song
+   * seconds, not beats, because the immunity a hit grants is a physiological
+   * allowance rather than a musical one.
    */
-  update(mechanics: RuntimeMechanic[], beat: number, focusX: number, focusY: number): void {
+  update(
+    mechanics: RuntimeMechanic[], beat: number, songTime: number, focusX: number, focusY: number,
+  ): void {
     this.capturing = [];
     for (const mechanic of mechanics) {
       if (!isSequenceEncounter(mechanic)) continue;
@@ -95,6 +102,11 @@ export class BreakoutController {
       for (const verdict of mechanic.drainJudgements()) {
         if (verdict === 'MISS') this.status.registerNoteMiss();
         else this.status.registerNoteHit();
+      }
+      // Charged through the run, like every other hit in the game. The
+      // encounter knows what a phrase cost; it does not get to take health.
+      for (const owed of mechanic.drainDamage()) {
+        this.status.damage(owed.source, songTime, owed.amount);
       }
       if (mechanic.capturesInput(beat)) this.capturing.push(mechanic);
     }

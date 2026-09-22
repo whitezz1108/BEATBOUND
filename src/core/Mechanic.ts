@@ -63,6 +63,19 @@ export interface RuntimeMechanic {
   readonly role: EventRole;
   /** What this costs when it connects. Modes read it instead of guessing. */
   readonly damageSource: DamageSource;
+  /**
+   * What this costs, in health, when the shared table's price for
+   * `damageSource` is not the right one.
+   *
+   * `damageSource` answers "what kind of thing hit the player" and the damage
+   * table turns that answer into a number, which is right for a projectile or
+   * a chain: the same bullet hurts the same everywhere. A mechanic whose cost
+   * is *authored* -- A12 charges for a specific failed phrase, at a price the
+   * level decided -- names it here, and modes charge this instead.
+   *
+   * Undefined for everything else, which leaves the shared table in charge.
+   */
+  readonly damageAmount?: number;
   readonly phase: MechanicPhase;
   readonly isFinished: boolean;
   /**
@@ -92,6 +105,8 @@ export abstract class BaseMechanic implements RuntimeMechanic {
   readonly role: EventRole;
   /** Overridden by anything fired at the player or run into at speed. */
   readonly damageSource: DamageSource = 'COLLISION';
+  /** Overridden by anything whose price is authored rather than looked up. */
+  readonly damageAmount: number | undefined = undefined;
   protected readonly params: ParamBag;
   protected readonly timing: ResolvedTiming;
   protected readonly activationBeat: number;

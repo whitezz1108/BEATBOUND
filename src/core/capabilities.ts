@@ -14,6 +14,7 @@
 
 import { DIRECTION8, type Direction8 } from './direction8';
 import type { Rect } from './geometry';
+import type { DamageSource } from './HealthManager';
 import type { RuntimeMechanic } from './Mechanic';
 import type { Renderer } from './Renderer';
 
@@ -282,6 +283,22 @@ export function surfaceFor(
 /** One scored moment of an encounter, drained by the mode into the run's stats. */
 export type SequenceVerdict = 'PERFECT' | 'GOOD' | 'MISS';
 
+/**
+ * Health an encounter has decided the player owes, drained by the mode.
+ *
+ * A12's seal is a collision when it collapses -- that failure arrives through
+ * `hazards()` like every other hazard, and needs nothing from this. But a
+ * phrase that was fumbled *and* saved by a well-timed accent ends with the seal
+ * open and the player standing in clean air, so there is no collision left to
+ * charge. Rather than invent a hazard shape with no physical meaning, the
+ * encounter names the price and the run pays it: the mechanic judges, the run
+ * charges, exactly as with `drainJudgements`.
+ */
+export interface SequenceDamage {
+  source: DamageSource;
+  amount: number;
+}
+
 export interface SequenceEncounter {
   /**
    * True while directional keys belong to the encounter rather than to
@@ -308,6 +325,14 @@ export interface SequenceEncounter {
    * mechanic never holds a reference to anything outside itself.
    */
   drainJudgements(): SequenceVerdict[];
+  /**
+   * Health owed since the last call, and clear it.
+   *
+   * Drained for the same reason judgements are: the encounter decides what a
+   * phrase cost, and the run is the only thing allowed to take health. Always
+   * empty for an encounter that was played cleanly.
+   */
+  drainDamage(): SequenceDamage[];
   /** Short HUD string: how the encounter is going. */
   readonly encounterLabel: string;
 }

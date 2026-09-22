@@ -65,7 +65,7 @@ function approx(a: number, b: number, tolerance = 1e-9): boolean {
 async function main(): Promise<void> {
   const loader = new LevelLoader();
   const level = await loader.load({
-    levelUrl: '/arena_test.level.json',
+    levelUrl: '/_archive/arena_test.level.json',
     patternsUrl: '/patterns.mvp.json',
     mechanicsUrl: '/mechanics.mvp.json',
   });

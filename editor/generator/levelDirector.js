@@ -33,9 +33,13 @@ const MODES = ['ARENA', 'RUNNER', 'VERTICAL', 'RADIAL'];
 // Sections from analysis
 // ---------------------------------------------------------------------------
 
-/** Per-section energy stats from the analysis bar grid. */
+/**
+ * Per-section energy stats from the analysis bar grid.
+ *
+ * `endBar` is exclusive, matching the analysis document and the runtime.
+ */
 export function energyStats(music, startBar, endBar) {
-  const bars = music.bars.filter((b) => b.bar >= startBar && b.bar <= endBar);
+  const bars = music.bars.filter((b) => b.bar >= startBar && b.bar < endBar);
   if (bars.length === 0) {
     return { mean: 0, peak: 0, rhythmDensity: 0 };
   }
@@ -45,6 +49,16 @@ export function energyStats(music, startBar, endBar) {
     peak: round2(Math.max(...bars.map((b) => b.energy))),
     rhythmDensity: round2(mean(bars.map((b) => b.rhythmDensity))),
   };
+}
+
+/**
+ * Director sections carry an *exclusive* `endBar` (the analysis document's
+ * convention, and the runtime's). `breatherForSection` is shared with the V2
+ * compiler and takes an inclusive last bar, so convert at the call rather than
+ * forking the shared implementation.
+ */
+function breatherShim(section) {
+  return { ...section, endBar: section.endBar - 1 };
 }
 
 /**
@@ -58,14 +72,14 @@ export function buildSections(music, gameRules) {
   const totalBars = music.bars.length;
   const raw = music.sections.map((s) => ({
     startBar: s.startBar,
-    endBar: Math.min(s.endBar, totalBars),
+    endBar: Math.min(s.endBar, totalBars + 1),
     analysisSection: s.id,
   }));
 
   // Merge tiny segments into the previous one.
   const merged = [];
   for (const s of raw) {
-    const len = s.endBar - s.startBar + 1;
+    const len = s.endBar - s.startBar;
     if (len < rules.minBars && merged.length > 0) {
       merged[merged.length - 1].endBar = s.endBar;
     } else if (len >= rules.minBars || merged.length === 0) {
@@ -76,7 +90,7 @@ export function buildSections(music, gameRules) {
   // neighbour unless it is the only section.
   if (merged.length > 1) {
     const last = merged[merged.length - 1];
-    if (last.endBar - last.startBar + 1 < rules.minBars) {
+    if (last.endBar - last.startBar < rules.minBars) {
       merged[merged.length - 2].endBar = last.endBar;
       merged.pop();
     }
@@ -90,10 +104,10 @@ export function buildSections(music, gameRules) {
   // Split overly long sections at the strongest internal novelty bar.
   const sized = [];
   for (const s of merged) {
-    const len = s.endBar - s.startBar + 1;
+    const len = s.endBar - s.startBar;
     if (len > rules.maxBars) {
       const middle = music.bars
-        .filter((b) => b.bar > s.startBar + 4 && b.bar <= s.endBar - 4)
+        .filter((b) => b.bar > s.startBar + 4 && b.bar < s.endBar - 4)
         .sort((a, b) => b.novelty - a.novelty);
       const cut = middle[0]?.bar ?? Math.floor((s.startBar + s.endBar) / 2) + 1;
       sized.push(...splitAt(s, cut));
@@ -115,9 +129,9 @@ export function buildSections(music, gameRules) {
       if (a > b) longest = i;
     }
     const s = sized[longest];
-    if (s.endBar - s.startBar + 1 < rules.minBars * 2) break; // cannot split further
+    if (s.endBar - s.startBar < rules.minBars * 2) break; // cannot split further
     const middle = music.bars
-      .filter((b) => b.bar > s.startBar + rules.minBars - 1 && b.bar <= s.endBar - rules.minBars + 1)
+      .filter((b) => b.bar > s.startBar + rules.minBars - 1 && b.bar <= s.endBar - rules.minBars)
       .sort((a, b) => b.novelty - a.novelty);
     const cut = middle[0]?.bar ?? Math.floor((s.startBar + s.endBar) / 2) + 1;
     sized.splice(longest, 1, ...splitAt(s, cut));
@@ -127,7 +141,7 @@ export function buildSections(music, gameRules) {
   return sized.map((s, i) => {
     const startBar = s.startBar;
     const endBar = s.endBar;
-    const lengthBars = endBar - startBar + 1;
+    const lengthBars = endBar - startBar;
     return {
       id: `${gameRules.section.idPrefix}${String(i + 1).padStart(2, '0')}`,
       startBar,
@@ -221,7 +235,12 @@ export function direct(music, rules, opts = {}) {
   const beatsPerBar = music.tempo.timeSignature[0];
   const breatherBeats = gameRules.transition.breatherBeats ?? 0;
   for (let i = 0; i < sections.length; i++) {
-    const breather = breatherForSection(sections[i], sections[i + 1] ?? null, breatherBeats, beatsPerBar);
+    const breather = breatherForSection(
+      breatherShim(sections[i]),
+      sections[i + 1] ? breatherShim(sections[i + 1]) : null,
+      breatherBeats,
+      beatsPerBar
+    );
     sections[i].fillBars = breather ? breather.fillBars : sections[i].lengthBars;
     sections[i].breatherFromBeat = breather ? breather.fromBeat : null;
   }
@@ -254,7 +273,12 @@ export function direct(music, rules, opts = {}) {
     const incoming = i > 0 ? boundary.get(`${sections[i - 1].id}>${s.id}`) : null;
     const headBars = incoming?.headBars ?? 0;
     const tailBars = outgoing?.tailBars ?? 0;
-    const breather = breatherForSection(s, sections[i + 1] ?? null, breatherBeats, beatsPerBar);
+    const breather = breatherForSection(
+      breatherShim(s),
+      sections[i + 1] ? breatherShim(sections[i + 1]) : null,
+      breatherBeats,
+      beatsPerBar
+    );
     fillSection(s, { headBars, tailBars, index, gameRules, diffRules, transitionRules, modeHistory, seed, breather, beatsPerBar });
     notes.push(
       `${s.id} ${s.mode} d${s.difficulty} ${s.function} (${s.startBar}-${s.endBar}) :: ${describePlacements(s.patterns)}`
@@ -473,8 +497,8 @@ export function regenerateSection(blueprint, sectionId, rules, opts = {}) {
   );
   const breatherOf = (i) =>
     breatherForSection(
-      blueprint.sections[i],
-      blueprint.sections[i + 1] ?? null,
+      breatherShim(blueprint.sections[i]),
+      blueprint.sections[i + 1] ? breatherShim(blueprint.sections[i + 1]) : null,
       breatherBeats,
       beatsPerBar
     );

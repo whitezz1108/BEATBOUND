@@ -2,6 +2,18 @@ import { BeatBoundGame } from './game/BeatBoundGame';
 import { DATA, devOptionsFromLocation, libraryPath, loadLevelIndex, levelUrlFromLocation, type LevelIndexEntry } from './config';
 import { findLab, LABS, type LabDefinition, type LabGroup } from './lab/labs';
 import { LabController } from './lab/LabController';
+import { MODE_COLOURS } from './core/ModeManager';
+import type { GameMode } from './core/types';
+import { createMenuBackdrop } from './menu/MenuBackdrop';
+
+/** The level a mode card puts into the picker. Every target must be a real
+ * song that ships audio -- tuning/dev levels live in `_archive/`. */
+const MODE_LEVELS: Partial<Record<GameMode, string>> = {
+  ARENA: 'toosie_slide_arena_primary.level.json',
+  RUNNER: 'lil_babygunna_-_drip_too_hard.level.json',
+  VERTICAL: 'arkins_-_jangchung.level.json',
+  RADIAL: 'lil_babygunna_-_drip_too_hard.level.json',
+};
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const hudRoot = document.getElementById('hud') as HTMLElement;
@@ -16,11 +28,29 @@ const labList = document.getElementById('lab-list') as HTMLElement;
 const levelSetup = document.getElementById('setup') as HTMLElement;
 
 const game = new BeatBoundGame(canvas, hudRoot);
+const backdrop = createMenuBackdrop(
+  document.getElementById('menu-bg') as HTMLCanvasElement,
+  document.getElementById('hero') as HTMLCanvasElement,
+);
 const params = new URLSearchParams(window.location.search);
 const lab = findLab(params.get('lab'));
 const dev = devOptionsFromLocation();
 
 renderLabMenu(lab);
+// The page loads straight onto the title screen; this also starts the
+// backdrop animation.
+setMenuVisible(true);
+
+/**
+ * Title screen vs. run. Hiding the menu also parks the backdrop animation and
+ * hands the window back to the game + debug panel layout.
+ */
+function setMenuVisible(visible: boolean): void {
+  overlay.classList.toggle('hidden', !visible);
+  document.body.classList.toggle('menu-open', visible);
+  if (visible) backdrop.start();
+  else backdrop.stop();
+}
 
 if (lab && lab.build) {
   void startLab(lab);
@@ -32,13 +62,13 @@ if (lab && lab.build) {
 
 async function startLab(definition: LabDefinition): Promise<void> {
   // A lab is the tuning environment: no menu, straight into the loop.
-  overlay.classList.add('hidden');
+  setMenuVisible(false);
   labPanel.classList.remove('hidden');
   const controller = new LabController(game, definition, labPanel, Number(params.get('bpm')) || 120);
   try {
     await controller.launch();
   } catch (error: unknown) {
-    overlay.classList.remove('hidden');
+    setMenuVisible(true);
     subtitle.innerHTML = `<span class="error">${message(error)}</span>`;
     console.error('[BeatBound] lab failed', error);
   }
@@ -61,7 +91,7 @@ function showMenu(): void {
     return;
   }
   game.stop();
-  overlay.classList.remove('hidden');
+  setMenuVisible(true);
   startButton.disabled = false;
   startButton.textContent = hasRun ? 'Play again' : 'Start';
 }
@@ -80,6 +110,7 @@ async function startLevelFlow(): Promise<void> {
   });
 
   populateLevels(await loadLevelIndex(), levelUrl);
+  wireModeCards();
 
   try {
     const level = await game.load({ levelUrl, patternsUrl: DATA.patterns, mechanicsUrl: DATA.mechanics });
@@ -108,18 +139,40 @@ async function startLevelFlow(): Promise<void> {
     else next.delete('invincible');
     window.history.replaceState(null, '', `?${next.toString()}`);
 
-    overlay.classList.add('hidden');
+    setMenuVisible(false);
     // After the first run the level's systems are spent, so a fresh one has to
     // be built rather than started again.
     const launch = hasRun ? game.restart(options) : game.start(options);
     hasRun = true;
     launch.catch((error: unknown) => {
-      overlay.classList.remove('hidden');
+      setMenuVisible(true);
       subtitle.innerHTML = `<span class="error">${message(error)}</span>`;
       startButton.textContent = 'Start failed';
       console.error('[BeatBound] start failed', error);
     });
   });
+}
+
+/**
+ * Mode cards. Picking one tints the hero, highlights the card and drops that
+ * mode's reference level into the picker; the player can still override the
+ * level before starting.
+ */
+function wireModeCards(): void {
+  const cards = [...document.querySelectorAll<HTMLButtonElement>('#modes .mode-card')];
+  const select = (mode: string): void => {
+    const colour = MODE_COLOURS[mode as GameMode] ?? '#6de3ff';
+    backdrop.setAccent(colour);
+    for (const card of cards) card.classList.toggle('selected', card.dataset.mode === mode);
+    const file = MODE_LEVELS[mode as GameMode];
+    if (file && [...levelSelect.options].some((o) => o.value === file)) levelSelect.value = file;
+  };
+  for (const card of cards) card.addEventListener('click', () => select(card.dataset.mode ?? ''));
+
+  // Preselect the card that owns the level this page loaded with, if any.
+  const current = libraryPath(levelUrlFromLocation());
+  const owner = Object.entries(MODE_LEVELS).find(([, file]) => file === current);
+  if (owner) select(owner[0]);
 }
 
 window.addEventListener('keydown', (e) => {
@@ -142,7 +195,7 @@ function renderLabMenu(active: LabDefinition | null): void {
   const groups: LabGroup[] = ['ARENA', 'RUNNER', 'VERTICAL', 'RADIAL', 'GLOBAL'];
   labList.innerHTML = groups.map((group) => {
     const items = LABS.filter((l) => l.group === group).map((l) => {
-      const href = l.build ? `?lab=${l.id}` : '?level=prototype_90s.level.json';
+      const href = l.build ? `?lab=${l.id}` : '?level=_archive/prototype_90s.level.json';
       const current = active?.id === l.id ? ' class="current"' : '';
       return `<li><a href="${href}"${current}><span class="lab-no">${l.index}</span>${escapeHtml(l.title)}</a></li>`;
     }).join('');

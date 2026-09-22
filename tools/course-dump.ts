@@ -11,8 +11,8 @@
  * Prints, per phrase: the archetype and role, the surface, the beats, and every
  * verb with the level it ran at. Then the terrain the planner derived from it.
  *
- *   npm run course-dump -- runner_showcase.level.json
- *   npm run course-dump -- runner_showcase.level.json --segments
+ *   npm run course-dump -- _archive/runner_showcase.level.json
+ *   npm run course-dump -- _archive/runner_showcase.level.json --segments
  */
 
 import { readFileSync } from 'node:fs';

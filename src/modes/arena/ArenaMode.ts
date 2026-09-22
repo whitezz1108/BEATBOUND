@@ -90,7 +90,7 @@ export class ArenaMode implements GameplayMode {
     if (this.ctx.status.outcome === 'PLAYING') {
       // Encounters are polled before the avatar moves, so the binding the
       // player steers with matches the one the encounter just read.
-      this.breakout.update(this.mechanics, u.beat, this.player.x, this.player.y);
+      this.breakout.update(this.mechanics, u.beat, u.songTime, this.player.x, this.player.y);
       this.player.speed = TUNING.arena.playerSpeed * this.breakout.movementScale(u.beat);
       this.player.update(u.deltaSeconds, this.ctx.input.axisFrom(this.breakout.moveKeys));
     }
@@ -126,7 +126,9 @@ export class ArenaMode implements GameplayMode {
 
     if (hitBy) {
       this.grazeWasClean = false;
-      if (this.ctx.status.damage(hitBy.damageSource, u.songTime)) {
+      // The mechanic may have priced this itself -- an authored cost rather
+      // than the shared table's -- so the mode passes whatever it declared.
+      if (this.ctx.status.damage(hitBy.damageSource, u.songTime, hitBy.damageAmount)) {
         this.lastHitBeat = beat;
         this.ctx.feel.playerHit(body.x, body.y);
       }

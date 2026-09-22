@@ -563,7 +563,23 @@ export async function generateLevel(opts = {}) {
     tuning,
     repair: repairCallback,
     maxPasses: opts.maxRepairPasses ?? MAX_REPAIR_PASSES,
-    onEvent: (e) => emit({ stage: 'repair', message: describeRepairEvent(e), ...e }),
+    // `repairBlueprint` reports progress with *counts* -- its `score()` helper
+    // returns `{errors: number, warnings: number}` -- while every other streamed
+    // event uses `errors` for the list of error strings. Spreading the repair
+    // event verbatim put a number where the panel iterates a list, so its
+    // `for (const err of ev.errors)` threw "number 0 is not iterable" on the
+    // first repair event of every run and the whole generation was reported as
+    // failed. Namespace the counts so one name keeps one meaning across the wire.
+    onEvent: (e) => {
+      const { errors, warnings, ...rest } = e;
+      emit({
+        stage: 'repair',
+        message: describeRepairEvent(e),
+        ...rest,
+        errorCount: errors,
+        warningCount: warnings,
+      });
+    },
   });
   blueprint = structural.blueprint;
 

@@ -496,6 +496,61 @@ test('golden: the same seed compiles to the same level twice', { skip: !HAVE_REA
   assert.equal(JSON.stringify(first.level), JSON.stringify(second.level), 'the same ask must produce the same level');
 });
 
+test('every streamed event spells `errors` as a list, never a count', { skip: !HAVE_REAL_ARTIFACTS }, async () => {
+  // The editor panel renders each event with `for (const err of ev.errors)`.
+  // `repairBlueprint` reports progress with *counts* -- its `score()` helper
+  // returns `{errors: number, warnings: number}` -- and the pipeline used to
+  // spread those straight onto the event. `0 ?? []` is still `0`, so the very
+  // first repair event of every run threw "number 0 is not iterable" inside
+  // the panel's try block and the whole generation was reported as failed,
+  // after it had in fact compiled, published and validated. The counts are
+  // namespaced now; this pins the contract so a future spread cannot put a
+  // number back under the name the panel iterates.
+  const levelId = '_probe_event_contract';
+  const dc = realDirectorContext;
+  const bars = dc.timing.bar_count;
+  const blueprint = {
+    schema_version: BLUEPRINT_V2_SCHEMA_VERSION,
+    generator: { kind: 'ai_director', model: 'mock-model', prompt_version: 'mock_v1', created_from: 'director_context_v2' },
+    song: { id: dc.source.song_id, title: 'x', audio: `${dc.source.song_id}.mp3`, bpm: dc.timing.bpm, timeSignature: [4, 4], barCount: bars, durationSec: dc.source.duration_sec },
+    request: { primary_mode: 'ARENA', allowed_modes: ['ARENA', 'RUNNER'], target_difficulty: 3, primary_mode_ratio: 0.5, seed: 7 },
+    global: { intent: 'contract', arc: 'rise', difficulty_curve: Array.from({ length: bars }, () => 3) },
+    sections: [
+      { id: 'S01', start_bar: 1, end_bar_exclusive: Math.floor(bars / 2), mode: 'ARENA', function: 'INTRO', difficulty: 2, intensity: 0.4, rationale: 'x' },
+      { id: 'S02', start_bar: Math.floor(bars / 2), end_bar_exclusive: bars + 1, mode: 'RUNNER', function: 'PEAK', difficulty: 4, intensity: 0.8, rationale: 'x' },
+    ],
+  };
+
+  const events = [];
+  await goldenRun({ levelId, blueprint, onEvent: (e) => events.push(e) });
+
+  assert.ok(events.length > 0, 'the pipeline emitted no events at all');
+  for (const e of events) {
+    for (const field of ['errors', 'warnings']) {
+      const v = e[field];
+      assert.ok(
+        v === undefined || Array.isArray(v),
+        `event "${e.stage}" carries \`${field}\` as ${typeof v} (${JSON.stringify(v)}) -- ` +
+          `the panel iterates that field as a list`,
+      );
+    }
+    // The counts are still reported, just under a name nothing iterates.
+    if (e.errorCount !== undefined) {
+      assert.equal(typeof e.errorCount, 'number', `event "${e.stage}" errorCount must be a number`);
+    }
+  }
+
+  // Checked last, so a regression reports the violation above rather than this.
+  // The repair progress events carry the sub-stage as their `stage` -- the
+  // pipeline spreads the repair event after `stage: 'repair'`, so `director`
+  // and `normalize` win -- so `errorCount` is the marker that the path which
+  // used to throw actually ran.
+  assert.ok(
+    events.some((e) => e.errorCount !== undefined),
+    'no repair progress event was emitted, so this test would not have caught the bug it exists for',
+  );
+});
+
 test('golden: a blueprint the validator rejects is never published', { skip: !HAVE_REAL_ARTIFACTS }, async () => {
   const levelId = '_probe_golden_rejected';
   const dc = realDirectorContext;

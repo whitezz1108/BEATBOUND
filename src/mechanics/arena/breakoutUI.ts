@@ -34,10 +34,42 @@
  * implied the press had been missed when it had not. The phrase only has to be
  * *finished* before the accent, and the accent is the one beat-locked press in
  * the encounter -- so the timing cue lives on the accent, where it belongs.
- * The SPACE circle's converging ring closes onto the beat and is the only clock
- * on the row. Progress through the phrase is carried by the row's own colours
- * (played diamonds go green, the front of the queue burns yellow) and by the
- * tally above it, both of which say the true thing: how much is left, not when.
+ * Progress through the phrase is carried by the row's own colours (played
+ * diamonds go green, the front of the queue burns yellow) and by the tally
+ * above it, both of which say the true thing: how much is left, not when.
+ *
+ * THE ACCENT'S CLOCK
+ * ------------------
+ * The accent is the only timed press, so it carries every cue that means
+ * "now", and it carries them in three channels on purpose -- because the
+ * player is watching the seal close around them, not the row, and one cue in
+ * one channel is a cue that gets missed:
+ *
+ *   - an *approach ring*, closing on the target over the whole encounter and
+ *     landing exactly on the beat. Its radius is time, which is why it starts
+ *     as soon as the phrase does: a clock that appears one beat before the
+ *     deadline is not a clock, it is a jump scare. A faint track ring marks
+ *     where it began, so the closing motion reads as arriving somewhere.
+ *   - a *countdown arc* around the target, depleting over the last
+ *     `COUNTDOWN_BEATS` beats. Distance says "soon"; this says "three beats",
+ *     and it says it to someone who has just looked up.
+ *   - the *window itself*, drawn as a state rather than as geometry: inside
+ *     the judging window the target goes white, swells and stops saying SPACE
+ *     and starts saying NOW. The window is ±`finalGoodBeats` around the beat
+ *     and that is far too thin a band to draw as a band -- so it is drawn as
+ *     the one thing it actually is, a moment.
+ *
+ * `breakoutPlan.ts`'s judgement is what these three agree with; the audible
+ * ticks in `RhythmBreakoutMechanic` are the fourth channel and count the same
+ * beats as the arc.
+ *
+ * WHAT A PHRASE COSTS, ON SCREEN
+ * ------------------------------
+ * The encounter charges health for a fumbled phrase and for a missed accent
+ * (see `PARTIAL_DAMAGE` / `ACCENT_DAMAGE`). A price the player only discovers
+ * by watching their bar drop is a price that reads as a bug, so the row says
+ * it: the target prints what missing it costs while the accent is still
+ * coming, and prints what a break cost in the moment it happens.
  *
  * The row scales to the sequence length, so a three-step phrase and a
  * ten-step one both stay inside the same strip and the diamonds never collide.
@@ -98,6 +130,32 @@ const CAPSULE_RADIUS = 1.7;
  * keeps the same share of it at every window size and every phrase length.
  */
 const GLYPH_RATIO = 1.41;
+
+/** How far out the approach ring starts, in field units. */
+const APPROACH_LEAD = 0.22;
+
+/**
+ * Beats before the accent the countdown arc covers, and the mechanic's ticks
+ * count. One number, two channels: the arc is drawn from it and the ticks are
+ * played from it, so what is seen and what is heard cannot drift apart.
+ */
+export const COUNTDOWN_BEATS = 4;
+
+/** How long the snap flash and the aftermath readouts last, in beats. */
+const SNAP_BEATS = 0.28;
+const COST_BEATS = 1.1;
+
+/**
+ * How long a direction press stays lit as a *recent* event, in beats.
+ *
+ * Every part of the hit flash -- the overshoot, the white core, the fast ring --
+ * is timed off this one number, so the press reads as one gesture rather than
+ * as three effects that happen to start together.
+ */
+const HIT_FLASH_BEATS = 0.32;
+
+/** How long the arrow-to-SPACE handoff sweep takes to cross the row, in beats. */
+const HANDOFF_BEATS = 0.42;
 
 /** Where the row actually lands for a player standing at `anchor`. */
 interface RowFrame {
@@ -172,6 +230,8 @@ export interface PromptRowState {
   /** Absolute beat the phrase starts on, and the beat the accent lands on. */
   startBeat: number;
   finalBeat: number;
+  /** Half-width of the accent's judging window, in beats. */
+  finalGoodBeats: number;
   /** 0..1 fade-in during the prep window. */
   reveal: number;
   /** 0..1 -- how close the accent is. 1 at the beat itself. */
@@ -184,6 +244,13 @@ export interface PromptRowState {
   breakable: boolean;
   /** Key name printed inside the target circle. */
   keyLabel: string;
+  /** What missing the accent costs, printed on the target before it lands. */
+  accentMissDamage: number;
+  /** What a fumbled phrase costs, printed when a break carries that price. */
+  missDamage: number;
+  /** Beat the accent landed on a fumbled phrase, and what it cost. */
+  partialBeat: number;
+  partialAmount: number;
 }
 
 /**
@@ -268,8 +335,40 @@ export function renderPromptRow(r: Renderer, s: PromptRowState): void {
     for (let i = 0; i < count; i++) {
       renderSlot(r, s, s.steps[i], i, total, dim, frame, size, i === next);
     }
+    if (phraseDone) renderHandoff(r, s, frame, size, total);
     renderFinalSlot(r, s, total, frame, size);
   });
+}
+
+/**
+ * The sweep that carries the eye from the last arrow to the SPACE target.
+ *
+ * The row is the one place where the encounter's two demands are told apart by
+ * position, and the accent is the demand that actually costs health -- but it
+ * sits at the far end of the row from the arrows the player has been staring
+ * at, and it is the only one of the two that has a deadline. A phrase that
+ * ends with nothing at all happening at the moment it ends leaves the player
+ * looking in the wrong place at the moment that matters.
+ *
+ * Runs once, on the beat the last step resolves, so it reads as the phrase
+ * *closing* rather than as another thing to react to. Green if the phrase came
+ * out clean, red if it did not -- the same line either way, so the player is
+ * not being told two different stories about what to do next.
+ */
+function renderHandoff(r: Renderer, s: PromptRowState, frame: RowFrame, size: number, total: number): void {
+  const doneBeat = Math.max(...s.steps.map((st) => st.resolvedBeat ?? 0));
+  const age = s.beat - doneBeat;
+  if (age < 0 || age >= HANDOFF_BEATS) return;
+  const clean = s.steps.every((st) => st.state === 'HIT');
+  const colour = clean ? COLOUR.hit : COLOUR.miss;
+  const t = clamp(age / HANDOFF_BEATS, 0, 1);
+  const from = slotPosition(0, total, s.anchor).x;
+  const to = finalSlot(total, frame).x;
+  const head = from + (to - from) * t;
+  const tail = from + (to - from) * Math.max(0, t - 0.45);
+  const fade = 1 - t;
+  r.polyline([{ x: tail, y: frame.rowY }, { x: head, y: frame.rowY }], colour, 3, 0.8 * fade);
+  r.glow(head, frame.rowY, size * 1.8, colour, 0.55 * fade);
 }
 
 /** Index of the step being asked for, or `steps.length` once the queue drains. */
@@ -296,65 +395,126 @@ function finalSlot(total: number, frame: RowFrame): { x: number; y: number } {
  *
  * A circle, not a diamond: it is the one slot that is not a direction, and it
  * should read as the *place the phrase is going* rather than as one more
- * prompt. Its charge behaviours -- the converging ring, the ready glow, the
- * break burst -- all anchor here.
+ * prompt. Its charge behaviours -- the approach ring, the countdown arc, the
+ * ready glow, the break burst -- all anchor here.
  *
- * It is also the encounter's only clock. The arrows are untimed, so the ring
- * closing onto this circle is the one thing on the row that means "now": its
- * radius is the time left, and it lands exactly on the beat. That is why it is
- * drawn more insistently than the rest of the row -- everything else here is a
- * checklist, and this is the deadline.
+ * It is also the encounter's only clock, and since the judgement track came out
+ * it is the encounter's only *timing cue* as well, so it is drawn more
+ * insistently than anything else on the row. Everything here is one of the
+ * three channels described in the file header, and they are deliberately
+ * redundant: the ring is a clock you have to watch, the arc is a count you can
+ * drop in on, and the window is a state you cannot miss.
  */
 function renderFinalSlot(r: Renderer, s: PromptRowState, total: number, frame: RowFrame, size: number): void {
   const { x, y } = finalSlot(total, frame);
   const age = s.beat - s.finalChangedBeat;
+  const radius = size * 0.9;
+  /** Inside the judging window: the only moment the accent will answer. */
+  const open = Math.abs(s.beat - s.finalBeat) <= s.finalGoodBeats;
 
   if (s.finalState === 'HIT') {
-    if (age > 0.9) return;
+    if (age > COST_BEATS) return;
     const t = clamp(age / 0.9, 0, 1);
     r.strokeCircle(x, y, 0.03 + 0.22 * easeOutCubic(t), COLOUR.hit, 3, 1 - t);
+    r.glow(x, y, 0.1 * (1 - t), '#ffffff', 0.6 * (1 - t));
     r.text('BREAK', x, y - 0.05, COLOUR.hit, 18, 'center', 1 - t);
+    // A break that carried a price says so, in the same breath as the reward.
+    if (s.partialAmount > 0 && age < COST_BEATS) {
+      const cost = clamp(age / COST_BEATS, 0, 1);
+      r.text(`-${s.partialAmount}`, x, y + 0.055 + 0.02 * cost, COLOUR.miss, 17, 'center', 1 - cost);
+    }
     return;
   }
   if (s.finalState === 'MISSED') {
-    if (age > 0.9) return;
-    const t = clamp(age / 0.9, 0, 1);
-    r.text('SEAL HOLDS', x, y - 0.05, COLOUR.miss, 15, 'center', 1 - t);
+    if (age > COST_BEATS) return;
+    const t = clamp(age / COST_BEATS, 0, 1);
+    r.text('SEAL HOLDS', x, y - 0.055, COLOUR.miss, 15, 'center', 1 - t);
+    r.text(`-${s.accentMissDamage}`, x, y + 0.045 + 0.02 * t, COLOUR.miss, 20, 'center', 1 - t);
     return;
   }
 
   const ready = s.finalState === 'READY';
-  const colour = !s.breakable ? COLOUR.miss : ready ? COLOUR.hit : COLOUR.active;
+  const live = s.breakable;
   const pulse = 0.5 - 0.5 * Math.cos(Math.PI * 2 * s.beat);
-  const radius = size * 0.9 * (1 + 0.3 * s.charge + 0.12 * pulse);
+  const colour = !live ? COLOUR.miss : open ? '#ffffff' : ready ? COLOUR.hit : COLOUR.active;
+  const swell = 1 + 0.3 * s.charge + 0.12 * pulse + (open ? 0.2 : 0);
+  const at = radius * swell;
 
-  // Converging ring: its radius is the time left, so it lands on the circle
-  // exactly on the beat. It fades in with the charge rather than sitting at
-  // full size through the whole phrase -- a ring that is always there is
-  // furniture, and the player stops reading it as a countdown.
+  // ---- channel one: the approach ring ----
   //
-  // Since the track came out this is the encounter's only timing cue, so it is
-  // drawn further out and brighter than it used to be: it has to carry the
-  // countdown that the playhead used to share.
-  const convergence = 0.19 * (1 - s.charge);
-  if (convergence > 0.001 && s.charge > 0.02) {
-    r.strokeCircle(x, y, radius + convergence, colour, 2, 0.2 + 0.75 * s.charge);
-    // Four lines racing in with it, which is what makes the ring read as
+  // The track marks where the ring started, so the closing motion has
+  // somewhere to be arriving *from* -- without it a lone shrinking ring is
+  // just a shape getting smaller. Both are held back once the ring has landed,
+  // so the window reads as a state rather than as the end of a slide.
+  const convergence = APPROACH_LEAD * (1 - clamp(s.charge, 0, 1));
+  if (live && convergence > 0.004) {
+    r.strokeCircle(x, y, radius + APPROACH_LEAD, colour, 1, 0.14 + 0.1 * s.charge);
+    r.strokeCircle(x, y, at + convergence, colour, 2, 0.25 + 0.7 * s.charge);
+    // A dimmer ring trailing it, which is what makes the pair read as
     // *arriving* rather than as merely shrinking.
+    r.strokeCircle(x, y, at + convergence * 1.55, colour, 2, 0.1 + 0.35 * s.charge);
     for (let i = 0; i < 4; i++) {
       const angle = (i * Math.PI) / 2 + Math.PI / 4;
-      const from = { x: x + Math.cos(angle) * (radius + convergence * 1.6), y: y + Math.sin(angle) * (radius + convergence * 1.6) };
-      const to = { x: x + Math.cos(angle) * (radius + convergence), y: y + Math.sin(angle) * (radius + convergence) };
-      r.line(from.x, from.y, to.x, to.y, colour, 2, 0.12 + 0.6 * s.charge);
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const from = at + convergence * 1.9;
+      const to = at + convergence;
+      r.line(x + cos * from, y + sin * from, x + cos * to, y + sin * to, colour, 2, 0.12 + 0.6 * s.charge);
     }
   }
 
-  r.fillCircle(x, y, radius, colour, 0.2 + 0.5 * s.charge);
-  r.strokeCircle(x, y, radius, colour, 2, 0.5 + 0.5 * s.charge);
-  if (ready) r.glow(x, y, 0.09, colour, 0.35 + 0.3 * pulse);
+  // ---- channel two: the countdown arc ----
+  //
+  // A timer that empties clockwise over the run-in, counting the same beats the
+  // mechanic ticks. It starts full and ends exactly on the accent, so "how much
+  // of the arc is left" and "how many ticks are left" are the same question.
+  const beatsLeft = s.finalBeat - s.beat;
+  if (live && beatsLeft > 0 && beatsLeft <= COUNTDOWN_BEATS) {
+    const remain = clamp(beatsLeft / COUNTDOWN_BEATS, 0, 1);
+    r.strokeArc(
+      x, y, radius + 0.028, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * remain,
+      colour, 3, 0.4 + 0.6 * (1 - remain),
+    );
+    // The pip that expires with each beat, so the arc's end is legible even
+    // when the arc itself is nearly gone.
+    const pip = -Math.PI / 2 + Math.PI * 2 * remain;
+    r.fillCircle(x + Math.cos(pip) * (radius + 0.028), y + Math.sin(pip) * (radius + 0.028), 0.006, colour, 0.9);
+  }
 
-  r.text(s.keyLabel, x, y, colour, r.len(0.017), 'center', 0.6 + 0.4 * s.charge);
-  if (!s.breakable) r.text('UNSTABLE', x, y + 0.075, COLOUR.miss, r.len(0.015), 'center', 0.8);
+  // ---- channel three: the window ----
+  const sinceBeat = s.beat - s.finalBeat;
+  if (live && Math.abs(sinceBeat) <= SNAP_BEATS) {
+    // The beat itself: a hard white snap, so a press that was late still
+    // shows the player exactly where the line was.
+    const t = 1 - Math.abs(sinceBeat) / SNAP_BEATS;
+    r.strokeCircle(x, y, at + 0.025 + 0.05 * (1 - t), '#ffffff', 4, 0.9 * t);
+    r.glow(x, y, at * 2.6, '#ffffff', 0.45 * t);
+  }
+  if (open) {
+    r.strokeCircle(x, y, at + 0.055, '#ffffff', 2, 0.5 + 0.4 * pulse);
+    r.glow(x, y, at * 2.2, '#ffffff', 0.3 + 0.25 * pulse);
+  }
+
+  r.fillCircle(x, y, at, colour, 0.2 + 0.5 * s.charge + (open ? 0.15 : 0));
+  r.strokeCircle(x, y, at, colour, 2, 0.5 + 0.5 * s.charge);
+  if (ready && live) r.glow(x, y, 0.1, colour, 0.35 + 0.3 * pulse);
+
+  // The label answers the question the player is asking. Before the window it
+  // is *which key*; inside it, the only question left is *when*, so it says
+  // that instead -- and says it in the one word that cannot be misread.
+  r.text(
+    open ? 'NOW' : s.keyLabel, x, y,
+    colour, r.len(open ? 0.021 : 0.017), 'center', 0.6 + 0.4 * s.charge,
+  );
+  if (!live) {
+    r.text('UNSTABLE', x, y + 0.075, COLOUR.miss, r.len(0.015), 'center', 0.8);
+    r.text(`-${s.accentMissDamage}`, x, y + 0.105, COLOUR.miss, r.len(0.018), 'center', 0.9);
+  } else if (ready) {
+    // The price of the press that is about to be asked for. Shown as the
+    // accent turns ready rather than through the whole phrase: it is a warning
+    // about the next beat, and a permanent label stops being read.
+    r.text(`-${s.accentMissDamage}`, x, y + 0.085, COLOUR.miss, r.len(0.016), 'center', 0.75);
+  }
 }
 
 function renderSlot(
@@ -368,6 +528,15 @@ function renderSlot(
   let alpha = 0.7;
   let colour: string = COLOUR.upcoming;
   let shake = 0;
+  /**
+   * 1 at the instant of a hit, falling to 0 over `HIT_FLASH_BEATS`.
+   *
+   * The diamond's own state change is a colour, and a colour is easy to miss
+   * on a row the player is reading out of the corner of their eye while the
+   * seal closes on them. This drives the parts that are not colours: the white
+   * core, the second ring, and the overshoot.
+   */
+  let flash = 0;
 
   switch (step.state) {
     case 'ACTIVE': {
@@ -388,10 +557,14 @@ function renderSlot(
       break;
     }
     case 'HIT': {
-      const punch = age < 0.5 ? easeOutBack(clamp(age / 0.5, 0, 1)) : 1;
-      scale = 1.35 - 0.35 * punch;
+      // A bigger overshoot than the row used to have, and a white core on top
+      // of it: the press has to register from the middle of the board, where
+      // the player is actually looking.
+      const punch = age < HIT_FLASH_BEATS ? easeOutBack(clamp(age / HIT_FLASH_BEATS, 0, 1)) : 1;
+      scale = 1.5 - 0.5 * punch;
       alpha = 1;
       colour = COLOUR.hit;
+      flash = clamp(1 - age / HIT_FLASH_BEATS, 0, 1);
       break;
     }
     case 'MISSED': {
@@ -412,8 +585,18 @@ function renderSlot(
   const radius = size * scale;
 
   if (isNext && step.state === 'ACTIVE') r.glow(x, y, radius * 2.6, colour, 0.34);
-  if (step.state === 'HIT' && age < 0.45) {
-    r.strokeCircle(x, y, radius * (1 + 1.6 * (age / 0.45)), COLOUR.hit, 2, 0.7 * (1 - age / 0.45));
+  if (step.state === 'HIT') {
+    // Two rings leaving the glyph: a white one that goes fast and a green one
+    // that lingers, so the hit has a snap *and* an aftermath.
+    const white = clamp(age / (HIT_FLASH_BEATS * 0.7), 0, 1);
+    if (white < 1) {
+      r.strokeCircle(x, y, radius * (1 + 2.1 * white), '#ffffff', 3, 0.85 * (1 - white));
+    }
+    const green = clamp(age / 0.6, 0, 1);
+    if (green < 1) {
+      r.strokeCircle(x, y, radius * (1 + 1.5 * green), COLOUR.hit, 2, 0.7 * (1 - green));
+    }
+    if (flash > 0) r.glow(x, y, radius * 3.2, COLOUR.hit, 0.5 * flash);
   }
 
   // The slot itself: a diamond, so the row never reads as note heads borrowed
@@ -424,9 +607,16 @@ function renderSlot(
     const angle = (i * Math.PI) / 2;
     return { x: x + Math.cos(angle) * radius, y: y + Math.sin(angle) * radius };
   });
-  r.fillPolygon(corners, colour, alpha * 0.22);
+  r.fillPolygon(corners, colour, alpha * (0.22 + 0.5 * flash));
+  if (flash > 0) r.fillPolygon(corners, '#ffffff', alpha * 0.55 * flash * flash);
   r.polyline([...corners, corners[0]], colour, step.state === 'UPCOMING' ? 1 : 2, alpha);
-  r.text(DIRECTION_GLYPH[step.direction], x, y, colour, r.len(GLYPH_RATIO * size) * scale, 'center', alpha);
+  // The glyph burns white first and settles into its colour, which is what
+  // makes the press read as an event rather than as a state.
+  r.text(
+    DIRECTION_GLYPH[step.direction], x, y,
+    flash > 0.5 ? '#ffffff' : colour,
+    r.len(GLYPH_RATIO * size) * scale, 'center', alpha,
+  );
 }
 
 /**

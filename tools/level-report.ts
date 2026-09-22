@@ -6,8 +6,8 @@
  * running the game.
  *
  *   npm run level                              # the default arena test level
- *   npm run level -- prototype_90s.level.json  # any level in the library
- *   npm run level -- arena_test.level.json 17  # only from bar 17 on
+ *   npm run level -- _archive/prototype_90s.level.json  # any level in the library
+ *   npm run level -- _archive/arena_test.level.json 17  # only from bar 17 on
  */
 
 import { readFileSync } from 'node:fs';

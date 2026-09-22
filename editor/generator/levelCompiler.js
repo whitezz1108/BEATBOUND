@@ -48,7 +48,11 @@ export function compile(blueprint) {
     const section = {
       id: s.id,
       startBar: s.startBar,
-      lengthBars: s.endBar - s.startBar + 1,
+      // `endBar` is exclusive all the way through -- the analysis document, the
+      // blueprint, and the runtime's `bar < section.endBar`. The compiled level
+      // keeps `startBar` + `lengthBars` and drops `endBar`, so the two have to
+      // agree: lengthBars = endBar - startBar.
+      lengthBars: s.endBar - s.startBar,
       mode: s.mode,
       function: s.function,
       difficulty: s.difficulty,

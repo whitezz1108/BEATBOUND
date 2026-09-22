@@ -52,7 +52,15 @@ const state = {
 async function api(path, opts) {
   const res = await fetch(path, opts);
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `${path}: HTTP ${res.status}`);
+  if (!res.ok) {
+    // Some routes explain themselves with a single `error` string, but the
+    // compile routes reject with the validator's `errors` array -- /api/generate
+    // answers 422 with the real reasons. Reporting only `${path}: HTTP 422` threw
+    // those away and left the panel saying nothing useful.
+    const detail = data.error
+      ?? (Array.isArray(data.errors) && data.errors.length ? data.errors.join(' | ') : null);
+    throw new Error(detail ?? `${path}: HTTP ${res.status}`);
+  }
   return data;
 }
 
@@ -135,12 +143,30 @@ function downloadExport(endpoint, filename) {
   setStatus(`downloading ${filename}…`);
 }
 
+/**
+ * A blueprint from the director always has `sections`; `transitions` is
+ * optional and the session's stored copy omits it entirely. Every reader walks
+ * both as arrays, and `state.blueprint?.transitions.find(...)` does not save
+ * them: `?.` short-circuits on a missing *blueprint*, not on a missing
+ * *transitions*, so the call still landed on `undefined.find` and took
+ * `refresh()` -- and with it the whole panel -- down on load. Normalize once
+ * where the blueprint enters, rather than guarding a dozen call sites.
+ */
+function normalizeBlueprint(bp) {
+  if (!bp || typeof bp !== 'object') return null;
+  return {
+    ...bp,
+    sections: Array.isArray(bp.sections) ? bp.sections : [],
+    transitions: Array.isArray(bp.transitions) ? bp.transitions : [],
+  };
+}
+
 async function direct() {
   const seed = Math.max(1, parseInt($('seed-input').value) || 42);
   setStatus(`running the level director (seed ${seed})…`);
   try {
     const data = await postJson('/api/direct', { seed });
-    state.blueprint = data.blueprint;
+    state.blueprint = normalizeBlueprint(data.blueprint);
     state.selection = { type: 'section', id: state.blueprint.sections[0]?.id ?? null };
     refresh();
     setStatus(`blueprint generated: ${state.blueprint.sections.length} sections, ` +
@@ -162,7 +188,7 @@ async function regenerateSection() {
     await saveBlueprint();
     setStatus(`regenerating ${section.id}…`);
     const data = await postJson('/api/regenerate', { sectionId: section.id });
-    state.blueprint = data.blueprint;
+    state.blueprint = normalizeBlueprint(data.blueprint);
     refresh();
     setStatus(`section ${section.id} regenerated (variant ${section.variant})`);
   } catch (err) {
@@ -379,7 +405,13 @@ function renderV2Event(ev) {
   if (ev.message) detail.push(ev.message);
   const head = `<span class="stage">${ev.stage}</span>`;
   v2Log(`${head}  ${detail.join(' · ')}`, ev.ok === true ? 'ok' : '');
-  for (const err of ev.errors ?? []) v2Log(`    ${err}`, 'err');
+  // Only a list of strings is iterable here. `errors` is a list on every event
+  // except the repair progress ones, which carry counts under `errorCount` --
+  // and iterating a count is exactly what threw "number 0 is not iterable" and
+  // failed the run. A malformed event must cost a log line, not the whole panel.
+  if (Array.isArray(ev.errors)) {
+    for (const err of ev.errors) v2Log(`    ${err}`, 'err');
+  }
 }
 
 async function v2Generate() {
@@ -444,11 +476,18 @@ async function v2Generate() {
 
     // Report the verdict, not the request status: a level that compiled but
     // failed validation is a failed run, and the log says so.
+    // Two different reports with two different shapes, and both are nested:
+    // `validation` is validateAll()'s -- `{ok, level: {errors, warnings}, ...}`
+    // -- and `structural` is repairBlueprint()'s, whose verdicts live under
+    // `.validation`. Reading either at the wrong level yields `undefined`, and
+    // `?? []` turns that into a confident "0 error(s), 0 warning(s)" for a run
+    // that failed. The panel said exactly that while the validate stage in the
+    // same log listed four warnings.
     const errors = result.validation?.level?.errors ?? [];
     const warnings = result.validation?.level?.warnings ?? [];
-    const structuralErrors = result.structural?.errors ?? [];
+    const structuralErrors = result.structural?.validation?.errors ?? [];
     for (const err of structuralErrors) v2Log(`blueprint: ${err}`, 'err');
-    for (const warn of result.structural?.warnings ?? []) v2Log(`blueprint: ${warn}`);
+    for (const warn of result.structural?.validation?.warnings ?? []) v2Log(`blueprint: ${warn}`);
     for (const warn of warnings) v2Log(`warning: ${warn}`);
 
     if (result.ok) {
@@ -545,7 +584,15 @@ function renderPatternRows(section) {
   ul.innerHTML = '';
   const keepRole = $('sec-keep-role').checked;
 
-  section.patterns.forEach((p, i) => {
+  // A v1 blueprint section carries its `patterns`; a v2 one does not, because
+  // the compiler derives them from the director's section description. Absent
+  // is a real state here, not a bug to report -- but iterating it threw
+  // "Cannot read properties of undefined (reading 'forEach')" and took the
+  // whole refresh down, so the run was reported as failed after it had in fact
+  // compiled, published and validated.
+  const patterns = Array.isArray(section.patterns) ? section.patterns : [];
+
+  patterns.forEach((p, i) => {
     const li = document.createElement('li');
     const locked = Boolean(p.role && keepRole);
     li.innerHTML = `
@@ -576,8 +623,11 @@ function populateSectionEditor(section) {
   $('sec-function').value = section.function;
   $('sec-difficulty').value = section.difficulty;
   $('sec-diff-label').textContent = section.difficulty;
-  $('sec-start').value = section.startBar;
-  $('sec-end').value = section.endBar;
+  // v1 spells these `startBar`/`endBar` (endBar inclusive); a v2 blueprint uses
+  // `start_bar`/`end_bar_exclusive`. Read whichever is present rather than
+  // rendering the string "undefined" into the field.
+  $('sec-start').value = section.startBar ?? section.start_bar ?? '';
+  $('sec-end').value = section.endBar ?? section.end_bar_exclusive ?? '';
   $('sec-breather').textContent =
     section.breatherFromBeat != null
       ? `breather: beats ≥ ${section.breatherFromBeat} do not spawn (mode change next)`
@@ -1147,7 +1197,7 @@ async function init() {
     renderV2Modes();
     if (st.hasAnalysis) state.analysis = await api('/api/analysis');
     if (st.hasBlueprint) {
-      state.blueprint = await api('/api/blueprint');
+      state.blueprint = normalizeBlueprint(await api('/api/blueprint'));
       state.selection = { type: 'section', id: state.blueprint.sections[0]?.id ?? null };
     }
     setStatus(
@@ -1164,3 +1214,8 @@ async function init() {
 }
 
 init();
+
+// Module scope is otherwise unreachable from outside, which makes the panel's
+// own state and redraw path impossible to inspect when a render goes wrong --
+// exactly what made the /api/state shape mismatch hard to see. Expose them.
+window.__editor = { state, refresh, drawTimeline, drawWaveform };

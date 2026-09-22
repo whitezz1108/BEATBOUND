@@ -80,6 +80,24 @@ test('/api/state carries what the V2 panel reads', async () => {
   assert.equal(body.tuning.breatherBeats, body.tuningMirror.breatherBeats);
 });
 
+// The canvases read these off whatever `/api/state` last put in `state.analysis`.
+// It used to send a *summary* -- `bars` was the bar COUNT -- so `for (const b of
+// state.analysis.bars)` in drawTimeline() threw "number 0 is not iterable" and
+// the whole AI GENERATE run was reported as failed. Pin the real shape.
+test('/api/state and /api/analysis agree on the analysis shape the canvases read', async () => {
+  const { body: st } = await getJson('/api/state');
+  const { body: full } = await getJson('/api/analysis');
+  assert.ok(st.analysis, '/api/state reported no analysis; the editor has none loaded');
+  assert.deepEqual(st.analysis, full, '/api/state must serve the same object as /api/analysis');
+
+  assert.ok(Array.isArray(st.analysis.bars), 'analysis.bars must be the per-bar array, not a count');
+  assert.ok(st.analysis.bars.length > 0);
+  assert.equal(typeof st.analysis.bars[0].energy, 'number', 'the timeline heat strip reads bars[].energy');
+  assert.ok(Array.isArray(st.analysis.tempo.timeSignature), 'the canvases read tempo.timeSignature[0]');
+  assert.ok(Array.isArray(st.analysis.sections), 'the canvases iterate sections');
+  assert.equal(typeof st.analysis.song.durationSec, 'number');
+});
+
 test('/api/presets lists presets the panel can render', async () => {
   const { status, body } = await getJson('/api/presets');
   assert.equal(status, 200);

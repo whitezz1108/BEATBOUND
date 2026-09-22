@@ -27,6 +27,11 @@
  *      before, so it cannot become lethal while the player still has inputs
  *      left to make.
  *
+ * It also decides what a failed phrase *costs*, which is the same kind of
+ * fairness question: the encounter is the one ARENA hazard the player cannot
+ * dodge, so a bad bar must be survivable and its price must be legible before
+ * it is charged. See `PARTIAL_DAMAGE` / `ACCENT_DAMAGE` below.
+ *
  * Nothing here reads the clock or draws: it is a pure function of the param
  * bag plus the tempo, which is what lets `npm run fairness` and the pattern
  * audits exercise the same numbers the game plays.
@@ -45,6 +50,35 @@ import { SEAL_SKINS, type SealSkinName } from './SealBarrier';
 export type BreakoutFailureMode = 'LIGHT' | 'DAMAGE' | 'HEAVY';
 
 const FAILURE_MODES: BreakoutFailureMode[] = ['LIGHT', 'DAMAGE', 'HEAVY'];
+
+/**
+ * Health a phrase costs, by authored severity -- two prices, because the
+ * encounter has two ways to go wrong and they are not the same mistake.
+ *
+ *   PARTIAL  the phrase was not played in full but its accent still landed.
+ *            The seal opens, the player got out, and this is the sting for
+ *            the steps that were fumbled rather than a punishment for them.
+ *   ACCENT   the accent itself never landed -- the one beat-locked press the
+ *            whole encounter is built around -- or the phrase was too broken
+ *            for the seal to open at all. This is the real failure, and it is
+ *            charged whether the player was early, late, or never pressed.
+ *
+ * Both are *health*, not a rule: a run survives a bad bar, and the tally on
+ * screen says what the bar cost. `failureMode` remains the author's severity
+ * knob and keeps its own job -- which source the damage is filed under, and
+ * therefore how a collision with the closed seal is charged.
+ */
+const PARTIAL_DAMAGE: Record<BreakoutFailureMode, number> = { LIGHT: 2, DAMAGE: 3, HEAVY: 5 };
+const ACCENT_DAMAGE: Record<BreakoutFailureMode, number> = { LIGHT: 5, DAMAGE: 8, HEAVY: 10 };
+
+/**
+ * Ceiling on an authored price, as a share of the health bar.
+ *
+ * A rhythm encounter is one bar of one song. However badly it goes, it must
+ * not be able to take a run out on its own -- that is what the rest of the
+ * song's hazards are for -- so no price, authored or generated, goes past this.
+ */
+const MAX_DAMAGE = 25;
 
 /**
  * How far a player can stand from the centre of the arena.
@@ -83,6 +117,10 @@ export interface BreakoutPlan {
   /** Step misses the seal tolerates before it can no longer be broken. */
   maxMisses: number;
   failureMode: BreakoutFailureMode;
+  /** Health the accent costs when it is missed, or when the seal cannot open. */
+  accentMissDamage: number;
+  /** Health a phrase costs when it is fumbled but the accent still lands. */
+  missDamage: number;
   /** Distance to the nearest wall at spawn. See `sealGeometry.ts`. */
   startRadius: number;
   /** Distance to the nearest wall at the final accent. */
@@ -171,6 +209,7 @@ export function planEncounter(params: ParamBag, ctx: PlanContext): BreakoutPlan 
   // with the player and there is nowhere to walk to anyway.
   const movementScale = clamp(numberOr(params.movementScale, 0.6), 0, 1);
   const prepBeats = planPrep(params, ctx, spb, notes);
+  const failureMode = readFailureMode(params.failureMode);
 
   return {
     prepBeats,
@@ -181,7 +220,14 @@ export function planEncounter(params: ParamBag, ctx: PlanContext): BreakoutPlan 
     goodBeats,
     finalGoodBeats,
     maxMisses: Math.max(0, Math.round(numberOr(params.maxMisses, 1))),
-    failureMode: readFailureMode(params.failureMode),
+    failureMode,
+    accentMissDamage: readDamage(params.accentMissDamage, ACCENT_DAMAGE[failureMode]),
+    // A partial phrase can never cost more than the accent it failed to
+    // protect: the accent is the encounter, and the arrows are the run-up.
+    missDamage: Math.min(
+      readDamage(params.missDamage, PARTIAL_DAMAGE[failureMode]),
+      readDamage(params.accentMissDamage, ACCENT_DAMAGE[failureMode]),
+    ),
     startRadius,
     criticalRadius,
     thickness,
@@ -304,6 +350,11 @@ function isCardinal(direction: string): direction is BreakoutDirection {
 function readFailureMode(value: unknown): BreakoutFailureMode {
   const name = String(value ?? 'DAMAGE').toUpperCase();
   return (FAILURE_MODES as string[]).includes(name) ? (name as BreakoutFailureMode) : 'DAMAGE';
+}
+
+/** A price authored per encounter, or the severity's own. Never above `MAX_DAMAGE`. */
+function readDamage(value: unknown, fallback: number): number {
+  return clamp(Math.round(numberOr(value, fallback)), 0, MAX_DAMAGE);
 }
 
 function readSkin(value: unknown): SealSkinName {

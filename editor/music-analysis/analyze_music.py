@@ -172,7 +172,15 @@ def analyze(path, output, bpm_override, time_sig):
             "id": f"section_{s + 1:02d}",
             "label": f"section_{s + 1:02d}",
             "startBar": lo,
-            "endBar": hi - 1,
+            # Exclusive, matching the V2 document's `end_bar_exclusive` and what
+            # the runtime reads (`bar < section.endBar`, BeatBoundGame.ts). This
+            # used to publish `hi - 1` -- an *inclusive* end -- so consecutive
+            # sections both claimed bar `hi`: section_01 ended at 13 and
+            # section_02 started at 13. The V2 builder repaired that by deriving
+            # bars from the contiguous section times, but the v1 consumers
+            # (levelDirector.buildSections) took endBar at face value and built
+            # overlapping sections, which the validator then rejected outright.
+            "endBar": hi,
             "startTime": bars_in[0]["startTime"],
             "endTime": bars_in[-1]["endTime"],
             "durationSec": round(bars_in[-1]["endTime"] - bars_in[0]["startTime"], 6),

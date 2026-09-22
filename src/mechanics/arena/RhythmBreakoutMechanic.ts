@@ -50,6 +50,18 @@
  * input and therefore always fail the encounter, see exactly what a player who
  * stands still and does nothing would see.
  *
+ * WHAT A PHRASE COSTS
+ * -------------------
+ * The collapse is the *bad* ending, and the price is authored rather than
+ * inherited: `damageAmount` is what the seal charges, so a HEAVY encounter
+ * hurts more than a LIGHT one without either of them having to pretend to be a
+ * different kind of hazard. The middle ending is newer -- a phrase that was
+ * fumbled but whose accent still landed -- and it has no collision to ride on,
+ * because the seal opens and the player is left standing in clean air. That one
+ * is charged through `drainDamage()`, which is the same bargain as the verdict
+ * tally: the mechanic judges, the run charges. Both prices live in
+ * `breakoutPlan.ts`, and the row on screen says what the current one is.
+ *
  * Timing, parsing and every fairness clamp live in `breakoutPlan.ts`; the
  * phrase and its judging in `breakoutSequence.ts`; the ring in
  * `SealBarrier.ts`; the prompts in `breakoutUI.ts`. This file owns the state
@@ -59,9 +71,10 @@
  */
 
 import { BaseMechanic, type MechanicPhase, type MechanicSpawnContext, type MechanicUpdate } from '../../core/Mechanic';
-import type { SequenceEncounter, SequenceVerdict } from '../../core/capabilities';
+import type { SequenceDamage, SequenceEncounter, SequenceVerdict } from '../../core/capabilities';
 import type { DamageSource } from '../../core/HealthManager';
 import { clamp, lerp, makeRng, type Shape } from '../../core/geometry';
+import { DIRECTION_ANGLE } from '../../core/direction8';
 import type { Renderer } from '../../core/Renderer';
 import { easeInOut, easeOutCubic } from '../../feel/Easing';
 import { TUNING } from '../../tuning';
@@ -73,7 +86,7 @@ import {
 import { SEAL_SKINS, SealBarrier, type SealPhase } from './SealBarrier';
 import { bandShapes, circumradiusFor, spinAt, type SealShape } from './sealGeometry';
 import {
-  renderEncounterLabel, renderMovementLock, renderPlayerCharge, renderPromptRow, slotPosition,
+  COUNTDOWN_BEATS, renderEncounterLabel, renderMovementLock, renderPlayerCharge, renderPromptRow, slotPosition,
 } from './breakoutUI';
 
 type Outcome = 'PENDING' | 'BROKEN' | 'FAILED';
@@ -89,12 +102,25 @@ const FAILURE_DAMAGE: Record<BreakoutFailureMode, DamageSource> = {
 /** Below this the movement scale is a lock, not a damp. */
 const MOVEMENT_LOCK_EPSILON = 0.05;
 
+/**
+ * Beats before the accent at which the countdown starts ticking.
+ *
+ * The count itself lives in `breakoutUI`, which draws the arc that spans it.
+ * Heard and seen are the same number by construction; two constants that had to
+ * be kept equal by hand would not stay equal.
+ */
 const SEAL_COLOUR = '#9d7bff';
 const BREAK_COLOUR = '#f7d774';
 const MISS_COLOUR = '#ff5470';
+const HIT_COLOUR = '#7dffb0';
 
 export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEncounter {
   override readonly damageSource: DamageSource;
+  /**
+   * What an unbroken seal costs. Authored, not looked up: the level decided
+   * how heavy this encounter is, and the collapse charges exactly that.
+   */
+  override readonly damageAmount: number;
 
   private readonly plan: BreakoutPlan;
   private readonly sequence: RhythmSequence;
@@ -114,6 +140,11 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
   private finalChangedBeat = 0;
   /** One-shot latch for the "the next beat is the hit" cue. */
   private readyCued = false;
+  /** Last whole beat the countdown ticked on, so each beat ticks once. */
+  private lastTickBeat = -Infinity;
+  /** Beat the accent landed on a fumbled phrase, and what it cost. */
+  private partialBeat = -Infinity;
+  private partialAmount = 0;
   /**
    * What the seal is closed around: the player.
    *
@@ -126,6 +157,8 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
   private focusY = ARENA_CENTRE.y;
   /** Verdicts waiting for the mode to fold into the run's note tally. */
   private judgements: SequenceVerdict[] = [];
+  /** Health waiting for the mode to charge to the run. */
+  private owed: SequenceDamage[] = [];
 
   constructor(spawn: MechanicSpawnContext) {
     const plan = planEncounter(spawn.params, {
@@ -146,6 +179,7 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
 
     this.plan = plan;
     this.damageSource = FAILURE_DAMAGE[plan.failureMode];
+    this.damageAmount = plan.accentMissDamage;
     this.rng = makeRng(spawn.seed);
     this.sequence = new RhythmSequence(plan.steps, this.activationBeat);
     this.finalJudge = new RhythmTimingJudge(plan.perfectBeats, plan.finalGoodBeats);
@@ -229,7 +263,7 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     // +1: the row the particle lands on includes the SPACE slot at its end.
     const at = slotPosition(result.index, this.sequence.length + 1, this.anchor);
     if (result.verdict === 'MISS') this.cueStepMiss(at);
-    else this.cueStepHit(at, result.verdict);
+    else this.cueStepHit(at, result.verdict, direction);
   }
 
   pressConfirm(beat: number): void {
@@ -238,7 +272,9 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     if (!this.breakable) {
       // The seal took too many misses to break. The press still answers, so
       // the player learns that they pressed correctly and it was the phrase
-      // that failed them, not their timing on the accent.
+      // that failed them, not their timing on the accent. The price of that
+      // phrase is the seal's own -- it collapses on them in a moment, and
+      // charges `damageAmount` when it does.
       this.feel.sfx('miss');
       return;
     }
@@ -248,6 +284,12 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
   drainJudgements(): SequenceVerdict[] {
     const drained = this.judgements;
     this.judgements = [];
+    return drained;
+  }
+
+  drainDamage(): SequenceDamage[] {
+    const drained = this.owed;
+    this.owed = [];
     return drained;
   }
 
@@ -272,8 +314,38 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
       // final accent is on the beat -- so update only refreshes UI state.
       this.sequence.update(beat);
       this.updateFinal(beat);
+      this.updateCountdown(beat);
     }
 
+  }
+
+  /**
+   * The audible clock on the accent.
+   *
+   * The ring closing on the SPACE target is a clock, but a clock has to be
+   * *read*: it says how much time is left only to someone already watching it.
+   * The ticks say the same thing to someone who looked up late -- three ticks,
+   * then the charge sting on the last beat, then the accent -- and they are
+   * deliberately quiet, because they are counting over the music rather than
+   * competing with it.
+   *
+   * One tick per whole beat, on the *song's* beat rather than the visual one,
+   * so a hit-stop cannot smear the count. Only the ticks that are actually
+   * counting are played: once the phrase is past the seal's tolerance there is
+   * no accent left to hit, and ticking through a deadline the player can no
+   * longer meet would be a lie told in the one channel they cannot re-read.
+   */
+  private updateCountdown(beat: number): void {
+    if (!this.breakable) return;
+    if (beat >= this.finalBeat) return;
+    const whole = Math.floor(beat);
+    if (whole <= this.lastTickBeat) return;
+    this.lastTickBeat = whole;
+    // The last beat belongs to `seal_charge`, which is the one that has to
+    // cut through; a tick on top of it would only blunt it.
+    if (this.finalBeat - whole <= 1) return;
+    if (this.finalBeat - whole > COUNTDOWN_BEATS) return;
+    this.feel.sfx('hold_tick', 1.6);
   }
 
   /** The accent's own little state machine: waiting, ready, then resolved. */
@@ -322,6 +394,11 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
    * rather than to the centre of the arena: the flash, the two shockwaves and
    * the shard spray all start on the body, and the ring breaks where the wave
    * reaches it. The player caused this.
+   *
+   * The accent detonates where it was *pressed*, too -- on the SPACE slot at
+   * the end of the row. That is the other half of the read: the wave says the
+   * seal is gone, the burst on the target says which key did it, and a player
+   * who got it right by a hair learns where the line was.
    */
   private breakSeal(beat: number): void {
     const verdict: BreakoutVerdict = this.finalJudge.verdict(beat - this.finalBeat);
@@ -332,6 +409,19 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
 
     // The accent is a scored input too -- the biggest one in the encounter.
     this.judgements.push(verdict);
+    // A phrase that was not fully played but was saved by the accent still
+    // costs something. Charged here rather than by the seal, because the seal
+    // is about to come apart: the player got out, and this is the price of the
+    // steps they did not play.
+    //
+    // The test is `hits < length` and not `misses > 0`, because a step the
+    // player never touched is not a miss -- it never expired, so nothing was
+    // scored against it -- but it is emphatically not a step they played. Left
+    // as `misses > 0`, a player could stand still through the whole phrase and
+    // press SPACE on the beat for a free break, which is the exact behaviour
+    // the price exists to rule out.
+    if (this.sequence.hits < this.sequence.length) this.chargePartial(beat);
+
     this.barrier.shatter(this.circumradiusAt(beat), spinAt(this.shape, beat), this.rng);
     // A beat of silence before the wave. Longer for a PERFECT, because the
     // freeze is the reward and a player who nailed it should get more of it.
@@ -353,9 +443,62 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     this.feel.emit(this.focusX, this.focusY, {
       count: 18, speed: 0.6, colour: SEAL_COLOUR, size: 0.007, life: 0.8, shape: 'spark',
     });
+    this.cueAccentHit(verdict);
   }
 
-  /** The seal wins: it keeps closing, and the collapse does the talking. */
+  /**
+   * The accent landed: a burst on the SPACE slot itself.
+   *
+   * Deliberately lighter than the break it triggers. The break is the event;
+   * this is the *receipt*, placed on the glyph the player's finger was on, and
+   * it is sized so the two read as one gesture rather than two explosions.
+   */
+  private cueAccentHit(verdict: BreakoutVerdict): void {
+    const at = slotPosition(this.sequence.length, this.sequence.length + 1, this.anchor);
+    const perfect = verdict === 'PERFECT';
+    this.feel.shockwave(at.x, at.y, perfect ? 0.3 : 0.22, '#ffffff', 0.4, perfect ? 4 : 3);
+    this.feel.emit(at.x, at.y, {
+      count: perfect ? 26 : 18,
+      speed: 0.75, speedJitter: 0.4,
+      colour: perfect ? BREAK_COLOUR : '#ffffff',
+      size: 0.008, life: 0.5, shape: 'spark',
+    });
+  }
+
+  /**
+   * The phrase was fumbled, the accent was not: what that costs.
+   *
+   * The seal still opens, so there is no collision to carry the price -- the
+   * run is handed the debt instead. The feedback is a *sting* rather than a
+   * hit: no hit-stop and no camera kick, because the player just earned the
+   * loudest moment in the encounter and a red flash over it would read as the
+   * break having failed. It is the row that says what happened, by turning red
+   * where the steps were missed and printing the price next to the accent.
+   */
+  private chargePartial(beat: number): void {
+    const amount = this.plan.missDamage;
+    if (amount > 0) this.owed.push({ source: this.damageSource, amount });
+    this.feel.sfx('miss', 0.55);
+    this.feel.emit(this.focusX, this.focusY, {
+      count: 10, speed: 0.45, colour: MISS_COLOUR, size: 0.006, life: 0.45, shape: 'spark',
+    });
+    this.partialBeat = beat;
+    this.partialAmount = amount;
+  }
+
+  /**
+   * The seal wins: it keeps closing, and the collapse does the talking.
+   *
+   * No damage is charged here. The collapse *is* the charge -- the band
+   * sweeps through the body a moment later and the mode bills it at
+   * `damageAmount` -- which keeps this failure on the same path as every
+   * other hazard in the game and keeps the headless audits honest, since a
+   * player who never presses anything is exactly what they simulate.
+   *
+   * What this adds is the warning: the accent is gone, and the player has one
+   * beat of collapse to understand that the thing now coming down on them is
+   * the price of it. The red rings are that sentence.
+   */
   private failSeal(beat: number): void {
     this.outcome = 'FAILED';
     this.outcomeBeat = beat;
@@ -366,18 +509,42 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     this.feel.impact('MEDIUM', {
       x: this.focusX, y: this.focusY, colour: MISS_COLOUR, particles: false,
     });
+    this.feel.shockwave(this.focusX, this.focusY, 0.3, MISS_COLOUR, 0.5, 3);
+    this.feel.emit(this.focusX, this.focusY, {
+      count: 16, speed: 0.5, colour: MISS_COLOUR, size: 0.007, life: 0.5, shape: 'spark',
+    });
   }
 
-  private cueStepHit(at: { x: number; y: number }, verdict: BreakoutVerdict): void {
+  /**
+   * A step landed: the row's half of the encounter's feedback.
+   *
+   * The diamond already punches and turns green in `breakoutUI.ts`, but the
+   * row sits low and the player is watching the seal, so the press has to be
+   * legible from the middle of the board as well. Two things do that: a ring
+   * that marks the glyph as *resolved* rather than merely recoloured, and a
+   * spray thrown the way the arrow pointed -- which is the read that ties the
+   * key the player hit to the prompt they hit it on.
+   */
+  private cueStepHit(at: { x: number; y: number }, verdict: BreakoutVerdict, direction: BreakoutDirection): void {
     this.judgements.push(verdict);
+    const colour = verdict === 'PERFECT' ? BREAK_COLOUR : HIT_COLOUR;
     this.feel.sfx(verdict === 'PERFECT' ? 'direction_perfect' : 'direction_hit');
-    this.feel.impact('LIGHT', { x: at.x, y: at.y, colour: verdict === 'PERFECT' ? BREAK_COLOUR : '#7dffb0' });
+    this.feel.impact('LIGHT', { x: at.x, y: at.y, colour });
+    this.feel.shockwave(at.x, at.y, 0.14, colour, 0.3, 2);
+    this.feel.emit(at.x, at.y, {
+      count: 12, speed: 0.6, speedJitter: 0.3, colour,
+      size: 0.007, life: 0.4, shape: 'spark',
+      direction: DIRECTION_ANGLE[direction], spread: Math.PI * 0.5,
+    });
   }
 
   private cueStepMiss(at: { x: number; y: number }): void {
     this.judgements.push('MISS');
     this.feel.sfx('miss', 0.8);
     this.feel.shockwave(at.x, at.y, 0.12, MISS_COLOUR, 0.28, 2);
+    this.feel.emit(at.x, at.y, {
+      count: 8, speed: 0.4, colour: MISS_COLOUR, size: 0.006, life: 0.4, shape: 'spark',
+    });
   }
 
   // ---- geometry -----------------------------------------------------------
@@ -426,10 +593,18 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
     return clamp((this.plan.startRadius - this.radiusAt(beat)) / span, 0, 1);
   }
 
-  /** 0..1 -- how close the final accent is. 1 on the beat itself. */
+  /**
+   * 0..1 -- how close the final accent is. 1 on the beat itself.
+   *
+   * Deliberately spans the whole phrase rather than the last beat or two. This
+   * is the row's clock -- the approach ring's radius *is* this number -- and a
+   * clock that only appears once the deadline is in sight tells the player
+   * nothing they can act on. The seal's own tension reads the same ramp, so the
+   * cage tightens and the ring closes together, and both arrive on the accent.
+   */
   private charge(beat: number): number {
     if (this.outcome !== 'PENDING') return 0;
-    const span = Math.max(0.5, this.finalBeat - this.criticalBeat);
+    const span = Math.max(0.5, this.finalBeat - this.activationBeat);
     return clamp(1 - (this.finalBeat - beat) / span, 0, 1);
   }
 
@@ -494,12 +669,17 @@ export class RhythmBreakoutMechanic extends BaseMechanic implements SequenceEnco
       beat,
       startBeat: this.activationBeat,
       finalBeat: this.finalBeat,
+      finalGoodBeats: this.plan.finalGoodBeats,
       reveal,
       charge: this.charge(beat),
       finalState: this.finalState,
       finalChangedBeat: this.finalChangedBeat,
       breakable: this.breakable,
       keyLabel: 'SPACE',
+      missDamage: this.plan.missDamage,
+      accentMissDamage: this.plan.accentMissDamage,
+      partialBeat: this.partialBeat,
+      partialAmount: this.partialAmount,
     });
   }
 
