@@ -8549,6 +8549,1727 @@
         "maxSimultaneousThreats": 1
       },
       "notes": "Ten inputs, and the only pattern in the level that chains four families into one phrase: an alternation, a three-step sweep, a doubled cell, and a four-note run into the accent. It is the last thing the song asks for and it resolves on the last downbeat of the track, with a heavier collapse behind it than anything else so that failing it is unambiguous. Two rounds: the phrase, then its mirror at double speed."
+    },
+    {
+      "id": "AP52",
+      "name": "Seal Break: Swung Walk",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 2,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "ACCENT"
+        ],
+        "sections": [
+          "VERSE",
+          "DROP"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.667,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.333,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.667,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.667,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.333,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.667,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Drip Too Hard is a half-time record with a swung vocal, so the phrase is a triplet walk rather than an eighth-note one: five steps at two-thirds of a beat each, which is the subdivision the voice is actually using. Nothing lands on a strong beat except the accent, and that is the point -- the player is asked to feel the swing rather than count the grid. Two rounds, the phrase and its mirror, each resolving on a real downbeat four beats after it starts."
+    },
+    {
+      "id": "AP53",
+      "name": "Seal Break: Call and Reply",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 2,
+        "rhythmComplexity": 2,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 2
+      },
+      "lengthBars": 3,
+      "musicTags": {
+        "rhythm": [
+          "BEAT",
+          "DOWNBEAT"
+        ],
+        "sections": [
+          "VERSE",
+          "BREAKDOWN"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The call is four arrows, one per beat, filling a whole real bar. The reply is three arrows in half a bar -- the same idea answered in half the time. That long-then-short shape is the song's own call and response between the vocal and the drop, and it teaches a player to read phrase length as information instead of expecting a fixed number of inputs. Both accents land on downbeats."
+    },
+    {
+      "id": "AP54",
+      "name": "Seal Break: Half-Time",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "HALF_TIME",
+          "SUBDIVISION",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP",
+          "CHORUS"
+        ],
+        "energy": [
+          "MID"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "A doubled cell, a beat and a half of nothing, then a second doubled cell running into the accent. The hole is authored rather than accidental: a player who reads ahead sees the gap and has to hold position through it instead of filling it. On a half-time record the silence is the loudest part of the bar, so the phrase spends its steps exactly where the track does and rests where the track rests."
+    },
+    {
+      "id": "AP55",
+      "name": "Seal Break: Offbeat",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 3,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "SUBDIVISION",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Six arrows in three beats with the second one missing: the cell doubles on the first half-beat and then skips the beat it would have landed on. The skip is what makes it read as syncopation rather than as a run -- the hand wants to press on that beat and has to not. One miss forgiven, because the first time a player meets a hole in a stream they will press into it."
+    },
+    {
+      "id": "AP56",
+      "name": "Seal Break: Pressure",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 5,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "DRIVING",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Seven arrows, one per half-beat, straight through the bar and into the accent. This is the plainest thing the mechanic can ask for at this tempo and it is here on purpose: after the swing and the syncopation of the first drop, the loudest bars of the record ask for an even stream a player can lock onto. The pressure is the tempo, not the shape, which is why one miss is forgiven and the collapse behind it is heavy."
+    },
+    {
+      "id": "AP57",
+      "name": "Seal Break: Triplet Storm",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 4,
+        "rhythmComplexity": 5,
+        "spatialComplexity": 2,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "SUBDIVISION",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.667,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.333,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.333,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.667,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.667,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.333,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.333,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.667,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The swung walk again, but where it used to end it now doubles: four triplet steps, then three in the last beat. A player who learned the walk in the first drop recognises the opening and then has to accelerate inside a subdivision they thought they knew. That recognition-then-subversion is what makes a climax read as a climax rather than as a longer version of the same thing."
+    },
+    {
+      "id": "AP58",
+      "name": "Seal Break: Finale",
+      "mode": "ARENA",
+      "function": "BOSS",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 4,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 3,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 5,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "SYNCOPATED",
+          "ACCENT",
+          "DROP"
+        ],
+        "sections": [
+          "DROP",
+          "OUTRO"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.667,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.333,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 4,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 5,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Three rounds in one pattern, and the only dance pattern in the library that asks for a third: an even six, a swung six, then a short three that resolves on the last beat of the pattern. The rounds are the same length on paper and different lengths in the hand, so the phrase cannot be memorised as a list -- it has to be read. It closes the level on the bar the record closes on, and the collapse behind it is heavy so that failing the last thing the song asks for is unambiguous."
+    },
+    {
+      "id": "AP59",
+      "name": "Seal Break: Pulse",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "DOWNBEAT",
+          "SUBDIVISION",
+          "ACCENT"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.4,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 0.8,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.2,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.4,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 0.8,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.2,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Four arrows inside a beat and a fifth, then the accent on the very next bar line. At 129 BPM that is a press every 190ms, fast enough that the phrase has to be read as a shape rather than as four separate decisions, and the reward is an accent landing on the downbeat of the loudest track in the library. The mirror starts two beats later, so both accents land on bar lines and the pattern reads as a pulse rather than as a run."
+    },
+    {
+      "id": "AP60",
+      "name": "Seal Break: Push",
+      "mode": "ARENA",
+      "function": "PRACTICE",
+      "difficulty": {
+        "overall": 3,
+        "reaction": 3,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 3,
+        "informationLoad": 3
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "ACCENT",
+          "DRIVING"
+        ],
+        "sections": [
+          "VERSE",
+          "BUILD"
+        ],
+        "energy": [
+          "MID",
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 2,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Five eighth-note steps and then three full beats of nothing before the accent lands on beat four. The gap is the mechanic: the player finishes the phrase early and has to hold the beat they were given instead of pressing when their hands are ready. Beat four is where this track pushes into the next bar, so the accent is authored to arrive with the push rather than with the downbeat it pushes toward."
+    },
+    {
+      "id": "AP61",
+      "name": "Seal Break: Stomp",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "DRIVING",
+          "ACCENT"
+        ],
+        "sections": [
+          "BUILD",
+          "DROP"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "The same direction twice, three times over, then the accent on beat four. Doubled cells are how a four-on-the-floor record asks for weight rather than speed -- the hand comes back to the key it just left instead of travelling, which is a different motion from a run even at the same tempo. The accent on beat four keeps the push feel this family uses for the track, so the phrase ends leaning into the next bar."
+    },
+    {
+      "id": "AP62",
+      "name": "Seal Break: Roll",
+      "mode": "ARENA",
+      "function": "COMBINE",
+      "difficulty": {
+        "overall": 4,
+        "reaction": 4,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 4,
+        "informationLoad": 4
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "DOWNBEAT",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP",
+          "CHORUS"
+        ],
+        "energy": [
+          "HIGH"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 6,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              }
+            ],
+            "finalBeatOffset": 2,
+            "maxMisses": 1,
+            "failureMode": "DAMAGE",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Seven arrows across three beats, resolving on the downbeat of the bar after next, then a three-arrow reply that resolves on the downbeat after that. The long round is long enough to leave working memory and has to be read as a continuous roll; the short round is the same idea compressed, so the two accents arrive two beats apart with nothing between them. It is the only pattern in the family whose rounds differ in length and share a resolution point."
+    },
+    {
+      "id": "AP63",
+      "name": "Seal Break: Break",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 5,
+        "rhythmComplexity": 4,
+        "spatialComplexity": 2,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SYNCOPATED",
+          "SUBDIVISION",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Seven arrows with one missing, and the missing one is the beat the player has been taught to press on. The hole sits where this family usually puts a step, so a player running on muscle memory will press into it and lose the phrase -- reading the row is the only way through. It is the hardest reading demand in the library at this tempo, which is why the accent lands on beat four rather than on a downbeat: the reward is the push, not the resolution."
+    },
+    {
+      "id": "AP64",
+      "name": "Seal Break: Torrent",
+      "mode": "ARENA",
+      "function": "CLIMAX",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 5,
+        "rhythmComplexity": 3,
+        "spatialComplexity": 2,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 4,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "DRIVING",
+          "ACCENT"
+        ],
+        "sections": [
+          "DROP"
+        ],
+        "energy": [
+          "HIGH",
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Eight arrows, one per half-beat: four beats of continuous input and then the accent on beat four of the next bar. There is no trick in the shape and that is deliberate -- at 129 BPM a plain eight is already at the edge of what a hand can do without a break, and the pattern exists to find out whether a player can keep an even stream going when nothing in the phrase tells them where they are. One miss forgiven, heavy collapse behind it."
+    },
+    {
+      "id": "AP65",
+      "name": "Seal Break: Last Stand",
+      "mode": "ARENA",
+      "function": "BOSS",
+      "difficulty": {
+        "overall": 5,
+        "reaction": 5,
+        "rhythmComplexity": 5,
+        "spatialComplexity": 3,
+        "inputComplexity": 5,
+        "informationLoad": 5
+      },
+      "lengthBars": 8,
+      "musicTags": {
+        "rhythm": [
+          "SUBDIVISION",
+          "SYNCOPATED",
+          "ACCENT",
+          "DROP"
+        ],
+        "sections": [
+          "DROP",
+          "CLIMAX"
+        ],
+        "energy": [
+          "PEAK"
+        ]
+      },
+      "events": [
+        {
+          "at": {
+            "bar": 1,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3.5,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 3,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2.75,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3.25,
+                "direction": "UP"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 5,
+            "beat": 3
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 2.5,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 2.75,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 3,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 3.25,
+                "direction": "DOWN"
+              }
+            ],
+            "finalBeatOffset": 5,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        },
+        {
+          "at": {
+            "bar": 7,
+            "beat": 1
+          },
+          "mechanicId": "A12",
+          "params": {
+            "prepBeats": 2,
+            "sequence": [
+              {
+                "beatOffset": 0,
+                "direction": "RIGHT"
+              },
+              {
+                "beatOffset": 0.5,
+                "direction": "UP"
+              },
+              {
+                "beatOffset": 1,
+                "direction": "LEFT"
+              },
+              {
+                "beatOffset": 1.5,
+                "direction": "DOWN"
+              },
+              {
+                "beatOffset": 2,
+                "direction": "RIGHT"
+              }
+            ],
+            "finalBeatOffset": 3,
+            "maxMisses": 1,
+            "failureMode": "HEAVY",
+            "movementScale": 0
+          }
+        }
+      ],
+      "constraints": {
+        "maxSimultaneousThreats": 1
+      },
+      "notes": "Four rounds and thirty-one inputs: an even eight, then two nines that end in a sixteenth cluster, then a short five that closes on beat four of the last bar. Each round is a little longer than the last and every accent still lands where this family puts it for the track, so the phrase escalates in load without ever moving its resolution. It is the last thing the level asks for and it ends on the last musical bar of the record."
     }
   ]
 }

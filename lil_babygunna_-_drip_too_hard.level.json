@@ -1,0 +1,410 @@
+{
+  "version": "1.0.0",
+  "editor": {
+    "seed": 1,
+    "analysisSource": "lil_babygunna_-_drip_too_hard.mp3",
+    "blueprintVersion": "beatbound_level_blueprint_v2",
+    "compilerVersion": "2.0.0",
+    "generator": "ai_director",
+    "intent": "This is a loop-based trap record with four near-identical passes (repeat similarity 0.988) punctuated by hard drop-outs, so the level is built as three escalating drops separated by real empty space: teach on the silent bars 1-4, peak at bars 9-12, 21-24 and 37-43, and let the bar-13, bar-25 and bar-44 collapses actually breathe. The repeats are differentiated by mode instead of by thickness - the second pass (bars 13-21) becomes a VERTICAL lane chart and the bar-47-52 rebuild becomes a RUNNER course - while ARENA keeps the loudest material, where section.difficulty genuinely changes telegraphs.",
+    "syncPoints": [
+      {
+        "bar": 1,
+        "anchor_type": "section_boundary",
+        "why": "Song start; the structural anchor that opens the level and the only one at bar 1 besides the phrase boundary."
+      },
+      {
+        "bar": 4,
+        "anchor_type": "energy_rise",
+        "why": "Bass and drums enter here - bar 4 combined_intensity jumps 0.05 to 0.22 - so the intro ends and the first build begins."
+      },
+      {
+        "bar": 9,
+        "anchor_type": "energy_peak",
+        "why": "First peak-class bars: combined_intensity reaches 0.65 and phrase_002 is labelled 'peak'."
+      },
+      {
+        "bar": 13,
+        "anchor_type": "energy_drop",
+        "why": "The first drop-out (combined 0.68 to 0.56) and the detector's section boundary; the ARENA to VERTICAL handoff sits here."
+      },
+      {
+        "bar": 21,
+        "anchor_type": "energy_peak",
+        "why": "Peak of phrase_004 (energy 0.64, rising) with a phrase_boundary stacked on it; VERTICAL hands back to ARENA here."
+      },
+      {
+        "bar": 25,
+        "anchor_type": "energy_drop",
+        "why": "Strongest drop of the first half (strength 1.0, combined 0.66 to 0.33) with a strong_beat on the same beat - the breakdown."
+      },
+      {
+        "bar": 37,
+        "anchor_type": "section_boundary",
+        "why": "Section 04 begins and combined_intensity enters the song's maximum region (0.68-0.70 across bars 37-40)."
+      },
+      {
+        "bar": 39,
+        "anchor_type": "energy_peak",
+        "why": "energy_peak and strong_beat coincide at strength 1.0 at the top of the loudest stretch."
+      },
+      {
+        "bar": 47,
+        "anchor_type": "energy_peak",
+        "why": "The RUNNER block opens on this peak, which starts the most rhythmically uniform high stretch (onset_density 1.0)."
+      },
+      {
+        "bar": 53,
+        "anchor_type": "energy_drop",
+        "why": "Hardest drop of the back half (strength 1.0, combined 0.65 to 0.32); RUNNER ends and ARENA resumes."
+      },
+      {
+        "bar": 61,
+        "anchor_type": "energy_drop",
+        "why": "Vocal exits and the outro's low-energy tail begins (combined 0.31 to 0.09)."
+      },
+      {
+        "bar": 68,
+        "anchor_type": "large_pitch_jump",
+        "why": "Final melodic event of the track (large_pitch_jump at strength 1.0, with melody_fall on the same beat) - the level resolves on it."
+      }
+    ]
+  },
+  "song": {
+    "id": "lil_babygunna_-_drip_too_hard",
+    "title": "Lil Baby,Gunna - Drip Too Hard",
+    "audio": "audio/editor/lil_babygunna_-_drip_too_hard.mp3",
+    "bpm": 112.35,
+    "timeSignature": [
+      4,
+      4
+    ]
+  },
+  "sections": [
+    {
+      "id": "section_01",
+      "startBar": 1,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "INTRO",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP08",
+          "repeat": 2,
+          "intensity": 0.3
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bars 1-4 are effectively empty: combined_intensity 0.02-0.14, drums and bass between 0.0002 and 0.0029, melody the only audible layer at 0.19-0.21. The one event is the energy_rise anchor at bar 4. There is nothing to dodge yet, so this is a four-bar teaching window at difficulty 1 - movement and telegraph reading with the widest possible gaps."
+    },
+    {
+      "id": "section_02",
+      "startBar": 5,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "BUILD",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "AP17",
+          "repeat": 1,
+          "intensity": 0.85
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "The first drop lands at bar 5 (energy 0.52, combined 0.56, bass 0.82) and holds to bar 8 with bass at 1.0 and onset_density 1.0; bar 6 is a local peak. Hazard density steps up across the four bars, but the texture is a repeating loop, so the tier only rises to 2."
+    },
+    {
+      "id": "section_03",
+      "startBar": 9,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "PEAK",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP18",
+          "repeat": 1,
+          "intensity": 0.98
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.47
+        }
+      ],
+      "transitionOut": "ARENA_TO_VERTICAL",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraZoom",
+            "params": {
+              "zoom": 1.15,
+              "ease": "easeOutBack"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "cameraPan",
+            "params": {
+              "direction": "followMode"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 42,
+      "rationale": "Bars 9-12 are the first sustained high block: combined_intensity 0.65-0.69, intensity_class 'peak' at bars 10 and 12, and drums jumping from 0.18 to 0.50-0.65. Phrase_002 is labelled 'peak' and the energy_peak anchors at bars 9 and 11 are high priority. This is the first section that asks for real movement."
+    },
+    {
+      "id": "section_04",
+      "startBar": 13,
+      "lengthBars": 8,
+      "mode": "VERTICAL",
+      "function": "RELEASE",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.47
+        },
+        {
+          "patternId": "VP08",
+          "repeat": 2,
+          "intensity": 0.67
+        },
+        {
+          "patternId": "VP04",
+          "repeat": 1,
+          "intensity": 0.67
+        },
+        {
+          "patternId": "VP01",
+          "repeat": 1,
+          "intensity": 0.4
+        }
+      ],
+      "transitionOut": "VERTICAL_TO_ARENA",
+      "scene": {
+        "effects": [
+          {
+            "effect": "cameraZoom",
+            "params": {
+              "zoom": 1.15,
+              "ease": "easeOutBack"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 74,
+      "rationale": "Bar 13 is an energy_drop and a detector section boundary: combined_intensity slides 0.68 -> 0.55 -> 0.41 with is_release flags, then bars 17-18 collapse to 0.19 and 0.25 (deepest valley of the first half, drums 0.0017), before bars 19-20 rebuild to 0.58. Section_02 is a reprise_equivalent of section_01 (similarity 0.988), so the lane chart is how this repeat is made to feel different rather than louder; the tap density simply follows the valley."
+    },
+    {
+      "id": "section_05",
+      "startBar": 21,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "PEAK",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP09",
+          "repeat": 2,
+          "intensity": 0.93
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Phrase_004 (bars 21-23) is the strongest sub-phrase of section_02 - energy 0.64 with a rising trend - and bar 21 carries a phrase_boundary plus an energy_peak while bar 22 is a local peak (combined 0.655) and bar 24 is another (0.657). Short, sharp peak: four bars of pressure before the loop falls out from under it."
+    },
+    {
+      "id": "section_06",
+      "startBar": 25,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "BREAKDOWN",
+      "difficulty": 2,
+      "patterns": [
+        {
+          "patternId": "AP21",
+          "repeat": 1,
+          "intensity": 0.51
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 25 is the hardest drop of the first half - energy_drop strength 1.0, combined_intensity 0.66 -> 0.33, with a coincident strong_beat - and bar 26 is a valley at 0.25 with drums at 0.005. Bars 27-28 are the loop restarting (energy_rise anchor at bar 27). The game deliberately lets go here: one slow hazard cycle and no new mechanics."
+    },
+    {
+      "id": "section_07",
+      "startBar": 29,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "BUILD",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP14",
+          "repeat": 2,
+          "intensity": 0.85
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bars 29-31 hold combined_intensity 0.63-0.66 with a local peak and energy_peak anchor at bar 30; bar 32 then falls to 0.35 (is_release) - the pre-drop breath - and bars 33-36 rebuild steadily to 0.63 at bar 36 with an energy_peak at bar 35. Tension accumulates across the whole eight bars rather than peaking at either end."
+    },
+    {
+      "id": "section_08",
+      "startBar": 37,
+      "lengthBars": 7,
+      "mode": "ARENA",
+      "function": "PEAK",
+      "difficulty": 4,
+      "patterns": [
+        {
+          "patternId": "AP01",
+          "repeat": 3,
+          "intensity": 0.98
+        },
+        {
+          "patternId": "AP03",
+          "repeat": 1,
+          "intensity": 0.98
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "The loudest stretch in the song: combined_intensity 0.68-0.70 across bars 37-40 (song maximum at bar 38, is_local_peak), energy_peak anchors at bars 37, 38, 39, 40 and 42, and an energy_peak plus strong_beat stacked at bar 39. Bar 41 is an is_release dip and bar 43 is a valley before the drop at 44. This is the only difficulty-4 material in the level."
+    },
+    {
+      "id": "section_09",
+      "startBar": 44,
+      "lengthBars": 3,
+      "mode": "ARENA",
+      "function": "BREAKDOWN",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP04",
+          "repeat": 1,
+          "intensity": 0.51
+        }
+      ],
+      "transitionOut": "ARENA_TO_RUNNER",
+      "scene": {
+        "effects": [
+          {
+            "effect": "wipe",
+            "params": {
+              "direction": "radial"
+            },
+            "durationBeats": 4
+          },
+          {
+            "effect": "particles",
+            "params": {
+              "burst": "boundaryCrossing"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 178,
+      "rationale": "Bar 44 is an energy_drop (high) and a phrase_boundary; bars 45-46 fall to combined_intensity 0.21 and 0.27 with drums at 0.001 and 0.007 - vocal and melody only. Three bars of near-nothing after the loudest section: the player gets back health and rhythm before the last run."
+    },
+    {
+      "id": "section_10",
+      "startBar": 47,
+      "lengthBars": 6,
+      "mode": "RUNNER",
+      "function": "PEAK",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "RP01",
+          "repeat": 2,
+          "intensity": 0.65
+        },
+        {
+          "patternId": "RP10",
+          "repeat": 1,
+          "intensity": 0.93
+        },
+        {
+          "patternId": "RP01",
+          "repeat": 1,
+          "intensity": 0.55
+        }
+      ],
+      "transitionOut": "RUNNER_TO_ARENA",
+      "scene": {
+        "effects": [
+          {
+            "effect": "wipe",
+            "params": {
+              "direction": "radial"
+            },
+            "durationBeats": 4
+          }
+        ]
+      },
+      "breatherFromBeat": 202,
+      "rationale": "Bars 47-52 are the most rhythmically uniform high block in the song: onset_density 0.78-1.0, energy 0.51-0.71, bass pinned near 1.0, with a local peak at bar 50 and an energy_peak anchor at bar 47. A steady eighth-note stream on a fixed beat grid suits an auto-runner's beat-quantised arcs better than spatial dodging. Note that section.difficulty is metadata-only for RUNNER - the section reads as hard because of its pattern choice, not its tier."
+    },
+    {
+      "id": "section_11",
+      "startBar": 53,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "BUILD",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP14",
+          "repeat": 1,
+          "intensity": 0.51
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 53 is an energy_drop of strength 1.0 (combined 0.65 -> 0.32) and bar 54 is a valley at 0.25 with drums at 0.009; bars 55-56 then rebuild to 0.55 and 0.59 with the energy_rise anchor burned into bar 54. Four bars that start empty and end loaded."
+    },
+    {
+      "id": "section_12",
+      "startBar": 57,
+      "lengthBars": 4,
+      "mode": "ARENA",
+      "function": "PEAK",
+      "difficulty": 3,
+      "patterns": [
+        {
+          "patternId": "AP18",
+          "repeat": 2,
+          "intensity": 0.93
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bars 57-58 climb to the last true peak of the track - energy_peak at bar 58 with strength 0.99 and combined_intensity 0.669 - then bars 59-60 fall away to 0.60 and 0.31 while the vocal stays high (0.44, 0.61). A last four-bar push that hands off to the outro."
+    },
+    {
+      "id": "section_13",
+      "startBar": 61,
+      "lengthBars": 8,
+      "mode": "ARENA",
+      "function": "OUTRO",
+      "difficulty": 1,
+      "patterns": [
+        {
+          "patternId": "AP03",
+          "repeat": 4,
+          "intensity": 0.3
+        },
+        {
+          "patternId": "AP09",
+          "repeat": 2,
+          "intensity": 0.3
+        }
+      ],
+      "transitionOut": null,
+      "rationale": "Bar 61 is an energy_drop plus a vocal_exit; bars 62-68 sit at combined_intensity 0.03-0.07 with drums at 0.0003 - the track is almost silent. The only remaining musical event is the large_pitch_jump / melody_fall at bar 68. Nothing here can be fought, so the level resolves on that final melodic gesture at difficulty 1."
+    }
+  ]
+}
